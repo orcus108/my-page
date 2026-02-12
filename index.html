@@ -1,0 +1,437 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Vedant Misra</title>
+    <style>
+
+      :root {
+        --bg: #f7f7f7;
+        --fg: #111;
+        --muted: #666;
+        --line: #ddd;
+      }
+
+      [data-theme="dark"] {
+        --bg: #0f0f10;
+        --fg: #efefef;
+        --muted: #9a9a9a;
+        --line: #2a2a2c;
+      }
+
+      * { box-sizing: border-box; }
+
+      body {
+        margin: 0;
+        font-family: "IBM Plex Sans", "Avenir Next", sans-serif;
+        background: var(--bg);
+        color: var(--fg);
+        line-height: 1.65;
+        overflow-x: hidden;
+      }
+
+      main {
+        max-width: 700px;
+        margin: 0 auto;
+        padding: 2rem 1.25rem 3rem;
+        position: relative;
+        z-index: 1;
+      }
+
+      .fx-canvas {
+        position: fixed;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        z-index: 0;
+        opacity: 0.9;
+      }
+
+      header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 1rem;
+      }
+
+      .header-right { display: flex; align-items: center; gap: 0.8rem; line-height: 1; }
+      .brand { line-height: 1; }
+      .left-link { line-height: 1; display: inline-flex; align-items: center; }
+      .socials { display: inline-flex; align-items: center; gap: 0.55rem; font-size: 0.92rem; line-height: 1; }
+      .theme-toggle { display: inline-flex; align-items: center; }
+      .theme-toggle input { position: absolute; opacity: 0; width: 0; height: 0; }
+
+      .theme-slider {
+        width: 42px;
+        height: 24px;
+        border-radius: 999px;
+        border: 1px solid var(--line);
+        position: relative;
+        cursor: pointer;
+      }
+
+      .theme-slider::after {
+        content: "";
+        position: absolute;
+        top: 2px;
+        left: 2px;
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        background: var(--fg);
+        transition: transform 0.2s ease;
+      }
+
+      .theme-toggle input:checked + .theme-slider::after { transform: translateX(18px); }
+
+      h1, h2 { margin: 0; font-weight: 600; }
+      h1 { font-size: 1.2rem; }
+      h2 {
+        font-size: 0.78rem;
+        margin-bottom: 1rem;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--muted);
+        font-weight: 600;
+      }
+      h3 { margin: 0 0 0.5rem; font-size: 0.98rem; }
+      .section-label { animation: labelPulse 4.6s ease-in-out infinite; }
+      @keyframes labelPulse {
+        0%, 100% { opacity: 0.82; letter-spacing: 0.12em; }
+        50% { opacity: 1; letter-spacing: 0.16em; }
+      }
+
+      p { margin: 0.8rem 0 0; }
+      ul { margin: 0; padding: 0; list-style: none; }
+      li + li { margin-top: 1.1rem; }
+      section { margin-top: 2.5rem; }
+      a { color: inherit; text-underline-offset: 0.15em; }
+      .list-link { text-decoration: none; font-weight: 500; }
+      .muted { color: var(--muted); }
+      .list-item { display: block; }
+      .list-title { display: inline-block; line-height: 1.25; }
+      .list-meta { margin-top: 0.2rem; font-size: 0.92rem; color: var(--muted); }
+
+      article ul { list-style: disc; padding-left: 1.1rem; }
+      article li + li { margin-top: 0.45rem; }
+
+      @media (prefers-reduced-motion: reduce) {
+        .section-label { animation: none; }
+      }
+
+      @media (max-width: 640px) {
+        main {
+          padding: 1.1rem 1rem 2.2rem;
+        }
+
+        h1 {
+          font-size: 1.1rem;
+        }
+
+        header {
+          gap: 0.75rem;
+        }
+
+        .header-right {
+          gap: 0.55rem;
+          white-space: nowrap;
+        }
+
+        .socials {
+          gap: 0.45rem;
+          font-size: 0.88rem;
+        }
+
+        .theme-slider {
+          width: 38px;
+          height: 22px;
+        }
+
+        .theme-slider::after {
+          width: 16px;
+          height: 16px;
+        }
+
+        .theme-toggle input:checked + .theme-slider::after {
+          transform: translateX(16px);
+        }
+
+        section {
+          margin-top: 2rem;
+        }
+
+        li + li {
+          margin-top: 0.95rem;
+        }
+
+        .list-meta {
+          font-size: 0.88rem;
+        }
+      }
+  
+    </style>
+  </head>
+  <body>
+    <canvas id="fx-canvas" class="fx-canvas" aria-hidden="true"></canvas>
+    <main>
+
+
+      <header>
+        <h1 class="brand">Vedant Misra</h1>
+        <div class="header-right">
+          <nav class="socials" aria-label="Social links">
+            <a href="https://x.com/orcus108" aria-label="X profile" target="_blank" rel="noopener noreferrer">X</a>
+            <a href="https://github.com/orcus108" aria-label="GitHub profile" target="_blank" rel="noopener noreferrer">GitHub</a>
+          </nav>
+          <label class="theme-toggle" aria-label="Toggle theme">
+            <input id="theme-toggle" type="checkbox" />
+            <span class="theme-slider"></span>
+          </label>
+        </div>
+      </header>
+  
+
+      <section>
+        <p class="muted">thinking out loud</p>
+      </section>
+
+      <section>
+        <h2 class="section-label">projects</h2>
+        <ul>
+          <li class="list-item"><a class="list-link list-title" href="projects/atlas-cli.html">atlas cli</a><div class="list-meta">terminal workflow orchestrator</div></li>
+          <li class="list-item"><a class="list-link list-title" href="projects/shape-notes.html">shape notes</a><div class="list-meta">markdown-first thinking workspace</div></li>
+        </ul>
+      </section>
+
+      <section>
+        <h2 class="section-label">blog</h2>
+        <ul>
+          <li class="list-item"><a class="list-link list-title" href="blog/designing-faster-feedback-loops.html">designing faster feedback loops</a><div class="list-meta">Feb 8, 2026</div></li>
+          <li class="list-item"><a class="list-link list-title" href="blog/on-building-in-quiet-seasons.html">on building in quiet seasons</a><div class="list-meta">Jan 14, 2026</div></li>
+          <li class="list-item"><a class="list-link list-title" href="blog/ai-and-human-identity.html">ai and human identity</a><div class="list-meta">Dec 22, 2025</div></li>
+        </ul>
+      </section>
+  
+    </main>
+
+    <script>
+      const root = document.documentElement;
+      const btn = document.getElementById("theme-toggle");
+      const stored = localStorage.getItem("theme");
+      const systemDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+      const initialTheme = stored || (systemDark ? "dark" : "light");
+
+      function applyTheme(theme) {
+        root.setAttribute("data-theme", theme);
+        btn.checked = theme === "dark";
+      }
+
+      applyTheme(initialTheme);
+
+      btn.addEventListener("change", () => {
+        const next = btn.checked ? "dark" : "light";
+        localStorage.setItem("theme", next);
+        applyTheme(next);
+      });
+
+      const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      if (!reduceMotion) {
+        const canvas = document.getElementById("fx-canvas");
+        const ctx = canvas.getContext("2d");
+        const particles = [];
+        const bursts = [];
+        const ripples = [];
+        const pointer = { x: 0, y: 0, active: false };
+        const count = 85;
+        const speed = 0.28;
+        let width = 0;
+        let height = 0;
+        let dpr = 1;
+
+        function palette() {
+          const dark = root.getAttribute("data-theme") === "dark";
+          return dark
+            ? { dot: "rgba(220, 220, 235, 0.42)", line: "rgba(180, 180, 210, 0.16)", burst: "rgba(255,255,255,0.7)" }
+            : { dot: "rgba(30, 30, 40, 0.25)", line: "rgba(35, 35, 45, 0.10)", burst: "rgba(25,25,35,0.5)" };
+        }
+
+        function resize() {
+          dpr = window.devicePixelRatio || 1;
+          width = window.innerWidth;
+          height = window.innerHeight;
+          canvas.width = Math.floor(width * dpr);
+          canvas.height = Math.floor(height * dpr);
+          ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        }
+
+        function spawnParticle(x = Math.random() * width, y = Math.random() * height) {
+          return {
+            x,
+            y,
+            vx: (Math.random() - 0.5) * speed,
+            vy: (Math.random() - 0.5) * speed,
+            size: 0.7 + Math.random() * 1.8
+          };
+        }
+
+        function spawnBurst(x, y) {
+          for (let i = 0; i < 22; i += 1) {
+            const angle = (Math.PI * 2 * i) / 22 + Math.random() * 0.2;
+            const force = 0.8 + Math.random() * 1.8;
+            bursts.push({
+              x,
+              y,
+              vx: Math.cos(angle) * force,
+              vy: Math.sin(angle) * force,
+              life: 42 + Math.floor(Math.random() * 18),
+              size: 0.6 + Math.random() * 1.7
+            });
+          }
+        }
+
+        function spawnRipple(x, y) {
+          ripples.push({
+            x,
+            y,
+            r: 0,
+            speed: 4.4,
+            life: 58,
+            maxLife: 58,
+            width: 26,
+            strength: 0.11
+          });
+        }
+
+        function wrap(p) {
+          if (p.x < -20) p.x = width + 20;
+          if (p.x > width + 20) p.x = -20;
+          if (p.y < -20) p.y = height + 20;
+          if (p.y > height + 20) p.y = -20;
+        }
+
+        function tick() {
+          const colors = palette();
+          ctx.clearRect(0, 0, width, height);
+
+          for (let i = 0; i < particles.length; i += 1) {
+            const p = particles[i];
+            if (pointer.active) {
+              const dx = pointer.x - p.x;
+              const dy = pointer.y - p.y;
+              const dist = Math.hypot(dx, dy) || 1;
+              if (dist < 220) {
+                const pull = (220 - dist) * 0.000025;
+                p.vx += dx * pull;
+                p.vy += dy * pull;
+              }
+            }
+
+            p.vx *= 0.992;
+            p.vy *= 0.992;
+            p.x += p.vx;
+            p.y += p.vy;
+            wrap(p);
+
+            ctx.beginPath();
+            ctx.fillStyle = colors.dot;
+            ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+            ctx.fill();
+
+            for (let j = i + 1; j < particles.length; j += 1) {
+              const q = particles[j];
+              const dx = p.x - q.x;
+              const dy = p.y - q.y;
+              const dist = Math.hypot(dx, dy);
+              if (dist < 95) {
+                const alpha = (95 - dist) / 95;
+                ctx.strokeStyle = colors.line.replace(/\d?\.\d+\)$/, (alpha * 0.22).toFixed(3) + ")");
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.moveTo(p.x, p.y);
+                ctx.lineTo(q.x, q.y);
+                ctx.stroke();
+              }
+            }
+          }
+
+          for (let i = ripples.length - 1; i >= 0; i -= 1) {
+            const ripple = ripples[i];
+            ripple.r += ripple.speed;
+            ripple.life -= 1;
+            if (ripple.life <= 0) {
+              ripples.splice(i, 1);
+              continue;
+            }
+
+            const lifeAlpha = ripple.life / ripple.maxLife;
+            const ringColor = colors.burst.replace(/\d?\.\d+\)$/, (0.58 * lifeAlpha).toFixed(3) + ")");
+            for (let p = 0; p < particles.length; p += 1) {
+              const part = particles[p];
+              const dx = part.x - ripple.x;
+              const dy = part.y - ripple.y;
+              const d = Math.hypot(dx, dy) || 1;
+              const band = Math.abs(d - ripple.r);
+              if (band < ripple.width) {
+                const force = (1 - band / ripple.width) * ripple.strength * lifeAlpha;
+                part.vx += (dx / d) * force * 2.1;
+                part.vy += (dy / d) * force * 2.1;
+              }
+            }
+
+            ctx.lineWidth = 1.2 + (1 - lifeAlpha) * 2.4;
+            ctx.strokeStyle = ringColor;
+            ctx.beginPath();
+            ctx.arc(ripple.x, ripple.y, ripple.r, 0, Math.PI * 2);
+            ctx.stroke();
+
+            ctx.lineWidth = 0.8;
+            ctx.strokeStyle = ringColor.replace(/\d?\.\d+\)$/, (0.35 * lifeAlpha).toFixed(3) + ")");
+            ctx.beginPath();
+            ctx.arc(ripple.x, ripple.y, ripple.r * 0.72, 0, Math.PI * 2);
+            ctx.stroke();
+          }
+
+          for (let i = bursts.length - 1; i >= 0; i -= 1) {
+            const b = bursts[i];
+            b.x += b.vx;
+            b.y += b.vy;
+            b.vx *= 0.97;
+            b.vy *= 0.97;
+            b.life -= 1;
+            if (b.life <= 0) {
+              bursts.splice(i, 1);
+              continue;
+            }
+            ctx.beginPath();
+            ctx.fillStyle = colors.burst;
+            ctx.arc(b.x, b.y, b.size, 0, Math.PI * 2);
+            ctx.fill();
+          }
+
+          requestAnimationFrame(tick);
+        }
+
+        resize();
+        for (let i = 0; i < count; i += 1) particles.push(spawnParticle());
+        requestAnimationFrame(tick);
+
+        window.addEventListener("resize", resize);
+        window.addEventListener("mousemove", (event) => {
+          pointer.x = event.clientX;
+          pointer.y = event.clientY;
+          pointer.active = true;
+        });
+        window.addEventListener("mouseleave", () => {
+          pointer.active = false;
+        });
+        window.addEventListener("click", (event) => {
+          spawnRipple(event.clientX, event.clientY);
+          spawnBurst(event.clientX, event.clientY);
+        });
+      }
+    </script>
+  
+  </body>
+</html>
