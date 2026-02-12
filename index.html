@@ -4,6 +4,11 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Vedant Misra</title>
+    <link rel="prefetch" href="projects/atlas-cli.html" />
+    <link rel="prefetch" href="projects/shape-notes.html" />
+    <link rel="prefetch" href="blog/designing-faster-feedback-loops.html" />
+    <link rel="prefetch" href="blog/on-building-in-quiet-seasons.html" />
+    <link rel="prefetch" href="blog/ai-and-human-identity.html" />
     <style>
 
       :root {
@@ -244,7 +249,7 @@
         const bursts = [];
         const ripples = [];
         const pointer = { x: 0, y: 0, active: false };
-        const count = 85;
+        const count = 52;
         const speed = 0.28;
         let width = 0;
         let height = 0;
@@ -344,8 +349,8 @@
               const dx = p.x - q.x;
               const dy = p.y - q.y;
               const dist = Math.hypot(dx, dy);
-              if (dist < 95) {
-                const alpha = (95 - dist) / 95;
+              if (dist < 78) {
+                const alpha = (78 - dist) / 78;
                 ctx.strokeStyle = colors.line.replace(/\d?\.\d+\)$/, (alpha * 0.22).toFixed(3) + ")");
                 ctx.lineWidth = 1;
                 ctx.beginPath();
@@ -422,11 +427,12 @@
           pointer.x = event.clientX;
           pointer.y = event.clientY;
           pointer.active = true;
-        });
+        }, { passive: true });
         window.addEventListener("mouseleave", () => {
           pointer.active = false;
         });
         window.addEventListener("click", (event) => {
+          if (event.target && event.target.closest("a")) return;
           spawnRipple(event.clientX, event.clientY);
           spawnBurst(event.clientX, event.clientY);
         });

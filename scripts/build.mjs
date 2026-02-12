@@ -345,7 +345,7 @@ function themeScript(includeFx = false) {
         const bursts = [];
         const ripples = [];
         const pointer = { x: 0, y: 0, active: false };
-        const count = 85;
+        const count = 52;
         const speed = 0.28;
         let width = 0;
         let height = 0;
@@ -445,8 +445,8 @@ function themeScript(includeFx = false) {
               const dx = p.x - q.x;
               const dy = p.y - q.y;
               const dist = Math.hypot(dx, dy);
-              if (dist < 95) {
-                const alpha = (95 - dist) / 95;
+              if (dist < 78) {
+                const alpha = (78 - dist) / 78;
                 ctx.strokeStyle = colors.line.replace(/\\d?\\.\\d+\\)$/, (alpha * 0.22).toFixed(3) + ")");
                 ctx.lineWidth = 1;
                 ctx.beginPath();
@@ -523,11 +523,12 @@ function themeScript(includeFx = false) {
           pointer.x = event.clientX;
           pointer.y = event.clientY;
           pointer.active = true;
-        });
+        }, { passive: true });
         window.addEventListener("mouseleave", () => {
           pointer.active = false;
         });
         window.addEventListener("click", (event) => {
+          if (event.target && event.target.closest("a")) return;
           spawnRipple(event.clientX, event.clientY);
           spawnBurst(event.clientX, event.clientY);
         });
@@ -558,13 +559,14 @@ function header(leftHref, leftText) {
   `;
 }
 
-function shell(title, body, includeFx = false) {
+function shell(title, body, includeFx = false, extraHead = "") {
   return `<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>${escapeHtml(title)}</title>
+${extraHead}
     <style>
 ${baseStyles()}
     </style>
@@ -665,7 +667,12 @@ ${header("", "Vedant Misra")}
       </section>
   `;
 
-  await writeFile(path.join(rootDir, "index.html"), shell("Vedant Misra", homeBody, true));
+  const prefetchHead = [
+    ...projects.map((p) => `    <link rel="prefetch" href="projects/${p.slug}.html" />`),
+    ...posts.map((p) => `    <link rel="prefetch" href="blog/${p.slug}.html" />`)
+  ].join("\n");
+
+  await writeFile(path.join(rootDir, "index.html"), shell("Vedant Misra", homeBody, true, prefetchHead));
 
   for (const project of projects) {
     const projectBody = `
