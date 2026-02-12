@@ -237,7 +237,7 @@ function baseStyles() {
         }
 
         .socials {
-          gap: 0.45rem;
+          gap: 0.75rem;
           font-size: 0.88rem;
         }
 
