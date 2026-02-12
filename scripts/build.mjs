@@ -305,7 +305,7 @@ function header(leftHref, leftText) {
         ${leftNode}
         <div class="header-right">
           <nav class="socials" aria-label="Social links">
-            <a href="https://x.com/orcus108" aria-label="X profile" target="_blank" rel="noopener noreferrer">X</a>
+            <a href="https://x.com/orcus108" aria-label="X profile" target="_blank" rel="noopener noreferrer">X (Twitter)</a>
             <a href="https://github.com/orcus108" aria-label="GitHub profile" target="_blank" rel="noopener noreferrer">GitHub</a>
           </nav>
           <label class="theme-toggle" aria-label="Toggle theme">
