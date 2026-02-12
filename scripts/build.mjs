@@ -156,16 +156,6 @@ function baseStyles() {
         z-index: 1;
       }
 
-      .fx-canvas {
-        position: fixed;
-        inset: 0;
-        width: 100%;
-        height: 100%;
-        pointer-events: none;
-        z-index: 0;
-        opacity: 0.9;
-      }
-
       header {
         display: flex;
         justify-content: space-between;
@@ -214,12 +204,6 @@ function baseStyles() {
         font-weight: 600;
       }
       h3 { margin: 0 0 0.5rem; font-size: 0.98rem; }
-      .section-label { animation: labelPulse 4.6s ease-in-out infinite; }
-      @keyframes labelPulse {
-        0%, 100% { opacity: 0.82; letter-spacing: 0.12em; }
-        50% { opacity: 1; letter-spacing: 0.16em; }
-      }
-
       p { margin: 0.8rem 0 0; }
       ul { margin: 0; padding: 0; list-style: none; }
       li + li { margin-top: 1.1rem; }
@@ -233,10 +217,6 @@ function baseStyles() {
 
       article ul { list-style: disc; padding-left: 1.1rem; }
       article li + li { margin-top: 0.45rem; }
-
-      @media (prefers-reduced-motion: reduce) {
-        .section-label { animation: none; }
-      }
 
       @media (max-width: 640px) {
         main {
@@ -290,32 +270,7 @@ function baseStyles() {
   `;
 }
 
-function themeScript(includeFx = false) {
-  if (!includeFx) {
-    return `
-    <script>
-      const root = document.documentElement;
-      const btn = document.getElementById("theme-toggle");
-      const stored = localStorage.getItem("theme");
-      const systemDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-      const initialTheme = stored || (systemDark ? "dark" : "light");
-
-      function applyTheme(theme) {
-        root.setAttribute("data-theme", theme);
-        btn.checked = theme === "dark";
-      }
-
-      applyTheme(initialTheme);
-
-      btn.addEventListener("change", () => {
-        const next = btn.checked ? "dark" : "light";
-        localStorage.setItem("theme", next);
-        applyTheme(next);
-      });
-    </script>
-  `;
-  }
-
+function themeScript() {
   return `
     <script>
       const root = document.documentElement;
@@ -336,203 +291,6 @@ function themeScript(includeFx = false) {
         localStorage.setItem("theme", next);
         applyTheme(next);
       });
-
-      const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-      if (!reduceMotion) {
-        const canvas = document.getElementById("fx-canvas");
-        const ctx = canvas.getContext("2d");
-        const particles = [];
-        const bursts = [];
-        const ripples = [];
-        const pointer = { x: 0, y: 0, active: false };
-        const count = 52;
-        const speed = 0.28;
-        let width = 0;
-        let height = 0;
-        let dpr = 1;
-
-        function palette() {
-          const dark = root.getAttribute("data-theme") === "dark";
-          return dark
-            ? { dot: "rgba(220, 220, 235, 0.42)", line: "rgba(180, 180, 210, 0.16)", burst: "rgba(255,255,255,0.7)" }
-            : { dot: "rgba(30, 30, 40, 0.25)", line: "rgba(35, 35, 45, 0.10)", burst: "rgba(25,25,35,0.5)" };
-        }
-
-        function resize() {
-          dpr = window.devicePixelRatio || 1;
-          width = window.innerWidth;
-          height = window.innerHeight;
-          canvas.width = Math.floor(width * dpr);
-          canvas.height = Math.floor(height * dpr);
-          ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-        }
-
-        function spawnParticle(x = Math.random() * width, y = Math.random() * height) {
-          return {
-            x,
-            y,
-            vx: (Math.random() - 0.5) * speed,
-            vy: (Math.random() - 0.5) * speed,
-            size: 0.7 + Math.random() * 1.8
-          };
-        }
-
-        function spawnBurst(x, y) {
-          for (let i = 0; i < 22; i += 1) {
-            const angle = (Math.PI * 2 * i) / 22 + Math.random() * 0.2;
-            const force = 0.8 + Math.random() * 1.8;
-            bursts.push({
-              x,
-              y,
-              vx: Math.cos(angle) * force,
-              vy: Math.sin(angle) * force,
-              life: 42 + Math.floor(Math.random() * 18),
-              size: 0.6 + Math.random() * 1.7
-            });
-          }
-        }
-
-        function spawnRipple(x, y) {
-          ripples.push({
-            x,
-            y,
-            r: 0,
-            speed: 4.4,
-            life: 58,
-            maxLife: 58,
-            width: 26,
-            strength: 0.11
-          });
-        }
-
-        function wrap(p) {
-          if (p.x < -20) p.x = width + 20;
-          if (p.x > width + 20) p.x = -20;
-          if (p.y < -20) p.y = height + 20;
-          if (p.y > height + 20) p.y = -20;
-        }
-
-        function tick() {
-          const colors = palette();
-          ctx.clearRect(0, 0, width, height);
-
-          for (let i = 0; i < particles.length; i += 1) {
-            const p = particles[i];
-            if (pointer.active) {
-              const dx = pointer.x - p.x;
-              const dy = pointer.y - p.y;
-              const dist = Math.hypot(dx, dy) || 1;
-              if (dist < 220) {
-                const pull = (220 - dist) * 0.000025;
-                p.vx += dx * pull;
-                p.vy += dy * pull;
-              }
-            }
-
-            p.vx *= 0.992;
-            p.vy *= 0.992;
-            p.x += p.vx;
-            p.y += p.vy;
-            wrap(p);
-
-            ctx.beginPath();
-            ctx.fillStyle = colors.dot;
-            ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-            ctx.fill();
-
-            for (let j = i + 1; j < particles.length; j += 1) {
-              const q = particles[j];
-              const dx = p.x - q.x;
-              const dy = p.y - q.y;
-              const dist = Math.hypot(dx, dy);
-              if (dist < 78) {
-                const alpha = (78 - dist) / 78;
-                ctx.strokeStyle = colors.line.replace(/\\d?\\.\\d+\\)$/, (alpha * 0.22).toFixed(3) + ")");
-                ctx.lineWidth = 1;
-                ctx.beginPath();
-                ctx.moveTo(p.x, p.y);
-                ctx.lineTo(q.x, q.y);
-                ctx.stroke();
-              }
-            }
-          }
-
-          for (let i = ripples.length - 1; i >= 0; i -= 1) {
-            const ripple = ripples[i];
-            ripple.r += ripple.speed;
-            ripple.life -= 1;
-            if (ripple.life <= 0) {
-              ripples.splice(i, 1);
-              continue;
-            }
-
-            const lifeAlpha = ripple.life / ripple.maxLife;
-            const ringColor = colors.burst.replace(/\\d?\\.\\d+\\)$/, (0.58 * lifeAlpha).toFixed(3) + ")");
-            for (let p = 0; p < particles.length; p += 1) {
-              const part = particles[p];
-              const dx = part.x - ripple.x;
-              const dy = part.y - ripple.y;
-              const d = Math.hypot(dx, dy) || 1;
-              const band = Math.abs(d - ripple.r);
-              if (band < ripple.width) {
-                const force = (1 - band / ripple.width) * ripple.strength * lifeAlpha;
-                part.vx += (dx / d) * force * 2.1;
-                part.vy += (dy / d) * force * 2.1;
-              }
-            }
-
-            ctx.lineWidth = 1.2 + (1 - lifeAlpha) * 2.4;
-            ctx.strokeStyle = ringColor;
-            ctx.beginPath();
-            ctx.arc(ripple.x, ripple.y, ripple.r, 0, Math.PI * 2);
-            ctx.stroke();
-
-            ctx.lineWidth = 0.8;
-            ctx.strokeStyle = ringColor.replace(/\\d?\\.\\d+\\)$/, (0.35 * lifeAlpha).toFixed(3) + ")");
-            ctx.beginPath();
-            ctx.arc(ripple.x, ripple.y, ripple.r * 0.72, 0, Math.PI * 2);
-            ctx.stroke();
-          }
-
-          for (let i = bursts.length - 1; i >= 0; i -= 1) {
-            const b = bursts[i];
-            b.x += b.vx;
-            b.y += b.vy;
-            b.vx *= 0.97;
-            b.vy *= 0.97;
-            b.life -= 1;
-            if (b.life <= 0) {
-              bursts.splice(i, 1);
-              continue;
-            }
-            ctx.beginPath();
-            ctx.fillStyle = colors.burst;
-            ctx.arc(b.x, b.y, b.size, 0, Math.PI * 2);
-            ctx.fill();
-          }
-
-          requestAnimationFrame(tick);
-        }
-
-        resize();
-        for (let i = 0; i < count; i += 1) particles.push(spawnParticle());
-        requestAnimationFrame(tick);
-
-        window.addEventListener("resize", resize);
-        window.addEventListener("mousemove", (event) => {
-          pointer.x = event.clientX;
-          pointer.y = event.clientY;
-          pointer.active = true;
-        }, { passive: true });
-        window.addEventListener("mouseleave", () => {
-          pointer.active = false;
-        });
-        window.addEventListener("click", (event) => {
-          if (event.target && event.target.closest("a")) return;
-          spawnRipple(event.clientX, event.clientY);
-          spawnBurst(event.clientX, event.clientY);
-        });
-      }
     </script>
   `;
 }
@@ -559,7 +317,7 @@ function header(leftHref, leftText) {
   `;
 }
 
-function shell(title, body, includeFx = false, extraHead = "") {
+function shell(title, body, extraHead = "") {
   return `<!doctype html>
 <html lang="en">
   <head>
@@ -572,11 +330,10 @@ ${baseStyles()}
     </style>
   </head>
   <body>
-    ${includeFx ? '<canvas id="fx-canvas" class="fx-canvas" aria-hidden="true"></canvas>' : ""}
     <main>
 ${body}
     </main>
-${themeScript(includeFx)}
+${themeScript()}
   </body>
 </html>
 `;
@@ -643,7 +400,7 @@ ${header("", "Vedant Misra")}
       </section>
 
       <section>
-        <h2 class="section-label">projects</h2>
+        <h2>projects</h2>
         <ul>
           ${projects
             .map(
@@ -655,7 +412,7 @@ ${header("", "Vedant Misra")}
       </section>
 
       <section>
-        <h2 class="section-label">blog</h2>
+        <h2>blog</h2>
         <ul>
           ${posts
             .map(
@@ -672,7 +429,7 @@ ${header("", "Vedant Misra")}
     ...posts.map((p) => `    <link rel="prefetch" href="blog/${p.slug}.html" />`)
   ].join("\n");
 
-  await writeFile(path.join(rootDir, "index.html"), shell("Vedant Misra", homeBody, true, prefetchHead));
+  await writeFile(path.join(rootDir, "index.html"), shell("Vedant Misra", homeBody, prefetchHead));
 
   for (const project of projects) {
     const projectBody = `
