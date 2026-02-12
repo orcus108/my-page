@@ -195,6 +195,7 @@ function baseStyles() {
 
       h1, h2 { margin: 0; font-weight: 600; }
       h1 { font-size: 1.2rem; }
+      .page-title { font-size: 1.35rem; line-height: 1.25; }
       h2 {
         font-size: 0.78rem;
         margin-bottom: 1rem;
@@ -226,6 +227,10 @@ function baseStyles() {
 
         h1 {
           font-size: 1.1rem;
+        }
+
+        .page-title {
+          font-size: 1.22rem;
         }
 
         header {
@@ -441,7 +446,7 @@ ${header("", "Vedant Misra")}
 ${header("../index.html", "home")}
 
       <section>
-        <h1>${escapeHtml(project.title.toLowerCase())}</h1>
+        <h1 class="page-title">${escapeHtml(project.title.toLowerCase())}</h1>
         <p class="muted">${escapeHtml(project.summary.toLowerCase())}</p>
       </section>
 
@@ -469,7 +474,7 @@ ${header("../index.html", "home")}
 ${header("../index.html", "home")}
 
       <section>
-        <h1>${escapeHtml(post.title.toLowerCase())}</h1>
+        <h1 class="page-title">${escapeHtml(post.title.toLowerCase())}</h1>
         <p class="muted post-meta">${escapeHtml(postMeta)}</p>
       </section>
 
