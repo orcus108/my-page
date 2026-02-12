@@ -214,6 +214,7 @@ function baseStyles() {
       .list-item { display: block; }
       .list-title { display: inline-block; line-height: 1.25; }
       .list-meta { margin-top: 0.2rem; font-size: 0.92rem; color: var(--muted); }
+      .post-meta { font-size: 0.86rem; }
 
       article ul { list-style: disc; padding-left: 1.1rem; }
       article li + li { margin-top: 0.45rem; }
@@ -265,6 +266,10 @@ function baseStyles() {
 
         .list-meta {
           font-size: 0.88rem;
+        }
+
+        .post-meta {
+          font-size: 0.82rem;
         }
       }
   `;
@@ -465,7 +470,7 @@ ${header("../index.html", "home")}
 
       <section>
         <h1>${escapeHtml(post.title.toLowerCase())}</h1>
-        <p class="muted">${escapeHtml(postMeta)}</p>
+        <p class="muted post-meta">${escapeHtml(postMeta)}</p>
       </section>
 
       <section>
