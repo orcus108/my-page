@@ -4,11 +4,12 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Vedant Misra</title>
-    <link rel="prefetch" href="projects/atlas-cli.html" />
-    <link rel="prefetch" href="projects/shape-notes.html" />
-    <link rel="prefetch" href="blog/designing-faster-feedback-loops.html" />
-    <link rel="prefetch" href="blog/on-building-in-quiet-seasons.html" />
+    <link rel="prefetch" href="projects/sakhi.html" />
+    <link rel="prefetch" href="projects/llm-from-scratch.html" />
+    <link rel="prefetch" href="projects/cartoonification.html" />
     <link rel="prefetch" href="blog/ai-and-human-identity.html" />
+    <link rel="prefetch" href="blog/ai-in-healthcare.html" />
+    <link rel="prefetch" href="blog/illusion-of-understanding-in-age-of-llms.html" />
     <style>
 
       :root {
@@ -84,6 +85,8 @@
       h1, h2 { margin: 0; font-weight: 600; }
       h1 { font-size: 1.2rem; }
       .page-title { font-size: 1.35rem; line-height: 1.25; }
+      .page-title-row { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; }
+      .page-links-inline { display: inline-flex; gap: 0.7rem; font-size: 0.88rem; white-space: nowrap; }
       h2 {
         font-size: 0.78rem;
         margin-bottom: 1rem;
@@ -107,6 +110,8 @@
 
       article ul { list-style: disc; padding-left: 1.1rem; }
       article li + li { margin-top: 0.45rem; }
+      .md-image { display: block; max-width: 100%; height: auto; margin-top: 0.9rem; border-radius: 8px; }
+      .md-hr { border: 0; border-top: 1px solid var(--line); margin: 1.2rem 0; }
 
       @media (max-width: 640px) {
         main {
@@ -119,6 +124,17 @@
 
         .page-title {
           font-size: 1.22rem;
+        }
+
+        .page-title-row {
+          flex-wrap: wrap;
+          align-items: flex-start;
+          gap: 0.45rem 0.8rem;
+        }
+
+        .page-links-inline {
+          font-size: 0.82rem;
+          gap: 0.6rem;
         }
 
         header {
@@ -188,23 +204,24 @@
   
 
       <section>
-        <p class="muted">thinking out loud</p>
+        <p class="muted">things I’m building and thinking about</p>
       </section>
 
       <section>
         <h2>projects</h2>
         <ul>
-          <li class="list-item"><a class="list-link list-title" href="projects/atlas-cli.html">atlas cli</a><div class="list-meta">terminal workflow orchestrator</div></li>
-          <li class="list-item"><a class="list-link list-title" href="projects/shape-notes.html">shape notes</a><div class="list-meta">markdown-first thinking workspace</div></li>
+          <li class="list-item"><a class="list-link list-title" href="projects/sakhi.html">sakhi</a><div class="list-meta">ai for india’s frontline health workers</div></li>
+          <li class="list-item"><a class="list-link list-title" href="projects/llm-from-scratch.html">llm from scratch</a><div class="list-meta">building an llm from scratch</div></li>
+          <li class="list-item"><a class="list-link list-title" href="projects/cartoonification.html">image cartoonification</a><div class="list-meta">pix2pix conditional gan implementation</div></li>
         </ul>
       </section>
 
       <section>
         <h2>blog</h2>
         <ul>
-          <li class="list-item"><a class="list-link list-title" href="blog/designing-faster-feedback-loops.html">designing faster feedback loops</a><div class="list-meta">Feb 8, 2026</div></li>
-          <li class="list-item"><a class="list-link list-title" href="blog/on-building-in-quiet-seasons.html">on building in quiet seasons</a><div class="list-meta">Jan 14, 2026</div></li>
-          <li class="list-item"><a class="list-link list-title" href="blog/ai-and-human-identity.html">ai and human identity</a><div class="list-meta">Dec 22, 2025</div></li>
+          <li class="list-item"><a class="list-link list-title" href="blog/ai-and-human-identity.html">ai and human identity</a><div class="list-meta">what remains when intelligence is no longer uniquely ours</div></li>
+          <li class="list-item"><a class="list-link list-title" href="blog/ai-in-healthcare.html">ai in healthcare - the indian way</a><div class="list-meta">rethinking healthcare for a billion people</div></li>
+          <li class="list-item"><a class="list-link list-title" href="blog/illusion-of-understanding-in-age-of-llms.html">the illusion of understanding in the age of llms</a><div class="list-meta">reading is not knowing</div></li>
         </ul>
       </section>
   

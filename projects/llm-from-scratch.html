@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Shape Notes - Vedant Misra</title>
+    <title>llm from scratch - Vedant Misra</title>
 
     <style>
 
@@ -200,27 +200,37 @@
 
       <section>
         <div class="page-title-row">
-          <h1 class="page-title">shape notes</h1>
+          <h1 class="page-title">llm from scratch</h1>
           <nav class="page-links-inline" aria-label="Project links">
-            <a href="https://github.com/orcus108/shape-notes" target="_blank" rel="noopener noreferrer">repo</a>
+            <a href="https://github.com/orcus108/llm-from-scratch" target="_blank" rel="noopener noreferrer">repo</a>
             
           </nav>
         </div>
-        <p class="muted">markdown-first thinking workspace</p>
+        <p class="muted">building an llm from scratch</p>
       </section>
 
       <section>
         <h2>overview</h2>
         <article>
-        <p>Shape Notes is a lightweight note environment focused on structuring rough thoughts into publishable outlines.</p>
-        <p>The core idea is to keep writing flow fast while still adding semantic structure over time.</p>
+        <p>building every single component of an LLM from scratch using PyTorch.</p>
+        <p>the goal is to understand how llms actually work from first principles.</p>
+        <hr class="md-hr" />
+        <p>covered so far: <br /> <br /> <strong>1. data &amp; tokenization pipeline</strong></p>
+        <ul><li>text cleaning and normalization</li><li>tokenization pipeline for autoregressive training</li><li>dataset integration using hugging face corpora</li></ul>
+        <p><strong>2. positional encoding strategies</strong></p>
+        <ul><li>learned (linear) positional embeddings</li><li>rotary positional embeddings (rope)</li></ul>
+        <p><strong>3. attention mechanisms</strong></p>
+        <ul><li>scaled dot-product attention</li><li>multi-head attention</li><li>advanced attention variants:</li><li>grouped query attention (gqa)</li><li>multi-head latent attention (mla)</li><li>sliding window attention (swa)</li></ul>
+        <p><strong>4. transformer architecture design</strong></p>
+        <ul><li>complete transformer block implementation</li><li>layer normalization</li><li>mlp / feed-forward networks</li><li>residual connections</li></ul>
+        <p><strong>5. scaling &amp; efficiency techniques</strong></p>
+        <ul><li>mixture-of-experts (moe) routing</li><li>kv caching for optimized inference</li></ul>
+        <p><strong>6. training &amp; adaptation</strong></p>
+        <ul><li>autoregressive pretraining on large-scale corpora</li><li>classification fine-tuning</li><li>supervised instruction fine-tuning</li></ul>
         </article>
       </section>
 
-      <section>
-        <h2>stack</h2>
-        <p>TypeScript, Markdown, static site generation</p>
-      </section>
+      
 
     
     </main>

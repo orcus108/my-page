@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Shape Notes - Vedant Misra</title>
+    <title>image cartoonification - Vedant Misra</title>
 
     <style>
 
@@ -200,27 +200,28 @@
 
       <section>
         <div class="page-title-row">
-          <h1 class="page-title">shape notes</h1>
+          <h1 class="page-title">image cartoonification</h1>
           <nav class="page-links-inline" aria-label="Project links">
-            <a href="https://github.com/orcus108/shape-notes" target="_blank" rel="noopener noreferrer">repo</a>
+            <a href="https://github.com/AnshumanMishra21345/Pix2Pix-Implementation" target="_blank" rel="noopener noreferrer">repo</a>
             
           </nav>
         </div>
-        <p class="muted">markdown-first thinking workspace</p>
+        <p class="muted">pix2pix conditional gan implementation</p>
       </section>
 
       <section>
         <h2>overview</h2>
         <article>
-        <p>Shape Notes is a lightweight note environment focused on structuring rough thoughts into publishable outlines.</p>
-        <p>The core idea is to keep writing flow fast while still adding semantic structure over time.</p>
+        <p>as a freshman, my first research-paper implementation (as part of the AI Club of IIT Madras) was <strong>Pix2Pix</strong>, a conditional GAN for image-to-image translation.</p>
+        <p>we read the paper <a href="https://arxiv.org/abs/1611.07004"><em>Image-to-Image Translation with Conditional Adversarial Networks</em></a> by Isola <em>et al.</em> and built and trained the full pipeline from scratch (a U-Net generator paired with a PatchGAN discriminator) reproducing the core results from the original work.</p>
+        <p>we then extended the model into a practical demo that converts real images into cartoon-style outputs through an interactive application.</p>
+        <p><strong>learned:</strong> how to read and implement a research paper, PyTorch, Kaggle, streamlit (for app interface), and that nervous feeling when you watch your model train/learn :)</p>
+        <hr class="md-hr" />
+        <p>some screenshots from training (on Kaggle P100 GPU) <br /> <img class="md-image" src="/images/pix2pix-training.png" alt="training progress" loading="lazy" decoding="async" /></p>
         </article>
       </section>
 
-      <section>
-        <h2>stack</h2>
-        <p>TypeScript, Markdown, static site generation</p>
-      </section>
+      
 
     
     </main>

@@ -80,6 +80,8 @@
       h1, h2 { margin: 0; font-weight: 600; }
       h1 { font-size: 1.2rem; }
       .page-title { font-size: 1.35rem; line-height: 1.25; }
+      .page-title-row { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; }
+      .page-links-inline { display: inline-flex; gap: 0.7rem; font-size: 0.88rem; white-space: nowrap; }
       h2 {
         font-size: 0.78rem;
         margin-bottom: 1rem;
@@ -103,6 +105,8 @@
 
       article ul { list-style: disc; padding-left: 1.1rem; }
       article li + li { margin-top: 0.45rem; }
+      .md-image { display: block; max-width: 100%; height: auto; margin-top: 0.9rem; border-radius: 8px; }
+      .md-hr { border: 0; border-top: 1px solid var(--line); margin: 1.2rem 0; }
 
       @media (max-width: 640px) {
         main {
@@ -115,6 +119,17 @@
 
         .page-title {
           font-size: 1.22rem;
+        }
+
+        .page-title-row {
+          flex-wrap: wrap;
+          align-items: flex-start;
+          gap: 0.45rem 0.8rem;
+        }
+
+        .page-links-inline {
+          font-size: 0.82rem;
+          gap: 0.6rem;
         }
 
         header {
@@ -184,7 +199,13 @@
   
 
       <section>
-        <h1 class="page-title">atlas cli</h1>
+        <div class="page-title-row">
+          <h1 class="page-title">atlas cli</h1>
+          <nav class="page-links-inline" aria-label="Project links">
+            <a href="https://github.com/orcus108/atlas-cli" target="_blank" rel="noopener noreferrer">repo</a>
+            
+          </nav>
+        </div>
         <p class="muted">terminal workflow orchestrator</p>
       </section>
 
@@ -200,6 +221,7 @@
         <h2>stack</h2>
         <p>Node.js, SQLite, shell scripts</p>
       </section>
+
     
     </main>
 

@@ -51,11 +51,34 @@ function parseFrontmatter(raw) {
   return { attrs, body };
 }
 
+function normalizeImageSrc(src) {
+  if (src.startsWith("http://") || src.startsWith("https://") || src.startsWith("/")) {
+    return src;
+  }
+  if (src.startsWith("./")) {
+    return `/${src.slice(2)}`;
+  }
+  if (src.startsWith("images/")) {
+    return `/${src}`;
+  }
+  return src;
+}
+
 function inlineMarkdown(text) {
   const escaped = escapeHtml(text);
-  return escaped.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (_m, label, href) => {
-    return `<a href="${escapeHtml(href)}">${escapeHtml(label)}</a>`;
-  });
+  return escaped
+    .replace(/&lt;br\s*\/?&gt;/gi, "<br />")
+    .replace(/!\[([^\]]*)\]\(([^)]+)\)/g, (_m, alt, src) => {
+      const normalizedSrc = normalizeImageSrc(src);
+      return `<img class="md-image" src="${escapeHtml(normalizedSrc)}" alt="${escapeHtml(alt)}" loading="lazy" decoding="async" />`;
+    })
+    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, (_m, label, href) => {
+      return `<a href="${escapeHtml(href)}">${escapeHtml(label)}</a>`;
+    })
+    .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
+    .replace(/__([^_]+)__/g, "<strong>$1</strong>")
+    .replace(/\*([^*]+)\*/g, "<em>$1</em>")
+    .replace(/_([^_]+)_/g, "<em>$1</em>");
 }
 
 function markdownToHtml(markdown) {
@@ -83,6 +106,13 @@ function markdownToHtml(markdown) {
     if (!line) {
       flushParagraph();
       flushList();
+      continue;
+    }
+
+    if (/^(-{3,}|\*{3,}|_{3,})$/.test(line)) {
+      flushParagraph();
+      flushList();
+      out.push(`<hr class="md-hr" />`);
       continue;
     }
 
@@ -196,6 +226,8 @@ function baseStyles() {
       h1, h2 { margin: 0; font-weight: 600; }
       h1 { font-size: 1.2rem; }
       .page-title { font-size: 1.35rem; line-height: 1.25; }
+      .page-title-row { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; }
+      .page-links-inline { display: inline-flex; gap: 0.7rem; font-size: 0.88rem; white-space: nowrap; }
       h2 {
         font-size: 0.78rem;
         margin-bottom: 1rem;
@@ -219,6 +251,8 @@ function baseStyles() {
 
       article ul { list-style: disc; padding-left: 1.1rem; }
       article li + li { margin-top: 0.45rem; }
+      .md-image { display: block; max-width: 100%; height: auto; margin-top: 0.9rem; border-radius: 8px; }
+      .md-hr { border: 0; border-top: 1px solid var(--line); margin: 1.2rem 0; }
 
       @media (max-width: 640px) {
         main {
@@ -231,6 +265,17 @@ function baseStyles() {
 
         .page-title {
           font-size: 1.22rem;
+        }
+
+        .page-title-row {
+          flex-wrap: wrap;
+          align-items: flex-start;
+          gap: 0.45rem 0.8rem;
+        }
+
+        .page-links-inline {
+          font-size: 0.82rem;
+          gap: 0.6rem;
         }
 
         header {
@@ -371,6 +416,8 @@ async function loadCollection(dir, type) {
       readTime: attrs.read_time || "",
       stack: attrs.stack || "",
       status: attrs.status || "",
+      repo: attrs.repo || "",
+      demo: attrs.demo || "",
       date,
       body,
       htmlBody: markdownToHtml(body)
@@ -406,7 +453,7 @@ async function build() {
 ${header("", "Vedant Misra")}
 
       <section>
-        <p class="muted">thinking out loud</p>
+        <p class="muted">things I’m building and thinking about</p>
       </section>
 
       <section>
@@ -427,7 +474,7 @@ ${header("", "Vedant Misra")}
           ${posts
             .map(
               (p) =>
-                `<li class="list-item"><a class="list-link list-title" href="blog/${p.slug}.html">${escapeHtml(p.title.toLowerCase())}</a><div class="list-meta">${escapeHtml(formatDate(p.date))}</div></li>`
+                `<li class="list-item"><a class="list-link list-title" href="blog/${p.slug}.html">${escapeHtml(p.title.toLowerCase())}</a><div class="list-meta">${escapeHtml(p.summary)}</div></li>`
             )
             .join("\n          ")}
         </ul>
@@ -446,7 +493,15 @@ ${header("", "Vedant Misra")}
 ${header("../index.html", "home")}
 
       <section>
-        <h1 class="page-title">${escapeHtml(project.title.toLowerCase())}</h1>
+        <div class="page-title-row">
+          <h1 class="page-title">${escapeHtml(project.title.toLowerCase())}</h1>
+          ${project.repo || project.demo
+            ? `<nav class="page-links-inline" aria-label="Project links">
+            ${project.repo ? `<a href="${escapeHtml(project.repo)}" target="_blank" rel="noopener noreferrer">repo</a>` : ""}
+            ${project.demo ? `<a href="${escapeHtml(project.demo)}" target="_blank" rel="noopener noreferrer">demo</a>` : ""}
+          </nav>`
+            : ""}
+        </div>
         <p class="muted">${escapeHtml(project.summary.toLowerCase())}</p>
       </section>
 
@@ -463,6 +518,7 @@ ${header("../index.html", "home")}
         <p>${escapeHtml(project.stack)}</p>
       </section>`
         : ""}
+
     `;
 
     await writeFile(path.join(rootDir, "projects", `${project.slug}.html`), shell(`${project.title} - Vedant Misra`, projectBody));
@@ -475,6 +531,7 @@ ${header("../index.html", "home")}
 
       <section>
         <h1 class="page-title">${escapeHtml(post.title.toLowerCase())}</h1>
+        ${post.summary ? `<p class="muted">${escapeHtml(post.summary)}</p>` : ""}
         <p class="muted post-meta">${escapeHtml(postMeta)}</p>
       </section>
 
