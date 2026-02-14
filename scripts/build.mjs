@@ -350,6 +350,12 @@ function themeScript() {
   `;
 }
 
+function vercelAnalyticsScript() {
+  return `
+    <script defer src="/_vercel/insights/script.js"></script>
+  `;
+}
+
 function header(leftHref, leftText) {
   const leftNode = leftHref
     ? `<a class="left-link" href="${leftHref}">${leftText}</a>`
@@ -388,6 +394,7 @@ ${baseStyles()}
     <main>
 ${body}
     </main>
+${vercelAnalyticsScript()}
 ${themeScript()}
   </body>
 </html>
