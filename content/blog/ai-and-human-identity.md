@@ -5,7 +5,7 @@ date: 2026-02-09
 read_time: 5 min read
 summary: what remains when intelligence is no longer uniquely ours
 ---
-if we reach a point where ai can do everything humans can do — write code, compose music, discover new physics, run companies, maybe even form better plans than we can — then a basic question appears: what is left for us?
+if we reach a point where ai can do everything humans can do, write code, compose music, discover new physics, run companies, maybe even form better plans than we can, then a basic question appears: what is left for us?
 
 for most of history, we have defined ourselves by what we can do. humans build tools, solve problems, create art, raise families, fight wars, and invent science. intelligence has always felt like our main advantage. even when machines replaced our physical strength during the industrial revolution, we could still say: “yes, but thinking is ours.” if ai becomes better at thinking than we are, that last advantage disappears.
 
