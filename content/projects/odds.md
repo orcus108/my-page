@@ -2,7 +2,7 @@
 title: Odds
 slug: odds
 summary: polymarket for IIT Madras
-date: 2026-04-08
+date: 2026-03-24
 status: In progress
 featured: true
 order: 2

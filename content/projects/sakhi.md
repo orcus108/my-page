@@ -2,7 +2,7 @@
 title: Sakhi
 slug: sakhi
 summary: ai for india’s frontline health workers
-date: 2026-02-15
+date: 2026-04-7
 status: In progress
 featured: true
 order: 1
