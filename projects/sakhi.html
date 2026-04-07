@@ -103,6 +103,11 @@
       .list-meta { margin-top: 0.2rem; font-size: 0.92rem; color: var(--muted); }
       .post-meta { font-size: 0.86rem; }
 
+      .section-header { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 1rem; }
+      .section-header h2 { margin-bottom: 0; }
+      .view-all { font-size: 0.82rem; color: var(--muted); text-decoration: none; white-space: nowrap; line-height: 1; }
+      .view-all:hover { color: var(--fg); }
+
       article ul { list-style: disc; padding-left: 1.1rem; }
       article li + li { margin-top: 0.45rem; }
       .md-image { display: block; max-width: 100%; height: auto; margin-top: 0.9rem; border-radius: 8px; }
@@ -203,7 +208,7 @@
           <h1 class="page-title">sakhi</h1>
           <nav class="page-links-inline" aria-label="Project links">
             <a href="https://github.com/orcus108/sakhi" target="_blank" rel="noopener noreferrer">repo</a>
-            
+            <a href="https://sakhi-asha.vercel.app" target="_blank" rel="noopener noreferrer">demo</a>
           </nav>
         </div>
         <p class="muted">ai for india’s frontline health workers</p>
@@ -214,12 +219,15 @@
         <article>
         <p>across India, ASHA workers are the backbone of community healthcare. they support families through pregnancy, childhood illnesses, chronic conditions, immunizations, and public health outreach. for many villages, she is the first — and sometimes only — link to the healthcare system.</p>
         <p>yet her work is burdened by paper registers, complex protocols, manual newborn visit scheduling, and opaque incentive (salary) claim processes. she tracks households across multiple notebooks, memorizes evolving guidelines, and escalates doubts to seniors when immediate clarity isn’t available. the administrative load is heavy, especially in low-connectivity settings.</p>
-        <p><strong>sakhi</strong> is a multilingual, voice-first, offline AI companion built to support ASHA workers in the field. it digitizes registers through guided voice interaction, automates visit scheduling, provides real-time protocol guidance, and tracks incentive claims transparently. powered by MedGemma’s medical text capabilities, sakhi can offer grounded general medical guidance when needed. using multimodal understanding, it can also analyze images, such as visible symptoms or medical documents, and generate preliminary structured insights to assist frontline decision-making.</p>
-        <p>sakhi isn&#39;t made to replace ASHA workers. it&#39;s to help her to do what she does best — care.</p>
+        <p><strong>sakhi</strong> (hindi for &quot;female friend&quot;) is a multilingual, voice-first, offline AI companion built to support ASHA workers in the field. it digitizes registers through guided voice interaction, automates visit scheduling, provides real-time protocol guidance, and tracks incentive claims transparently. powered by MedGemma’s medical text capabilities, sakhi can offer grounded general medical guidance when needed. using multimodal understanding, it can also analyze images, such as visible symptoms or medical documents, and generate preliminary structured insights to assist frontline decision-making.</p>
+        <p>sakhi isn&#39;t here to replace ASHA workers, it&#39;s here to assist her in doing what she does best.</p>
         <hr class="md-hr" />
         <p>i started building this for <a href="https://www.kaggle.com/competitions/med-gemma-impact-challenge">The MedGemma Impact Challenge</a>.</p>
+        <p>12-2-2026:</p>
         <p>this project is a work in progress. currently I&#39;ve built the first minimum viable product (mvp). this includes the website and app for both android and iOS with some basic functionalities.</p>
         <p>a screenshot of the first version of sakhi: <img class="md-image" src="/images/sakhi-v1.png" alt="a screenshot of sakhi v1" loading="lazy" decoding="async" /></p>
+        <p><br /> 27-3-2026:</p>
+        <p>here&#39;s the final product as of now (<a href="https://sakhi-asha.vercel.app">live demo</a> also available) a major improvement from that first version i showed on top. check out the repo for more details. <img class="md-image" src="/images/sakhi-top-row.png" alt="sakhi-top-row" loading="lazy" decoding="async" /> <img class="md-image" src="/images/sakhi-middle-row.png" alt="sakhi-middle-row" loading="lazy" decoding="async" /> <img class="md-image" src="/images/sakhi-bottom-row.png" alt="sakhi-bottom-row" loading="lazy" decoding="async" /></p>
         </article>
       </section>
 

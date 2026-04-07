@@ -4,6 +4,7 @@ slug: llm-from-scratch
 summary: building an llm from scratch
 date: 2026-02-03
 status: In progress
+featured: true
 repo: https://github.com/orcus108/llm-from-scratch
 ---
 building every single component of an LLM from scratch using PyTorch.

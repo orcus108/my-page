@@ -4,6 +4,7 @@ slug: cartoonification
 summary: pix2pix conditional GAN implementation
 date: 2025-02-18
 status: Completed
+featured: false
 repo: https://github.com/AnshumanMishra21345/Pix2Pix-Implementation
 ---
 as a freshman, my first research-paper implementation (as part of the AI Club of IIT Madras) was **Pix2Pix**, a conditional GAN for image-to-image translation. 

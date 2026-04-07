@@ -249,6 +249,11 @@ function baseStyles() {
       .list-meta { margin-top: 0.2rem; font-size: 0.92rem; color: var(--muted); }
       .post-meta { font-size: 0.86rem; }
 
+      .section-header { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 1rem; }
+      .section-header h2 { margin-bottom: 0; }
+      .view-all { font-size: 0.82rem; color: var(--muted); text-decoration: none; white-space: nowrap; line-height: 1; }
+      .view-all:hover { color: var(--fg); }
+
       article ul { list-style: disc; padding-left: 1.1rem; }
       article li + li { margin-top: 0.45rem; }
       .md-image { display: block; max-width: 100%; height: auto; margin-top: 0.9rem; border-radius: 8px; }
@@ -425,6 +430,8 @@ async function loadCollection(dir, type) {
       status: attrs.status || "",
       repo: attrs.repo || "",
       demo: attrs.demo || "",
+      featured: attrs.featured === "true",
+      order: attrs.order ? parseInt(attrs.order, 10) : null,
       date,
       body,
       htmlBody: markdownToHtml(body)
@@ -456,6 +463,12 @@ async function build() {
   await ensureDir(path.join(rootDir, "projects"));
   await ensureDir(path.join(rootDir, "blog"));
 
+  const featuredProjects = projects
+    .filter((p) => p.featured)
+    .sort((a, b) => (a.order ?? Infinity) - (b.order ?? Infinity));
+  const homeProjects = featuredProjects.length > 0 ? featuredProjects : projects.slice(0, 3);
+  const homePosts = posts.slice(0, 3);
+
   const homeBody = `
 ${header("", "Vedant Misra")}
 
@@ -464,9 +477,12 @@ ${header("", "Vedant Misra")}
       </section>
 
       <section>
-        <h2>projects</h2>
+        <div class="section-header">
+          <h2>projects</h2>
+          <a class="view-all" href="projects/index.html">view all →</a>
+        </div>
         <ul>
-          ${projects
+          ${homeProjects
             .map(
               (p) =>
                 `<li class="list-item"><a class="list-link list-title" href="projects/${p.slug}.html">${escapeHtml(p.title.toLowerCase())}</a><div class="list-meta">${escapeHtml(p.summary.toLowerCase())}</div></li>`
@@ -476,9 +492,12 @@ ${header("", "Vedant Misra")}
       </section>
 
       <section>
-        <h2>blog</h2>
+        <div class="section-header">
+          <h2>blog</h2>
+          <a class="view-all" href="blog/index.html">view all →</a>
+        </div>
         <ul>
-          ${posts
+          ${homePosts
             .map(
               (p) =>
                 `<li class="list-item"><a class="list-link list-title" href="blog/${p.slug}.html">${escapeHtml(p.title.toLowerCase())}</a><div class="list-meta">${escapeHtml(p.summary)}</div></li>`
@@ -489,8 +508,10 @@ ${header("", "Vedant Misra")}
   `;
 
   const prefetchHead = [
-    ...projects.map((p) => `    <link rel="prefetch" href="projects/${p.slug}.html" />`),
-    ...posts.map((p) => `    <link rel="prefetch" href="blog/${p.slug}.html" />`)
+    `    <link rel="prefetch" href="projects/index.html" />`,
+    `    <link rel="prefetch" href="blog/index.html" />`,
+    ...homeProjects.map((p) => `    <link rel="prefetch" href="projects/${p.slug}.html" />`),
+    ...homePosts.map((p) => `    <link rel="prefetch" href="blog/${p.slug}.html" />`)
   ].join("\n");
 
   await writeFile(path.join(rootDir, "index.html"), shell("Vedant Misra", homeBody, prefetchHead));
@@ -551,6 +572,42 @@ ${header("../index.html", "home")}
 
     await writeFile(path.join(rootDir, "blog", `${post.slug}.html`), shell(`${post.title} - Vedant Misra`, postBody));
   }
+
+  const allProjectsBody = `
+${header("../index.html", "home")}
+
+      <section>
+        <h2>all projects</h2>
+        <ul>
+          ${projects
+            .map(
+              (p) =>
+                `<li class="list-item"><a class="list-link list-title" href="${p.slug}.html">${escapeHtml(p.title.toLowerCase())}</a><div class="list-meta">${escapeHtml(p.summary.toLowerCase())}</div></li>`
+            )
+            .join("\n          ")}
+        </ul>
+      </section>
+  `;
+
+  await writeFile(path.join(rootDir, "projects", "index.html"), shell("Projects - Vedant Misra", allProjectsBody));
+
+  const allPostsBody = `
+${header("../index.html", "home")}
+
+      <section>
+        <h2>all posts</h2>
+        <ul>
+          ${posts
+            .map(
+              (p) =>
+                `<li class="list-item"><a class="list-link list-title" href="${p.slug}.html">${escapeHtml(p.title.toLowerCase())}</a><div class="list-meta">${escapeHtml(p.summary)}</div></li>`
+            )
+            .join("\n          ")}
+        </ul>
+      </section>
+  `;
+
+  await writeFile(path.join(rootDir, "blog", "index.html"), shell("Blog - Vedant Misra", allPostsBody));
 
   console.log(`Built ${projects.length} projects and ${posts.length} blog posts.`);
 }
