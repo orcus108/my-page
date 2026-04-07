@@ -10,4 +10,6 @@ repo: https://github.com/orcus108/odds
 demo: https://playodds.vercel.app/
 ---
 
-Your content here. Supports **bold**, *italic*, `lists`, images, and links.
+polymarket but for iit madras students. students can start their own markets. <br>
+learned about backend (supabase) and authorisation (oAuth) <br>
+couldnt publicise because prediction markets are a gray area in india :/
