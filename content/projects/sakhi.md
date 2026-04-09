@@ -37,3 +37,38 @@ check out the repo for more details.
 ![sakhi-top-row](images/sakhi-top-row.png)
 ![sakhi-middle-row](images/sakhi-middle-row.png)
 ![sakhi-bottom-row](images/sakhi-bottom-row.png)
+
+## tech stack
+
+| Layer            | Technology                                                                 |
+|------------------|----------------------------------------------------------------------------|
+| **Frontend**     | React + Vite + Tailwind CSS                                                |
+| **Mobile**       | Capacitor (Android APK / Play Store)                                       |
+| **Backend**      | FastAPI (Python)                                                           |
+| **AI Inference** | Ollama (GGUF / llama.cpp) on Hugging Face Spaces                           |
+| **Vector DB**    | ChromaDB                                                                  |
+| **Embeddings**   | sentence-transformers (paraphrase-multilingual-MiniLM-L12-v2)               |
+| **i18n**         | i18next (English + Hindi)                                                  |
+| **State Mgmt**   | React Context + localStorage                                               |
+| **Deployment**   | Vercel (Frontend) + Hugging Face Spaces (Backend + Model)                  |
+
+## hacks
+
+i had a strict zero budget so, had to get real creative with a lot of things. 
+
+the model hosting for example, i set it up on a huggingface space but the free one goes offline if it stays inactive for 10 minutes so i set up a bot that pings the space every 5 minutes, that way the space is always active and hence model always responds. 
+
+## what next
+
+they three key features i wanted to keep were:
+1. offline (since villages won't have good internet connectivity)
+2. voice first (since ASHA's will find speaking easier than typing)
+3. multi-lingual (to have real large scale impact, it'll have to be able to speak a lot of languages)
+
+i've achieved all of them to a reasonable extent but i can still make a lot more improvements, which is what i'm doing right now.
+
+google released the new Gemma 4 models which has a 2B variant that is natively multi-modal (text, image and audio), can think, runs locally on edge devices and multi-lingual (over 140 languages according to them) which seems like a perfect fit.
+i'm currently running medical benchmarks specific to maternal and newborns to check its capabilities, after which i'll fine tune and do some RL optmization (DPO) followed by quantization.
+google has also revamped LiteRT-LM which is like a super fast and efficient inference engine for language models on phone. plan to incorporate this too.
+but for all this i'll have to first convert the codebase from react to kotlin and properly set up the database etc. working on that right now.
+
