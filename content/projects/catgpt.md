@@ -9,4 +9,6 @@ repo: https://github.com/orcus108/catgpt
 demo: https://thecatgpt.vercel.app
 ---
 
-Your content here. Supports **bold**, *italic*, `lists`, images, and links.
+tldr; meoW
+
+i was bored and randomly thought of this. my first site that i pushed on vercel so that was a fun learn.
