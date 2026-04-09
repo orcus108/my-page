@@ -223,11 +223,24 @@
         <p>sakhi isn&#39;t here to replace ASHA workers, it&#39;s here to assist her in doing what she does best.</p>
         <hr class="md-hr" />
         <p>i started building this for <a href="https://www.kaggle.com/competitions/med-gemma-impact-challenge">The MedGemma Impact Challenge</a>.</p>
-        <p>12-2-2026:</p>
+        <p><em>12-2-2026</em></p>
         <p>this project is a work in progress. currently I&#39;ve built the first minimum viable product (mvp). this includes the website and app for both android and iOS with some basic functionalities.</p>
         <p>a screenshot of the first version of sakhi: <img class="md-image" src="/images/sakhi-v1.png" alt="a screenshot of sakhi v1" loading="lazy" decoding="async" /></p>
-        <p><br /> 27-3-2026:</p>
-        <p>here&#39;s the final product as of now (<a href="https://sakhi-asha.vercel.app">live demo</a> also available) a major improvement from that first version i showed on top. check out the repo for more details. <img class="md-image" src="/images/sakhi-top-row.png" alt="sakhi-top-row" loading="lazy" decoding="async" /> <img class="md-image" src="/images/sakhi-middle-row.png" alt="sakhi-middle-row" loading="lazy" decoding="async" /> <img class="md-image" src="/images/sakhi-bottom-row.png" alt="sakhi-bottom-row" loading="lazy" decoding="async" /></p>
+        <hr class="md-hr" />
+        <p><em>27-3-2026</em></p>
+        <p>here&#39;s the updated product (<a href="https://sakhi-asha.vercel.app">live demo</a> also available) a major improvement from that first version i showed on top. check out the repo for more details. <img class="md-image" src="/images/sakhi-top-row.png" alt="sakhi-top-row" loading="lazy" decoding="async" /> <img class="md-image" src="/images/sakhi-middle-row.png" alt="sakhi-middle-row" loading="lazy" decoding="async" /> <img class="md-image" src="/images/sakhi-bottom-row.png" alt="sakhi-bottom-row" loading="lazy" decoding="async" /></p>
+        <p><br /></p>
+        <h2>hacks</h2>
+        <p>i had a strict zero budget so had to get real creative with a lot of things.</p>
+        <p>the model hosting for example, i set it up on a huggingface space but the free one goes offline if it stays inactive for 10 minutes so i set up a bot that pings the space every 5 minutes, that way the space is always active and hence model always responds.</p>
+        <p>also maxed out on three kaggle accounts&#39; gpus.</p>
+        <hr class="md-hr" />
+        <h2>what next</h2>
+        <p>they three key features i wanted to keep were: <br /> 1. offline (since villages won&#39;t have good internet connectivity) <br /> 2. voice first (since ASHA&#39;s will find speaking easier than typing) <br /> 3. multi-lingual (to have real large scale impact, it&#39;ll have to be able to speak a lot of languages)</p>
+        <p>i&#39;ve achieved all of them to a reasonable extent but i can still make a lot more improvements, which is what i&#39;m doing right now.</p>
+        <p>also, major update: google released the new Gemma 4 models which has a 2B variant that is natively multi-modal (text, image and audio), can think, runs locally on edge devices and multi-lingual (over 140 languages according to them) which seems like a perfect fit for sakhi. i&#39;m currently running medical benchmarks specific to maternal and newborns to check its capabilities, after which i&#39;ll fine tune and do some RL optmization (DPO) followed by quantization. google has also revamped LiteRT-LM which is like a super fast and efficient inference engine for language models on phone. plan to incorporate this too. but for all this i&#39;ll have to first convert the codebase from react to kotlin and properly set up the database etc. working on that right now.</p>
+        <p>i&#39;ve also reached out to a bunch of NGO&#39;s and govt orgs who deal with ASHA workers to get a first hand account of what problems they face. enough building in isolation from those whose problems i&#39;m trying to solve.</p>
+        <p>exciting times ahead.</p>
         </article>
       </section>
 
