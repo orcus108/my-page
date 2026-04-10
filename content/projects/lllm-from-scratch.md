@@ -3,7 +3,7 @@ title: llm from scratch
 slug: llm-from-scratch
 summary: building an llm from scratch
 date: 2026-02-03
-status: In progress
+status: Archived
 featured: true
 repo: https://github.com/orcus108/llm-from-scratch
 ---

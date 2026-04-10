@@ -86,6 +86,7 @@ function markdownToHtml(markdown) {
   const out = [];
   let paragraph = [];
   let list = [];
+  let orderedList = [];
   let tableLines = [];
 
   const flushParagraph = () => {
@@ -99,6 +100,12 @@ function markdownToHtml(markdown) {
     if (!list.length) return;
     out.push(`<ul>${list.map((item) => `<li>${inlineMarkdown(item)}</li>`).join("")}</ul>`);
     list = [];
+  };
+
+  const flushOrderedList = () => {
+    if (!orderedList.length) return;
+    out.push(`<ol>${orderedList.map((item) => `<li>${inlineMarkdown(item)}</li>`).join("")}</ol>`);
+    orderedList = [];
   };
 
   const flushTable = () => {
@@ -123,6 +130,7 @@ function markdownToHtml(markdown) {
     if (line.startsWith("|") && line.endsWith("|")) {
       flushParagraph();
       flushList();
+      flushOrderedList();
       tableLines.push(line);
       continue;
     } else if (tableLines.length) {
@@ -132,12 +140,14 @@ function markdownToHtml(markdown) {
     if (!line) {
       flushParagraph();
       flushList();
+      flushOrderedList();
       continue;
     }
 
     if (/^(-{3,}|\*{3,}|_{3,})$/.test(line)) {
       flushParagraph();
       flushList();
+      flushOrderedList();
       out.push(`<hr class="md-hr" />`);
       continue;
     }
@@ -145,6 +155,7 @@ function markdownToHtml(markdown) {
     if (line.startsWith("### ")) {
       flushParagraph();
       flushList();
+      flushOrderedList();
       out.push(`<h3>${inlineMarkdown(line.slice(4).trim())}</h3>`);
       continue;
     }
@@ -152,6 +163,7 @@ function markdownToHtml(markdown) {
     if (line.startsWith("## ")) {
       flushParagraph();
       flushList();
+      flushOrderedList();
       out.push(`<h2>${inlineMarkdown(line.slice(3).trim())}</h2>`);
       continue;
     }
@@ -159,13 +171,22 @@ function markdownToHtml(markdown) {
     if (line.startsWith("# ")) {
       flushParagraph();
       flushList();
+      flushOrderedList();
       out.push(`<h1>${inlineMarkdown(line.slice(2).trim())}</h1>`);
       continue;
     }
 
     if (line.startsWith("- ")) {
       flushParagraph();
+      flushOrderedList();
       list.push(line.slice(2).trim());
+      continue;
+    }
+
+    if (/^\d+\.\s/.test(line)) {
+      flushParagraph();
+      flushList();
+      orderedList.push(line.replace(/^\d+\.\s/, "").trim());
       continue;
     }
 
@@ -174,6 +195,7 @@ function markdownToHtml(markdown) {
 
   flushParagraph();
   flushList();
+  flushOrderedList();
   flushTable();
   return out.join("\n        ");
 }
@@ -181,32 +203,33 @@ function markdownToHtml(markdown) {
 function baseStyles() {
   return `
       :root {
-        --bg: #f7f7f7;
-        --fg: #111;
+        --bg: #f5f5f0;
+        --fg: #1a1a1a;
         --muted: #666;
-        --line: #ddd;
+        --line: #d0d0cc;
       }
 
       [data-theme="dark"] {
-        --bg: #0f0f10;
-        --fg: #efefef;
-        --muted: #9a9a9a;
-        --line: #2a2a2c;
+        --bg: #0d0d0d;
+        --fg: #e0e0d8;
+        --muted: #888;
+        --line: #252520;
       }
 
       * { box-sizing: border-box; }
 
       body {
         margin: 0;
-        font-family: "IBM Plex Sans", "Avenir Next", sans-serif;
+        font-family: ui-monospace, "SFMono-Regular", "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
         background: var(--bg);
         color: var(--fg);
-        line-height: 1.65;
+        line-height: 1.6;
         overflow-x: hidden;
+        font-size: 0.875rem;
       }
 
       main {
-        max-width: 700px;
+        max-width: 680px;
         margin: 0 auto;
         padding: 2rem 1.25rem 3rem;
         position: relative;
@@ -221,16 +244,19 @@ function baseStyles() {
       }
 
       .header-right { display: flex; align-items: center; gap: 0.8rem; line-height: 1; }
-      .brand { line-height: 1; }
+      .header-left { display: inline-flex; align-items: center; gap: 0.4rem; line-height: 1; }
+      .brand { line-height: 1; font-size: 0.875rem; }
+      .brand::before { content: "~/"; color: var(--muted); margin-right: 0.1em; }
       .left-link { line-height: 1; display: inline-flex; align-items: center; }
-      .socials { display: inline-flex; align-items: center; gap: 0.55rem; font-size: 0.92rem; line-height: 1; }
+      .left-sep { color: var(--line); }
+      .socials { display: inline-flex; align-items: center; gap: 0.55rem; font-size: 0.8rem; line-height: 1; }
       .theme-toggle { display: inline-flex; align-items: center; }
       .theme-toggle input { position: absolute; opacity: 0; width: 0; height: 0; }
 
       .theme-slider {
         width: 42px;
         height: 24px;
-        border-radius: 999px;
+        border-radius: 2px;
         border: 1px solid var(--line);
         position: relative;
         cursor: pointer;
@@ -243,7 +269,7 @@ function baseStyles() {
         left: 2px;
         width: 18px;
         height: 18px;
-        border-radius: 50%;
+        border-radius: 1px;
         background: var(--fg);
         transition: transform 0.2s ease;
       }
@@ -251,19 +277,19 @@ function baseStyles() {
       .theme-toggle input:checked + .theme-slider::after { transform: translateX(18px); }
 
       h1, h2 { margin: 0; font-weight: 600; }
-      h1 { font-size: 1.2rem; }
-      .page-title { font-size: 1.35rem; line-height: 1.25; }
+      strong { font-weight: 600; }
+      h1 { font-size: 0.875rem; }
+      .page-title { font-size: 1rem; line-height: 1.35; }
       .page-title-row { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; }
-      .page-links-inline { display: inline-flex; gap: 0.7rem; font-size: 0.88rem; white-space: nowrap; }
+      .page-links-inline { display: inline-flex; gap: 0.7rem; font-size: 0.8rem; white-space: nowrap; }
       h2 {
-        font-size: 0.78rem;
+        font-size: 0.875rem;
         margin-bottom: 1rem;
-        letter-spacing: 0.12em;
-        text-transform: uppercase;
         color: var(--muted);
-        font-weight: 600;
+        font-weight: 500;
       }
-      h3 { margin: 0 0 0.5rem; font-size: 0.98rem; }
+      h2::before { content: "// "; }
+      h3 { margin: 0 0 0.5rem; font-size: 0.875rem; }
       p { margin: 0.8rem 0 0; }
       ul { margin: 0; padding: 0; list-style: none; }
       li + li { margin-top: 1.1rem; }
@@ -272,21 +298,67 @@ function baseStyles() {
       .list-link { text-decoration: none; font-weight: 500; }
       .muted { color: var(--muted); }
       .list-item { display: block; }
-      .list-title { display: inline-block; line-height: 1.25; }
-      .list-meta { margin-top: 0.2rem; font-size: 0.92rem; color: var(--muted); }
-      .post-meta { font-size: 0.86rem; }
+      .list-item-link { display: block; text-decoration: none; }
+      .list-item-link:hover .list-title { text-decoration: underline; text-underline-offset: 0.15em; }
+      .list-title { display: inline-block; line-height: 1.3; }
+      .list-meta { margin-top: 0.2rem; font-size: 0.8rem; color: var(--muted); }
+      .post-meta { font-size: 0.78rem; }
 
       .section-header { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 1rem; }
       .section-header h2 { margin-bottom: 0; }
-      .view-all { font-size: 0.82rem; color: var(--muted); text-decoration: none; white-space: nowrap; line-height: 1; }
+      .view-all { font-size: 0.78rem; color: var(--muted); text-decoration: none; white-space: nowrap; line-height: 1; }
       .view-all:hover { color: var(--fg); }
 
       article ul { list-style: disc; padding-left: 1.1rem; }
+      article ol { list-style: decimal; padding-left: 1.1rem; }
       article li + li { margin-top: 0.45rem; }
-      .md-image { display: block; max-width: 100%; height: auto; margin-top: 0.9rem; border-radius: 8px; }
+      .md-image { display: block; max-width: 100%; height: auto; margin-top: 0.9rem; border-radius: 2px; }
+      p:has(> .md-image + .md-image) { display: flex; gap: 1.5rem; align-items: flex-start; margin-top: 0.9rem; }
+      p:has(> .md-image + .md-image) .md-image { flex: 1; min-width: 0; margin-top: 0; }
       .md-hr { border: 0; border-top: 1px solid var(--line); margin: 1.2rem 0; }
+      .status-chip {
+        display: inline-block;
+        padding: 0.15rem 0.4rem;
+        border-radius: 2px;
+        font-size: 0.72rem;
+        border: 1px solid var(--line);
+        color: var(--muted);
+        position: relative;
+        cursor: default;
+      }
+      .stack-chip {
+        display: inline-block;
+        padding: 0.15rem 0.4rem;
+        border-radius: 2px;
+        font-size: 0.72rem;
+        border: 1px solid var(--line);
+        color: var(--muted);
+      }
+      .status-chip.status-in-progress { border-color: #7c3aed; color: #7c3aed; }
+      .status-chip.status-shipped { border-color: #059669; color: #059669; }
+      .status-chip.status-archived { border-color: var(--line); color: var(--muted); }
+      [data-theme="dark"] .status-chip.status-in-progress { border-color: #a78bfa; color: #a78bfa; }
+      [data-theme="dark"] .status-chip.status-shipped { border-color: #6ee7b7; color: #6ee7b7; }
+      .status-chip[data-tooltip]::after {
+        content: attr(data-tooltip);
+        position: absolute;
+        bottom: calc(100% + 6px);
+        left: 50%;
+        transform: translateX(-50%);
+        background: var(--fg);
+        color: var(--bg);
+        font-size: 0.7rem;
+        white-space: nowrap;
+        padding: 0.2rem 0.45rem;
+        border-radius: 2px;
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity 0.15s ease;
+      }
+      .status-chip[data-tooltip]:hover::after { opacity: 1; }
+
       .md-table-wrap { overflow-x: auto; margin-top: 0.9rem; }
-      .md-table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+      .md-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
       .md-table th, .md-table td { padding: 0.45rem 0.75rem; border: 1px solid var(--line); text-align: left; }
       .md-table th { font-weight: 600; color: var(--muted); background: transparent; }
 
@@ -296,11 +368,11 @@ function baseStyles() {
         }
 
         h1 {
-          font-size: 1.1rem;
+          font-size: 0.82rem;
         }
 
         .page-title {
-          font-size: 1.22rem;
+          font-size: 0.92rem;
         }
 
         .page-title-row {
@@ -310,7 +382,7 @@ function baseStyles() {
         }
 
         .page-links-inline {
-          font-size: 0.82rem;
+          font-size: 0.76rem;
           gap: 0.6rem;
         }
 
@@ -325,7 +397,7 @@ function baseStyles() {
 
         .socials {
           gap: 0.75rem;
-          font-size: 0.88rem;
+          font-size: 0.78rem;
         }
 
         .theme-slider {
@@ -351,11 +423,11 @@ function baseStyles() {
         }
 
         .list-meta {
-          font-size: 0.88rem;
+          font-size: 0.78rem;
         }
 
         .post-meta {
-          font-size: 0.82rem;
+          font-size: 0.75rem;
         }
       }
   `;
@@ -392,14 +464,18 @@ function vercelAnalyticsScript() {
   `;
 }
 
-function header(leftHref, leftText) {
+function header(leftHref, leftText, secondHref, secondText) {
   const leftNode = leftHref
     ? `<a class="left-link" href="${leftHref}">${leftText}</a>`
     : `<h1 class="brand">${leftText}</h1>`;
 
+  const secondNode = secondHref
+    ? `<a class="left-link second-link" href="${secondHref}">${secondText}</a>`
+    : "";
+
   return `
       <header>
-        ${leftNode}
+        <div class="header-left">${leftNode}${secondNode ? `<span class="left-sep">/</span>${secondNode}` : ""}</div>
         <div class="header-right">
           <nav class="socials" aria-label="Social links">
             <a href="https://x.com/orcus108" aria-label="X profile" target="_blank" rel="noopener noreferrer">X (Twitter)</a>
@@ -479,6 +555,13 @@ function formatDate(dateInput) {
   return d.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
 }
 
+function formatMonthYear(dateInput) {
+  if (!dateInput) return "";
+  const d = new Date(dateInput);
+  if (Number.isNaN(d.getTime())) return dateInput;
+  return d.toLocaleDateString("en-US", { year: "numeric", month: "short" });
+}
+
 async function ensureDir(dir) {
   await fs.mkdir(dir, { recursive: true });
 }
@@ -504,7 +587,7 @@ async function build() {
 ${header("", "Vedant Misra")}
 
       <section>
-        <p class="muted">things I’m building and thinking about</p>
+        <p class="muted">iit madras. ai, products, and the gap between the two.</p>
       </section>
 
       <section>
@@ -516,7 +599,7 @@ ${header("", "Vedant Misra")}
           ${homeProjects
             .map(
               (p) =>
-                `<li class="list-item"><a class="list-link list-title" href="projects/${p.slug}.html">${escapeHtml(p.title.toLowerCase())}</a><div class="list-meta">${escapeHtml(p.summary.toLowerCase())}</div></li>`
+                `<li class="list-item"><a class="list-item-link" href="projects/${p.slug}.html"><span class="list-link list-title">${escapeHtml(p.title.toLowerCase())}</span><div class="list-meta">${escapeHtml(p.summary.toLowerCase())}</div></a></li>`
             )
             .join("\n          ")}
         </ul>
@@ -531,9 +614,16 @@ ${header("", "Vedant Misra")}
           ${homePosts
             .map(
               (p) =>
-                `<li class="list-item"><a class="list-link list-title" href="blog/${p.slug}.html">${escapeHtml(p.title.toLowerCase())}</a><div class="list-meta">${escapeHtml(p.summary)}</div></li>`
+                `<li class="list-item"><a class="list-item-link" href="blog/${p.slug}.html"><span class="list-link list-title">${escapeHtml(p.title.toLowerCase())}</span><div class="list-meta">${escapeHtml(p.summary)}</div></a></li>`
             )
             .join("\n          ")}
+        </ul>
+      </section>
+
+      <section>
+        <h2>currently reading</h2>
+        <ul>
+          <li class="list-item"><span class="list-title">apple in china</span><span class="list-meta" style="display:inline;margin-left:0.4rem;">· patrick mcgee</span></li>
         </ul>
       </section>
   `;
@@ -549,7 +639,7 @@ ${header("", "Vedant Misra")}
 
   for (const project of projects) {
     const projectBody = `
-${header("../index.html", "home")}
+${header("../index.html", "home", "index.html", "projects")}
 
       <section>
         <div class="page-title-row">
@@ -562,6 +652,10 @@ ${header("../index.html", "home")}
             : ""}
         </div>
         <p class="muted">${escapeHtml(project.summary.toLowerCase())}</p>
+        <div style="display:flex;align-items:center;gap:0.6rem;flex-wrap:wrap;margin-top:0.6rem;">
+          ${project.status ? `<span class="status-chip status-${project.status.toLowerCase().replace(/\s+/g, "-")}" data-tooltip="${{ shipped: "live and done", "in-progress": "currently being built", archived: "put on hold" }[project.status.toLowerCase().replace(/\s+/g, "-")] || ""}">${escapeHtml(project.status.toLowerCase())}</span>` : ""}
+          ${project.date ? `<span class="muted" style="font-size:0.72rem;">${formatMonthYear(project.date)}</span>` : ""}
+        </div>
       </section>
 
       <section>
@@ -574,7 +668,9 @@ ${header("../index.html", "home")}
       ${project.stack
         ? `<section>
         <h2>stack</h2>
-        <p>${escapeHtml(project.stack)}</p>
+        <div style="display:flex;flex-wrap:wrap;gap:0.4rem;margin-top:0.2rem;">
+          ${project.stack.split(",").map(s => `<span class="stack-chip">${escapeHtml(s.trim())}</span>`).join("")}
+        </div>
       </section>`
         : ""}
 
@@ -586,7 +682,7 @@ ${header("../index.html", "home")}
   for (const post of posts) {
     const postMeta = [formatDate(post.date), post.readTime].filter(Boolean).join(" · ");
     const postBody = `
-${header("../index.html", "home")}
+${header("../index.html", "home", "index.html", "blog")}
 
       <section>
         <h1 class="page-title">${escapeHtml(post.title.toLowerCase())}</h1>
@@ -613,7 +709,7 @@ ${header("../index.html", "home")}
           ${projects
             .map(
               (p) =>
-                `<li class="list-item"><a class="list-link list-title" href="${p.slug}.html">${escapeHtml(p.title.toLowerCase())}</a><div class="list-meta">${escapeHtml(p.summary.toLowerCase())}</div></li>`
+                `<li class="list-item"><a class="list-item-link" href="${p.slug}.html"><span class="list-link list-title">${escapeHtml(p.title.toLowerCase())}</span><div class="list-meta">${escapeHtml(p.summary.toLowerCase())}</div></a></li>`
             )
             .join("\n          ")}
         </ul>
@@ -631,7 +727,7 @@ ${header("../index.html", "home")}
           ${posts
             .map(
               (p) =>
-                `<li class="list-item"><a class="list-link list-title" href="${p.slug}.html">${escapeHtml(p.title.toLowerCase())}</a><div class="list-meta">${escapeHtml(p.summary)}</div></li>`
+                `<li class="list-item"><a class="list-item-link" href="${p.slug}.html"><span class="list-link list-title">${escapeHtml(p.title.toLowerCase())}</span><div class="list-meta">${escapeHtml(p.summary)}${p.readTime ? ` · ${escapeHtml(p.readTime)}` : ""}</div></a></li>`
             )
             .join("\n          ")}
         </ul>

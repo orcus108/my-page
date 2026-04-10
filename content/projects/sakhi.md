@@ -33,16 +33,17 @@ a screenshot of the first version of sakhi:
 
 *27-3-2026*
 
-here's the updated product ([live demo](https://sakhi-asha.vercel.app) also available)
-a major improvement from that first version i showed on top.
-check out the repo for more details.
+here's the updated product ([live demo](https://sakhi-asha.vercel.app) also available) — a major improvement from that first version i showed on top. check out the repo for more details.
+
 ![sakhi-top-row](images/sakhi-top-row.png)
+
 ![sakhi-middle-row](images/sakhi-middle-row.png)
+
 ![sakhi-bottom-row](images/sakhi-bottom-row.png)
 
 <br>
 
-## Tech Stack
+## tech stack
 
 | Layer            | Technology                                                                 |
 |------------------|----------------------------------------------------------------------------|

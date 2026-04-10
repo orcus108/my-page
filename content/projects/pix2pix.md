@@ -3,7 +3,7 @@ title: image cartoonification
 slug: cartoonification
 summary: pix2pix conditional GAN implementation
 date: 2025-02-18
-status: Completed
+status: Shipped
 featured: false
 repo: https://github.com/AnshumanMishra21345/Pix2Pix-Implementation
 ---
