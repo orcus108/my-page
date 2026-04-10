@@ -112,6 +112,10 @@
       article li + li { margin-top: 0.45rem; }
       .md-image { display: block; max-width: 100%; height: auto; margin-top: 0.9rem; border-radius: 8px; }
       .md-hr { border: 0; border-top: 1px solid var(--line); margin: 1.2rem 0; }
+      .md-table-wrap { overflow-x: auto; margin-top: 0.9rem; }
+      .md-table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+      .md-table th, .md-table td { padding: 0.45rem 0.75rem; border: 1px solid var(--line); text-align: left; }
+      .md-table th { font-weight: 600; color: var(--muted); background: transparent; }
 
       @media (max-width: 640px) {
         main {
@@ -229,6 +233,9 @@
         <hr class="md-hr" />
         <p><em>27-3-2026</em></p>
         <p>here&#39;s the updated product (<a href="https://sakhi-asha.vercel.app">live demo</a> also available) a major improvement from that first version i showed on top. check out the repo for more details. <img class="md-image" src="/images/sakhi-top-row.png" alt="sakhi-top-row" loading="lazy" decoding="async" /> <img class="md-image" src="/images/sakhi-middle-row.png" alt="sakhi-middle-row" loading="lazy" decoding="async" /> <img class="md-image" src="/images/sakhi-bottom-row.png" alt="sakhi-bottom-row" loading="lazy" decoding="async" /></p>
+        <p><br /></p>
+        <h2>Tech Stack</h2>
+        <div class="md-table-wrap"><table class="md-table"><thead><tr><th>Layer</th><th>Technology</th></tr></thead><tbody><tr><td><em>Frontend</em></td><td>React + Vite + Tailwind CSS</td></tr><tr><td><em>Mobile</em></td><td>Capacitor (Android APK / Play Store)</td></tr><tr><td><em>Backend</em></td><td>FastAPI (Python)</td></tr><tr><td><em>AI Inference</em></td><td>Ollama (GGUF / llama.cpp) on Hugging Face Spaces</td></tr><tr><td><em>Vector DB</em></td><td>ChromaDB</td></tr><tr><td><em>Embeddings</em></td><td>sentence-transformers (paraphrase-multilingual-MiniLM-L12-v2)</td></tr><tr><td><em>i18n</em></td><td>i18next (English + Hindi)</td></tr><tr><td><em>State Mgmt</em></td><td>React Context + localStorage</td></tr><tr><td><em>Deployment</em></td><td>Vercel (Frontend) + Hugging Face Spaces (Backend + Model)</td></tr></tbody></table></div>
         <p><br /></p>
         <h2>hacks</h2>
         <p>i had a strict zero budget so had to get real creative with a lot of things.</p>

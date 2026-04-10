@@ -9,6 +9,7 @@ order: 1
 repo: https://github.com/orcus108/sakhi
 demo: https://sakhi-asha.vercel.app
 ---
+
 across India, ASHA workers are the backbone of community healthcare. they support families through pregnancy, childhood illnesses, chronic conditions, immunizations, and public health outreach. for many villages, she is the first — and sometimes only — link to the healthcare system.
 
 yet her work is burdened by paper registers, complex protocols, manual newborn visit scheduling, and opaque incentive (salary) claim processes. she tracks households across multiple notebooks, memorizes evolving guidelines, and escalates doubts to seniors when immediate clarity isn’t available. the administrative load is heavy, especially in low-connectivity settings.
@@ -38,6 +39,22 @@ check out the repo for more details.
 ![sakhi-top-row](images/sakhi-top-row.png)
 ![sakhi-middle-row](images/sakhi-middle-row.png)
 ![sakhi-bottom-row](images/sakhi-bottom-row.png)
+
+<br>
+
+## Tech Stack
+
+| Layer            | Technology                                                                 |
+|------------------|----------------------------------------------------------------------------|
+| *Frontend*     | React + Vite + Tailwind CSS                                                |
+| *Mobile*       | Capacitor (Android APK / Play Store)                                       |
+| *Backend*      | FastAPI (Python)                                                           |
+| *AI Inference* | Ollama (GGUF / llama.cpp) on Hugging Face Spaces                           |
+| *Vector DB*    | ChromaDB                                                                   |
+| *Embeddings*   | sentence-transformers (paraphrase-multilingual-MiniLM-L12-v2)              |
+| *i18n*         | i18next (English + Hindi)                                                  |
+| *State Mgmt*   | React Context + localStorage                                               |
+| *Deployment*   | Vercel (Frontend) + Hugging Face Spaces (Backend + Model)                  |
 
 <br> 
 

@@ -86,6 +86,7 @@ function markdownToHtml(markdown) {
   const out = [];
   let paragraph = [];
   let list = [];
+  let tableLines = [];
 
   const flushParagraph = () => {
     if (!paragraph.length) return;
@@ -100,8 +101,33 @@ function markdownToHtml(markdown) {
     list = [];
   };
 
+  const flushTable = () => {
+    if (!tableLines.length) return;
+    const [headerLine, , ...bodyLines] = tableLines;
+    const headers = headerLine.split("|").map(s => s.trim()).filter(Boolean);
+    const headerHtml = headers.map(h => `<th>${inlineMarkdown(h)}</th>`).join("");
+    const rowsHtml = bodyLines
+      .filter(l => l.trim())
+      .map(l => {
+        const cells = l.split("|").map(s => s.trim()).filter(Boolean);
+        return `<tr>${cells.map(c => `<td>${inlineMarkdown(c)}</td>`).join("")}</tr>`;
+      }).join("");
+    out.push(`<div class="md-table-wrap"><table class="md-table"><thead><tr>${headerHtml}</tr></thead><tbody>${rowsHtml}</tbody></table></div>`);
+    tableLines = [];
+  };
+
   for (const lineRaw of lines) {
     const line = lineRaw.trim();
+
+    // Table row detection
+    if (line.startsWith("|") && line.endsWith("|")) {
+      flushParagraph();
+      flushList();
+      tableLines.push(line);
+      continue;
+    } else if (tableLines.length) {
+      flushTable();
+    }
 
     if (!line) {
       flushParagraph();
@@ -148,6 +174,7 @@ function markdownToHtml(markdown) {
 
   flushParagraph();
   flushList();
+  flushTable();
   return out.join("\n        ");
 }
 
@@ -258,6 +285,10 @@ function baseStyles() {
       article li + li { margin-top: 0.45rem; }
       .md-image { display: block; max-width: 100%; height: auto; margin-top: 0.9rem; border-radius: 8px; }
       .md-hr { border: 0; border-top: 1px solid var(--line); margin: 1.2rem 0; }
+      .md-table-wrap { overflow-x: auto; margin-top: 0.9rem; }
+      .md-table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+      .md-table th, .md-table td { padding: 0.45rem 0.75rem; border: 1px solid var(--line); text-align: left; }
+      .md-table th { font-weight: 600; color: var(--muted); background: transparent; }
 
       @media (max-width: 640px) {
         main {

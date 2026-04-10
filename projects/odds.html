@@ -112,6 +112,10 @@
       article li + li { margin-top: 0.45rem; }
       .md-image { display: block; max-width: 100%; height: auto; margin-top: 0.9rem; border-radius: 8px; }
       .md-hr { border: 0; border-top: 1px solid var(--line); margin: 1.2rem 0; }
+      .md-table-wrap { overflow-x: auto; margin-top: 0.9rem; }
+      .md-table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+      .md-table th, .md-table td { padding: 0.45rem 0.75rem; border: 1px solid var(--line); text-align: left; }
+      .md-table th { font-weight: 600; color: var(--muted); background: transparent; }
 
       @media (max-width: 640px) {
         main {
@@ -223,6 +227,9 @@
         <p><img class="md-image" src="/images/odds-1.png" alt="odds-1" loading="lazy" decoding="async" /></p>
         <p><br /></p>
         <p><img class="md-image" src="/images/odds-2.png" alt="odds-2" loading="lazy" decoding="async" /></p>
+        <p><br /></p>
+        <h2>Tech Stack</h2>
+        <div class="md-table-wrap"><table class="md-table"><thead><tr><th>Layer</th><th>Technology</th></tr></thead><tbody><tr><td><em>Framework</em></td><td>Next.js 16.2.1 (App Router, Server Components, Server Actions)</td></tr><tr><td><em>Backend / DB</em></td><td>Supabase — Postgres, Auth (Google OAuth), Row Level Security</td></tr><tr><td><em>Styling</em></td><td>Tailwind CSS v4</td></tr><tr><td><em>Deployment</em></td><td>Vercel (with Vercel Analytics)</td></tr><tr><td><em>Rendering</em></td><td>ISR — Home: revalidate every 60s; Market Detail: every 30s</td></tr></tbody></table></div>
         </article>
       </section>
 
