@@ -54,8 +54,8 @@
       .brand::before { content: "~/"; color: var(--muted); margin-right: 0.1em; }
       .left-link { line-height: 1; display: inline-flex; align-items: center; }
       .left-sep { color: var(--line); }
-      .socials { display: inline-flex; align-items: center; gap: 0.55rem; font-size: 0.8rem; line-height: 1; }
       .theme-toggle { display: inline-flex; align-items: center; }
+      footer { margin-top: 3rem; padding-top: 1.25rem; border-top: 1px solid var(--line); display: flex; justify-content: flex-end; gap: 0.75rem; font-size: 0.78rem; color: var(--muted); }
       .theme-toggle input { position: absolute; opacity: 0; width: 0; height: 0; }
 
       .theme-slider {
@@ -167,7 +167,7 @@
       .md-table th, .md-table td { padding: 0.45rem 0.75rem; border: 1px solid var(--line); text-align: left; }
       .md-table th { font-weight: 600; color: var(--muted); background: transparent; }
 
-      @media (max-width: 640px) {
+@media (max-width: 640px) {
         main {
           padding: 1.1rem 1rem 2.2rem;
         }
@@ -198,11 +198,6 @@
         .header-right {
           gap: 0.55rem;
           white-space: nowrap;
-        }
-
-        .socials {
-          gap: 0.75rem;
-          font-size: 0.78rem;
         }
 
         .theme-slider {
@@ -245,10 +240,6 @@
       <header>
         <div class="header-left"><a class="left-link" href="../index.html">home</a><span class="left-sep">/</span><a class="left-link second-link" href="index.html">projects</a></div>
         <div class="header-right">
-          <nav class="socials" aria-label="Social links">
-            <a href="https://x.com/orcus108" aria-label="X profile" target="_blank" rel="noopener noreferrer">X (Twitter)</a>
-            <a href="https://github.com/orcus108" aria-label="GitHub profile" target="_blank" rel="noopener noreferrer">GitHub</a>
-          </nav>
           <label class="theme-toggle" aria-label="Toggle theme">
             <input id="theme-toggle" type="checkbox" />
             <span class="theme-slider"></span>
@@ -287,9 +278,66 @@
       
 
     
+      <footer>
+        <a href="https://x.com/orcus108" target="_blank" rel="noopener noreferrer">X (Twitter)</a>
+        <a href="https://github.com/orcus108" target="_blank" rel="noopener noreferrer">GitHub</a>
+      </footer>
     </main>
 
     <script defer src="/_vercel/insights/script.js"></script>
+  
+
+    <script>
+      console.log('%c// hey, nosy. i see you.', 'font-family:monospace;font-size:13px;color:#a78bfa;');
+      console.log('%c   x (twitter) → https://x.com/orcus108', 'font-family:monospace;font-size:11px;color:#888;');
+      console.log('%c   github      → https://github.com/orcus108', 'font-family:monospace;font-size:11px;color:#888;');
+
+      (function() {
+        const code = ['ArrowUp','ArrowUp','ArrowDown','ArrowDown','ArrowLeft','ArrowRight','ArrowLeft','ArrowRight','b','a'];
+        let idx = 0;
+        document.addEventListener('keydown', function(e) {
+          if (e.key === code[idx]) {
+            idx++;
+            if (idx === code.length) { idx = 0; matrixRain(); }
+          } else {
+            idx = e.key === code[0] ? 1 : 0;
+          }
+        });
+
+        function matrixRain() {
+          const canvas = document.createElement('canvas');
+          canvas.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;z-index:9999;pointer-events:none;opacity:0;transition:opacity 0.4s;';
+          document.body.appendChild(canvas);
+          const ctx = canvas.getContext('2d');
+          canvas.width = window.innerWidth;
+          canvas.height = window.innerHeight;
+          requestAnimationFrame(function() { canvas.style.opacity = '1'; });
+
+          const cols = Math.floor(canvas.width / 16);
+          const drops = Array.from({length: cols}, function() { return Math.random() * -50; });
+          const chars = 'アイウエオカキクケコサシスセソタチツテトナニヌネノ0123456789ABCDEF';
+
+          const interval = setInterval(function() {
+            ctx.fillStyle = 'rgba(0,0,0,0.06)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.font = '14px monospace';
+            drops.forEach(function(y, i) {
+              const bright = Math.random() > 0.95;
+              ctx.fillStyle = bright ? '#ffffff' : '#6ee7b7';
+              ctx.fillText(chars[Math.floor(Math.random() * chars.length)], i * 16, y * 16);
+              if (y * 16 > canvas.height && Math.random() > 0.97) drops[i] = 0;
+              drops[i]++;
+            });
+          }, 45);
+
+          setTimeout(function() {
+            clearInterval(interval);
+            canvas.style.opacity = '0';
+            setTimeout(function() { canvas.remove(); }, 400);
+          }, 4000);
+        }
+      })();
+    </script>
   
 
     <script>
