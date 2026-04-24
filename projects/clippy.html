@@ -3,16 +3,8 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Vedant Misra</title>
-    <link rel="prefetch" href="projects/index.html" />
-    <link rel="prefetch" href="blog/index.html" />
-    <link rel="prefetch" href="projects/clippy.html" />
-    <link rel="prefetch" href="projects/sakhi.html" />
-    <link rel="prefetch" href="projects/odds.html" />
-    <link rel="prefetch" href="projects/llm-from-scratch.html" />
-    <link rel="prefetch" href="blog/ai-and-human-identity.html" />
-    <link rel="prefetch" href="blog/ai-in-healthcare.html" />
-    <link rel="prefetch" href="blog/illusion-of-understanding-in-age-of-llms.html" />
+    <title>Clippy - Vedant Misra</title>
+
     <style>
 
       :root {
@@ -247,7 +239,7 @@
 
 
       <header>
-        <div class="header-left"><h1 class="brand">Vedant Misra</h1></div>
+        <div class="header-left"><a class="left-link" href="../index.html">home</a><span class="left-sep">/</span><a class="left-link second-link" href="index.html">projects</a></div>
         <div class="header-right">
           <label class="theme-toggle" aria-label="Toggle theme">
             <input id="theme-toggle" type="checkbox" />
@@ -258,41 +250,31 @@
   
 
       <section>
-        <p class="muted">iit madras. ai, products, and the gap between the two.</p>
-      </section>
-
-      <section>
-        <div class="section-header">
-          <h2>projects</h2>
-          <a class="view-all" href="projects/index.html">view all →</a>
+        <div class="page-title-row">
+          <h1 class="page-title">clippy</h1>
+          
         </div>
-        <ul>
-          <li class="list-item"><a class="list-item-link" href="projects/clippy.html"><span class="list-link list-title">clippy</span><div class="list-meta">a privacy-first clipboard manager for macos</div></a></li>
-          <li class="list-item"><a class="list-item-link" href="projects/sakhi.html"><span class="list-link list-title">sakhi</span><div class="list-meta">ai for india’s frontline health workers</div></a></li>
-          <li class="list-item"><a class="list-item-link" href="projects/odds.html"><span class="list-link list-title">odds</span><div class="list-meta">polymarket for iit madras</div></a></li>
-          <li class="list-item"><a class="list-item-link" href="projects/llm-from-scratch.html"><span class="list-link list-title">llm from scratch</span><div class="list-meta">building an llm from scratch</div></a></li>
-        </ul>
-      </section>
-
-      <section>
-        <div class="section-header">
-          <h2>blog</h2>
-          <a class="view-all" href="blog/index.html">view all →</a>
+        <p class="muted">a privacy-first clipboard manager for macos</p>
+        <div style="display:flex;align-items:center;gap:0.6rem;flex-wrap:wrap;margin-top:0.6rem;">
+          <span class="status-chip status-in-progress" data-tooltip="currently being built">in progress</span>
+          <span class="muted" style="font-size:0.72rem;">Apr 2026</span>
         </div>
-        <ul>
-          <li class="list-item"><a class="list-item-link" href="blog/ai-and-human-identity.html"><span class="list-link list-title">ai and human identity</span><div class="list-meta">what remains when intelligence is no longer uniquely ours</div></a></li>
-          <li class="list-item"><a class="list-item-link" href="blog/ai-in-healthcare.html"><span class="list-link list-title">ai in healthcare - the indian way</span><div class="list-meta">rethinking healthcare for a billion people</div></a></li>
-          <li class="list-item"><a class="list-item-link" href="blog/illusion-of-understanding-in-age-of-llms.html"><span class="list-link list-title">the illusion of understanding in the age of llms</span><div class="list-meta">reading is not knowing</div></a></li>
-        </ul>
       </section>
 
       <section>
-        <h2>currently reading</h2>
-        <ul>
-          <li class="list-item"><span class="list-title">apple in china</span><span class="list-meta" style="display:inline;margin-left:0.4rem;">· patrick mcgee</span></li>
-        </ul>
+        <h2>overview</h2>
+        <article>
+        <p>macOS Tahoe ships clipboard history, but the shortcut is two steps. one too many. Clippy collapses it to one: hit Cmd+Shift+V from any app, a floating panel appears, pick a clip, paste. that&#39;s it.</p>
+        <p>it&#39;s privacy-first. nothing leaves your machine, no network calls, no telemetry, no accounts. sensitive stuff like API keys, tokens, and passwords is automatically detected and never saved. password managers are excluded by default.</p>
+        <p>still building it out, but the core works.</p>
+        <h2>tech stack</h2>
+        <div class="md-table-wrap"><table class="md-table"><thead><tr><th>Layer</th><th>Choice</th><th>Why</th></tr></thead><tbody><tr><td>Language</td><td>Swift</td><td>Native macOS</td></tr><tr><td>UI</td><td>SwiftUI + AppKit</td><td>SwiftUI for list/search; AppKit required for floating panel</td></tr><tr><td>Persistence</td><td>GRDB (SQLite)</td><td>In-memory DB for unit tests</td></tr><tr><td>Global shortcut</td><td>KeyboardShortcuts (Sindre Sorhus) via SPM</td><td>Best-in-class</td></tr><tr><td>Paste injection</td><td>CGEvent via CoreGraphics</td><td>Only viable approach; requires sandbox off</td></tr><tr><td>Threading</td><td>DispatchSourceTimer on background queue</td><td>0.5s polling, avoids RunLoop jitter</td></tr><tr><td>Tests</td><td>XCTest with in-memory GRDB</td><td>4 trim() tests passing</td></tr></tbody></table></div>
+        </article>
       </section>
-  
+
+      
+
+    
       <footer>
         <a href="https://x.com/orcus108" target="_blank" rel="noopener noreferrer">X (Twitter)</a>
         <a href="https://github.com/orcus108" target="_blank" rel="noopener noreferrer">GitHub</a>
