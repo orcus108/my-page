@@ -207,6 +207,10 @@ function baseStyles() {
         --fg: #1a1a1a;
         --muted: #666;
         --line: #d0d0cc;
+        --contrib-1: rgba(5, 150, 105, 0.22);
+        --contrib-2: rgba(5, 150, 105, 0.48);
+        --contrib-3: rgba(5, 150, 105, 0.72);
+        --contrib-4: #059669;
       }
 
       [data-theme="dark"] {
@@ -214,6 +218,10 @@ function baseStyles() {
         --fg: #e0e0d8;
         --muted: #888;
         --line: #252520;
+        --contrib-1: rgba(110, 231, 183, 0.18);
+        --contrib-2: rgba(110, 231, 183, 0.42);
+        --contrib-3: rgba(110, 231, 183, 0.68);
+        --contrib-4: #6ee7b7;
       }
 
       * { box-sizing: border-box; }
@@ -271,7 +279,7 @@ function baseStyles() {
         height: 18px;
         border-radius: 1px;
         background: var(--fg);
-        transition: transform 0.2s ease;
+        transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
       }
 
       .theme-toggle input:checked + .theme-slider::after { transform: translateX(18px); }
@@ -362,6 +370,36 @@ function baseStyles() {
       .md-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
       .md-table th, .md-table td { padding: 0.45rem 0.75rem; border: 1px solid var(--line); text-align: left; }
       .md-table th { font-weight: 600; color: var(--muted); background: transparent; }
+
+      .contrib-chart { overflow-x: auto; padding-bottom: 0.25rem; }
+      .contrib-grid { display: grid; grid-template-rows: repeat(7, 10px); gap: 2px; width: fit-content; }
+      .contrib-cell { width: 10px; height: 10px; border-radius: 2px; background: rgba(0, 0, 0, 0.07); transition: transform 0.1s ease; }
+      [data-theme="dark"] .contrib-cell { background: rgba(255, 255, 255, 0.05); }
+      .contrib-cell[data-level="1"] { background: var(--contrib-1); }
+      .contrib-cell[data-level="2"] { background: var(--contrib-2); }
+      .contrib-cell[data-level="3"] { background: var(--contrib-3); }
+      .contrib-cell[data-level="4"] { background: var(--contrib-4); }
+      .contrib-cell:hover { transform: scale(1.35); }
+
+      body { transition: background-color 0.25s ease, color 0.25s ease; }
+
+      a { transition: color 0.15s ease; }
+      footer a:hover { color: var(--fg); }
+
+
+      .list-item-link { transition: transform 0.15s ease; }
+      .list-item-link:hover { transform: translateX(4px); }
+
+      @keyframes chip-glow-light {
+        0%, 100% { box-shadow: 0 0 0 0 rgba(124, 58, 237, 0); }
+        50% { box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.2); }
+      }
+      @keyframes chip-glow-dark {
+        0%, 100% { box-shadow: 0 0 0 0 rgba(167, 139, 250, 0); }
+        50% { box-shadow: 0 0 0 3px rgba(167, 139, 250, 0.2); }
+      }
+      .status-chip.status-in-progress { animation: chip-glow-light 2.5s ease-in-out infinite; }
+      [data-theme="dark"] .status-chip.status-in-progress { animation: chip-glow-dark 2.5s ease-in-out infinite; }
 
 @media (max-width: 640px) {
         main {
@@ -516,6 +554,51 @@ function vercelAnalyticsScript() {
   `;
 }
 
+async function fetchGithubContributions(username, token) {
+  const query = `query($u:String!,$from:DateTime!,$to:DateTime!){user(login:$u){contributionsCollection(from:$from,to:$to){contributionCalendar{totalContributions weeks{contributionDays{contributionCount date}}}}}}`;
+  try {
+    const res = await fetch("https://api.github.com/graphql", {
+      method: "POST",
+      headers: { Authorization: `bearer ${token}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ query, variables: { u: username, from: "2026-01-01T00:00:00Z", to: "2026-12-31T23:59:59Z" } }),
+    });
+    if (!res.ok) return null;
+    const json = await res.json();
+    return json?.data?.user?.contributionsCollection?.contributionCalendar ?? null;
+  } catch {
+    return null;
+  }
+}
+
+function contribLevel(count) {
+  if (count === 0) return 0;
+  if (count <= 3) return 1;
+  if (count <= 9) return 2;
+  if (count <= 19) return 3;
+  return 4;
+}
+
+function renderContribChart(calendar) {
+  const { totalContributions, weeks } = calendar;
+  const cells = weeks.flatMap((week, wi) =>
+    week.contributionDays.map((day) => {
+      const [y, m, d] = day.date.split("-").map(Number);
+      const dow = new Date(Date.UTC(y, m - 1, d)).getUTCDay();
+      const level = contribLevel(day.contributionCount);
+      return `<div class="contrib-cell" data-level="${level}" style="grid-column:${wi + 1};grid-row:${dow + 1}" title="${day.date}: ${day.contributionCount}"></div>`;
+    })
+  ).join("");
+
+  return `
+      <section>
+        <h2>activity</h2>
+        <p class="muted" style="font-size:0.78rem;margin-top:0;">${totalContributions} contributions in 2026</p>
+        <div class="contrib-chart">
+          <div class="contrib-grid" style="grid-template-columns:repeat(${weeks.length},10px);">${cells}</div>
+        </div>
+      </section>`;
+}
+
 function header(leftHref, leftText, secondHref, secondText) {
   const leftNode = leftHref
     ? `<a class="left-link" href="${leftHref}">${leftText}</a>`
@@ -636,11 +719,19 @@ async function build() {
   const homeProjects = featuredProjects.length > 0 ? featuredProjects : projects.slice(0, 3);
   const homePosts = posts.slice(0, 3);
 
+  // const token = process.env.GITHUB_TOKEN;
+  // let contribHtml = "";
+  // if (token) {
+  //   const calendar = await fetchGithubContributions("orcus108", token);
+  //   if (calendar) contribHtml = renderContribChart(calendar);
+  // }
+  const contribHtml = "";
+
   const homeBody = `
 ${header("", "Vedant Misra")}
 
       <section>
-        <p class="muted">iit madras. ai, products, and the gap between the two.</p>
+        <p class="muted">iit madras. ai and what to build with it.</p>
       </section>
 
       <section>
@@ -680,6 +771,8 @@ ${header("", "Vedant Misra")}
           <li class="list-item"><span class="list-title">building a storybrand 2.0</span><span class="list-meta" style="display:inline;margin-left:0.4rem;">· donald miller</span></li>
         </ul>
       </section>
+
+      ${contribHtml}
   `;
 
   const prefetchHead = [

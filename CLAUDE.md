@@ -2,6 +2,8 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+Paragraphs/sentences should start with lowercase. Don't use em-dashes anywhere in the site.
+
 ## Commands
 
 ```bash

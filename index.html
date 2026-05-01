@@ -19,6 +19,10 @@
         --fg: #1a1a1a;
         --muted: #666;
         --line: #d0d0cc;
+        --contrib-1: rgba(5, 150, 105, 0.22);
+        --contrib-2: rgba(5, 150, 105, 0.48);
+        --contrib-3: rgba(5, 150, 105, 0.72);
+        --contrib-4: #059669;
       }
 
       [data-theme="dark"] {
@@ -26,6 +30,10 @@
         --fg: #e0e0d8;
         --muted: #888;
         --line: #252520;
+        --contrib-1: rgba(110, 231, 183, 0.18);
+        --contrib-2: rgba(110, 231, 183, 0.42);
+        --contrib-3: rgba(110, 231, 183, 0.68);
+        --contrib-4: #6ee7b7;
       }
 
       * { box-sizing: border-box; }
@@ -83,7 +91,7 @@
         height: 18px;
         border-radius: 1px;
         background: var(--fg);
-        transition: transform 0.2s ease;
+        transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
       }
 
       .theme-toggle input:checked + .theme-slider::after { transform: translateX(18px); }
@@ -175,6 +183,36 @@
       .md-table th, .md-table td { padding: 0.45rem 0.75rem; border: 1px solid var(--line); text-align: left; }
       .md-table th { font-weight: 600; color: var(--muted); background: transparent; }
 
+      .contrib-chart { overflow-x: auto; padding-bottom: 0.25rem; }
+      .contrib-grid { display: grid; grid-template-rows: repeat(7, 10px); gap: 2px; width: fit-content; }
+      .contrib-cell { width: 10px; height: 10px; border-radius: 2px; background: rgba(0, 0, 0, 0.07); transition: transform 0.1s ease; }
+      [data-theme="dark"] .contrib-cell { background: rgba(255, 255, 255, 0.05); }
+      .contrib-cell[data-level="1"] { background: var(--contrib-1); }
+      .contrib-cell[data-level="2"] { background: var(--contrib-2); }
+      .contrib-cell[data-level="3"] { background: var(--contrib-3); }
+      .contrib-cell[data-level="4"] { background: var(--contrib-4); }
+      .contrib-cell:hover { transform: scale(1.35); }
+
+      body { transition: background-color 0.25s ease, color 0.25s ease; }
+
+      a { transition: color 0.15s ease; }
+      footer a:hover { color: var(--fg); }
+
+
+      .list-item-link { transition: transform 0.15s ease; }
+      .list-item-link:hover { transform: translateX(4px); }
+
+      @keyframes chip-glow-light {
+        0%, 100% { box-shadow: 0 0 0 0 rgba(124, 58, 237, 0); }
+        50% { box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.2); }
+      }
+      @keyframes chip-glow-dark {
+        0%, 100% { box-shadow: 0 0 0 0 rgba(167, 139, 250, 0); }
+        50% { box-shadow: 0 0 0 3px rgba(167, 139, 250, 0.2); }
+      }
+      .status-chip.status-in-progress { animation: chip-glow-light 2.5s ease-in-out infinite; }
+      [data-theme="dark"] .status-chip.status-in-progress { animation: chip-glow-dark 2.5s ease-in-out infinite; }
+
 @media (max-width: 640px) {
         main {
           padding: 1.1rem 1rem 2.2rem;
@@ -257,7 +295,7 @@
   
 
       <section>
-        <p class="muted">iit madras. ai, products, and the gap between the two.</p>
+        <p class="muted">iit madras. ai and what to build with it.</p>
       </section>
 
       <section>
@@ -291,6 +329,8 @@
           <li class="list-item"><span class="list-title">building a storybrand 2.0</span><span class="list-meta" style="display:inline;margin-left:0.4rem;">· donald miller</span></li>
         </ul>
       </section>
+
+      
   
       <footer>
         <a href="https://x.com/orcus108" target="_blank" rel="noopener noreferrer">X (Twitter)</a>
