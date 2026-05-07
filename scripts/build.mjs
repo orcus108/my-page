@@ -8,6 +8,7 @@ const contentDir = path.join(rootDir, "content");
 const projectsDir = path.join(contentDir, "projects");
 const blogDir = path.join(contentDir, "blog");
 
+
 function escapeHtml(text) {
   return text
     .replaceAll("&", "&amp;")
@@ -88,6 +89,7 @@ function markdownToHtml(markdown) {
   let list = [];
   let orderedList = [];
   let tableLines = [];
+  let blockquote = [];
 
   const flushParagraph = () => {
     if (!paragraph.length) return;
@@ -106,6 +108,12 @@ function markdownToHtml(markdown) {
     if (!orderedList.length) return;
     out.push(`<ol>${orderedList.map((item) => `<li>${inlineMarkdown(item)}</li>`).join("")}</ol>`);
     orderedList = [];
+  };
+
+  const flushBlockquote = () => {
+    if (!blockquote.length) return;
+    out.push(`<blockquote>${blockquote.map(l => `<p>${inlineMarkdown(l)}</p>`).join("")}</blockquote>`);
+    blockquote = [];
   };
 
   const flushTable = () => {
@@ -131,6 +139,7 @@ function markdownToHtml(markdown) {
       flushParagraph();
       flushList();
       flushOrderedList();
+      flushBlockquote();
       tableLines.push(line);
       continue;
     } else if (tableLines.length) {
@@ -141,6 +150,15 @@ function markdownToHtml(markdown) {
       flushParagraph();
       flushList();
       flushOrderedList();
+      flushBlockquote();
+      continue;
+    }
+
+    if (line.startsWith("> ")) {
+      flushParagraph();
+      flushList();
+      flushOrderedList();
+      blockquote.push(line.slice(2).trim());
       continue;
     }
 
@@ -196,6 +214,7 @@ function markdownToHtml(markdown) {
   flushParagraph();
   flushList();
   flushOrderedList();
+  flushBlockquote();
   flushTable();
   return out.join("\n        ");
 }
@@ -317,6 +336,8 @@ function baseStyles() {
       .section-header h2 { margin-bottom: 0; }
       .view-all { font-size: 0.78rem; color: var(--muted); text-decoration: none; white-space: nowrap; line-height: 1; }
       .view-all:hover { color: var(--fg); }
+      .nav-link { font-size: 0.78rem; color: var(--muted); text-decoration: none; line-height: 1; }
+      .nav-link:hover { color: var(--fg); }
 
       article ul { list-style: disc; padding-left: 1.1rem; }
       article ol { list-style: decimal; padding-left: 1.1rem; }
@@ -325,6 +346,8 @@ function baseStyles() {
       p:has(> .md-image + .md-image) { display: flex; gap: 1.5rem; align-items: flex-start; margin-top: 0.9rem; }
       p:has(> .md-image + .md-image) .md-image { flex: 1; min-width: 0; margin-top: 0; }
       .md-hr { border: 0; border-top: 1px solid var(--line); margin: 1.2rem 0; }
+      blockquote { margin: 1.5rem 0 0; padding-left: 1rem; border-left: 2px solid var(--line); }
+      blockquote p { margin: 0; color: var(--muted); line-height: 1.6; }
       .status-chip {
         display: inline-block;
         padding: 0.15rem 0.4rem;
@@ -599,7 +622,7 @@ function renderContribChart(calendar) {
       </section>`;
 }
 
-function header(leftHref, leftText, secondHref, secondText) {
+function header(leftHref, leftText, secondHref, secondText, navLinks = []) {
   const leftNode = leftHref
     ? `<a class="left-link" href="${leftHref}">${leftText}</a>`
     : `<h1 class="brand">${leftText}</h1>`;
@@ -608,10 +631,13 @@ function header(leftHref, leftText, secondHref, secondText) {
     ? `<a class="left-link second-link" href="${secondHref}">${secondText}</a>`
     : "";
 
+  const navHtml = navLinks.map(l => `<a class="nav-link" href="${escapeHtml(l.href)}">${escapeHtml(l.text)}</a>`).join("");
+
   return `
       <header>
         <div class="header-left">${leftNode}${secondNode ? `<span class="left-sep">/</span>${secondNode}` : ""}</div>
         <div class="header-right">
+          ${navHtml}
           <label class="theme-toggle" aria-label="Toggle theme">
             <input id="theme-toggle" type="checkbox" />
             <span class="theme-slider"></span>
@@ -706,6 +732,266 @@ async function writeFile(filePath, content) {
   await fs.writeFile(filePath, content, "utf8");
 }
 
+function highlightsStyles() {
+  return `
+    <style>
+      .tl-wrap {
+        position: relative;
+        margin-top: 2rem;
+        padding-bottom: 1rem;
+      }
+
+      .tl-wrap::before {
+        content: '';
+        position: absolute;
+        left: 78px;
+        top: 0;
+        bottom: 0;
+        width: 1px;
+        background: linear-gradient(to bottom, transparent, var(--line) 6%, var(--line) 94%, transparent);
+        pointer-events: none;
+        transform-origin: top center;
+        transform: scaleY(0);
+        transition: transform 1s cubic-bezier(0.16, 1, 0.3, 1) 0.1s;
+      }
+
+      .tl-wrap.tl-active::before {
+        transform: scaleY(1);
+      }
+
+      .tl-entry {
+        display: flex;
+        align-items: center;
+        margin-bottom: 2rem;
+        opacity: 0;
+        transform: translateX(-10px);
+        transition: opacity 0.48s cubic-bezier(0.16, 1, 0.3, 1) calc(var(--i) * 0.13s),
+                    transform 0.48s cubic-bezier(0.16, 1, 0.3, 1) calc(var(--i) * 0.13s);
+      }
+
+      .tl-entry:last-child { margin-bottom: 0; }
+
+      .tl-entry.tl-visible {
+        opacity: 1;
+        transform: none;
+      }
+
+      .tl-img {
+        width: 64px;
+        height: 64px;
+        flex: 0 0 64px;
+        border-radius: 4px;
+        overflow: hidden;
+        border: 1px solid var(--line);
+      }
+
+      .tl-img img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+        transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+      }
+
+      .tl-img:hover img { transform: scale(1.07); }
+
+      .tl-img-placeholder {
+        width: 100%;
+        height: 100%;
+        background: var(--line);
+      }
+
+      .tl-connector {
+        width: 28px;
+        flex: 0 0 28px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        position: relative;
+        z-index: 1;
+        align-self: stretch;
+      }
+
+      .tl-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--fg);
+        flex-shrink: 0;
+        transition: transform 0.2s ease;
+      }
+
+      .tl-entry:hover .tl-dot { transform: scale(1.55); }
+
+      .tl-body {
+        flex: 1;
+        padding-left: 0.85rem;
+      }
+
+      .tl-date {
+        font-size: 0.72rem;
+        color: var(--muted);
+        margin-bottom: 0.18rem;
+        line-height: 1.4;
+      }
+
+      .tl-text {
+        font-size: 0.875rem;
+        line-height: 1.5;
+      }
+
+      .tl-note {
+        font-size: 0.72rem;
+        color: var(--muted);
+        line-height: 1.6;
+        max-height: 0;
+        overflow: hidden;
+        opacity: 0;
+        margin-top: 0;
+        transform: translateY(-5px);
+        transition: max-height 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+                    margin-top 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+                    opacity 0.35s ease 0.1s,
+                    transform 0.4s ease 0.1s;
+      }
+
+      .tl-body:hover .tl-note {
+        max-height: 10rem;
+        opacity: 1;
+        margin-top: 0.45rem;
+        transform: translateY(0);
+      }
+
+      @keyframes tl-hint {
+        0%, 55%, 100% { opacity: 0; }
+        20%, 38% { opacity: 1; }
+      }
+
+      .tl-hint {
+        font-size: 0.65rem;
+        color: var(--muted);
+        opacity: 0;
+        pointer-events: none;
+        animation: tl-hint 9s ease-in-out infinite;
+        animation-delay: 2.5s;
+        line-height: 1;
+      }
+
+      @media (max-width: 480px) {
+        .tl-wrap::before { left: 58px; }
+        .tl-img { width: 48px; height: 48px; flex: 0 0 48px; }
+        .tl-connector { width: 20px; flex: 0 0 20px; }
+        .tl-text { font-size: 0.82rem; }
+      }
+
+      .tl-entry.tl-tapped .tl-note {
+        max-height: 10rem;
+        opacity: 1;
+        margin-top: 0.45rem;
+        transform: translateY(0);
+      }
+    </style>
+  `;
+}
+
+function highlightsScript() {
+  return `
+    <script>
+      (function() {
+        var wrap = document.querySelector('.tl-wrap');
+        var entries = document.querySelectorAll('.tl-entry');
+
+        var lineObserver = new IntersectionObserver(function(observed) {
+          observed.forEach(function(entry) {
+            if (entry.isIntersecting) {
+              entry.target.classList.add('tl-active');
+              lineObserver.unobserve(entry.target);
+            }
+          });
+        }, { threshold: 0.05 });
+        if (wrap) lineObserver.observe(wrap);
+
+        var entryObserver = new IntersectionObserver(function(observed) {
+          observed.forEach(function(entry) {
+            if (entry.isIntersecting) {
+              entry.target.classList.add('tl-visible');
+              entryObserver.unobserve(entry.target);
+            }
+          });
+        }, { threshold: 0.15 });
+        entries.forEach(function(el) { entryObserver.observe(el); });
+
+        if (window.matchMedia('(hover: none)').matches) {
+          var hint = document.querySelector('.tl-hint');
+          if (hint) hint.textContent = 'tap events for notes';
+
+          document.querySelectorAll('.tl-body').forEach(function(body) {
+            body.style.cursor = 'pointer';
+            body.addEventListener('click', function() {
+              var entry = body.closest('.tl-entry');
+              var isOpen = entry.classList.contains('tl-tapped');
+              document.querySelectorAll('.tl-entry.tl-tapped').forEach(function(e) {
+                e.classList.remove('tl-tapped');
+              });
+              if (!isOpen) entry.classList.add('tl-tapped');
+            });
+          });
+        }
+      })();
+    </script>
+  `;
+}
+
+async function buildAboutPage() {
+  const raw = await fs.readFile(path.join(contentDir, "about.md"), "utf8");
+  const highlights = JSON.parse(
+    await fs.readFile(path.join(contentDir, "highlights.json"), "utf8")
+  );
+
+  const entries = highlights.map((h, i) => {
+    const imgHtml = h.img
+      ? `<img src="${escapeHtml(`/images/highlights/${h.img}`)}" alt="" loading="lazy" />`
+      : `<div class="tl-img-placeholder"></div>`;
+    return `
+        <div class="tl-entry" style="--i:${i}">
+          <div class="tl-img">${imgHtml}</div>
+          <div class="tl-connector"><div class="tl-dot"></div></div>
+          <div class="tl-body">
+            <div class="tl-date">${escapeHtml(h.date)}</div>
+            <div class="tl-text">${escapeHtml(h.text)}</div>
+            ${h.note ? `<div class="tl-note">${escapeHtml(h.note)}</div>` : ""}
+          </div>
+        </div>`;
+  }).join("");
+
+  const body = `
+${header("../index.html", "home")}
+
+      <section>
+        <article>
+          ${markdownToHtml(raw)}
+        </article>
+      </section>
+
+      <section>
+        <div class="section-header">
+          <h2>highlights</h2>
+          <span class="tl-hint">hover events for notes</span>
+        </div>
+        <div class="tl-wrap">
+          ${entries}
+        </div>
+      </section>
+      ${highlightsScript()}
+  `;
+
+  await ensureDir(path.join(rootDir, "about"));
+  await writeFile(
+    path.join(rootDir, "about", "index.html"),
+    shell("About - Vedant Misra", body, highlightsStyles())
+  );
+}
+
 async function build() {
   const projects = await loadCollection(projectsDir, "project");
   const posts = await loadCollection(blogDir, "blog");
@@ -728,7 +1014,7 @@ async function build() {
   const contribHtml = "";
 
   const homeBody = `
-${header("", "Vedant Misra")}
+${header("", "Vedant Misra", null, null, [{ href: "about/index.html", text: "about" }])}
 
       <section>
         <p class="muted">iit madras. ai and what to build with it.</p>
@@ -768,7 +1054,7 @@ ${header("", "Vedant Misra")}
         <h2>currently reading</h2>
         <ul>
           <li class="list-item"><span class="list-title">apple in china</span><span class="list-meta" style="display:inline;margin-left:0.4rem;">· patrick mcgee</span></li>
-          <li class="list-item"><span class="list-title">creativity inc.</span><span class="list-meta" style="display:inline;margin-left:0.4rem;">· ed catmull</span></li>
+          <li class="list-item"><span class="list-title">building a storybrand 2.0</span><span class="list-meta" style="display:inline;margin-left:0.4rem;">· donald miller</span></li>
         </ul>
       </section>
 
@@ -883,7 +1169,10 @@ ${header("../index.html", "home")}
 
   await writeFile(path.join(rootDir, "blog", "index.html"), shell("Blog - Vedant Misra", allPostsBody));
 
-  console.log(`Built ${projects.length} projects and ${posts.length} blog posts.`);
+  await fs.rm(path.join(rootDir, "highlights"), { recursive: true, force: true });
+  await buildAboutPage();
+
+  console.log(`Built ${projects.length} projects, ${posts.length} blog posts, and about page.`);
 }
 
 build().catch((err) => {

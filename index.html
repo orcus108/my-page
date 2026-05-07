@@ -129,6 +129,8 @@
       .section-header h2 { margin-bottom: 0; }
       .view-all { font-size: 0.78rem; color: var(--muted); text-decoration: none; white-space: nowrap; line-height: 1; }
       .view-all:hover { color: var(--fg); }
+      .nav-link { font-size: 0.78rem; color: var(--muted); text-decoration: none; line-height: 1; }
+      .nav-link:hover { color: var(--fg); }
 
       article ul { list-style: disc; padding-left: 1.1rem; }
       article ol { list-style: decimal; padding-left: 1.1rem; }
@@ -137,6 +139,8 @@
       p:has(> .md-image + .md-image) { display: flex; gap: 1.5rem; align-items: flex-start; margin-top: 0.9rem; }
       p:has(> .md-image + .md-image) .md-image { flex: 1; min-width: 0; margin-top: 0; }
       .md-hr { border: 0; border-top: 1px solid var(--line); margin: 1.2rem 0; }
+      blockquote { margin: 1.5rem 0 0; padding-left: 1rem; border-left: 2px solid var(--line); }
+      blockquote p { margin: 0; color: var(--muted); line-height: 1.6; }
       .status-chip {
         display: inline-block;
         padding: 0.15rem 0.4rem;
@@ -286,6 +290,7 @@
       <header>
         <div class="header-left"><h1 class="brand">Vedant Misra</h1></div>
         <div class="header-right">
+          <a class="nav-link" href="about/index.html">about</a>
           <label class="theme-toggle" aria-label="Toggle theme">
             <input id="theme-toggle" type="checkbox" />
             <span class="theme-slider"></span>
@@ -326,7 +331,7 @@
         <h2>currently reading</h2>
         <ul>
           <li class="list-item"><span class="list-title">apple in china</span><span class="list-meta" style="display:inline;margin-left:0.4rem;">· patrick mcgee</span></li>
-          <li class="list-item"><span class="list-title">creativity inc.</span><span class="list-meta" style="display:inline;margin-left:0.4rem;">· ed catmull</span></li>
+          <li class="list-item"><span class="list-title">building a storybrand 2.0</span><span class="list-meta" style="display:inline;margin-left:0.4rem;">· donald miller</span></li>
         </ul>
       </section>
 
