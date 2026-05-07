@@ -457,7 +457,7 @@
         <p>i&#39;m Vedant, a sophomore at IIT Madras. <br /> serial builder. probably delusional. product fanatic. shipping constantly.</p>
         <p>my exams are going on so right now i don&#39;t have the mental faculties to put a nice about me. for now, this is all i got. will finish this by end of may 2026.</p>
         <p>until then, you can reach me via <a href="mailto:misravedantsocials@gmail.com">email</a> or on <a href="https://x.com/orcus108">twitter/X</a>.</p>
-        <p>thank you for your time.</p>
+        <p>thank you for your time</p>
         </article>
       </section>
 
@@ -527,10 +527,9 @@
           var hint = document.querySelector('.tl-hint');
           if (hint) hint.textContent = 'tap events for notes';
 
-          document.querySelectorAll('.tl-body').forEach(function(body) {
-            body.style.cursor = 'pointer';
-            body.addEventListener('click', function() {
-              var entry = body.closest('.tl-entry');
+          document.querySelectorAll('.tl-entry').forEach(function(entry) {
+            entry.style.cursor = 'pointer';
+            entry.addEventListener('click', function() {
               var isOpen = entry.classList.contains('tl-tapped');
               document.querySelectorAll('.tl-entry.tl-tapped').forEach(function(e) {
                 e.classList.remove('tl-tapped');

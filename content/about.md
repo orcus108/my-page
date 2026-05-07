@@ -10,4 +10,4 @@ my exams are going on so right now i don't have the mental faculties to put a ni
 
 until then, you can reach me via [email](mailto:misravedantsocials@gmail.com) or on [twitter/X](https://x.com/orcus108).
 
-thank you for your time.
+thank you for your time

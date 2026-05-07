@@ -925,10 +925,9 @@ function highlightsScript() {
           var hint = document.querySelector('.tl-hint');
           if (hint) hint.textContent = 'tap events for notes';
 
-          document.querySelectorAll('.tl-body').forEach(function(body) {
-            body.style.cursor = 'pointer';
-            body.addEventListener('click', function() {
-              var entry = body.closest('.tl-entry');
+          document.querySelectorAll('.tl-entry').forEach(function(entry) {
+            entry.style.cursor = 'pointer';
+            entry.addEventListener('click', function() {
               var isOpen = entry.classList.contains('tl-tapped');
               document.querySelectorAll('.tl-entry.tl-tapped').forEach(function(e) {
                 e.classList.remove('tl-tapped');
