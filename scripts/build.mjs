@@ -923,14 +923,15 @@ function highlightsScript() {
 
         var isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
         var hint = document.querySelector('.tl-hint');
-        if (hint && isTouch) hint.textContent = 'tap events for notes';
+        if (hint && isTouch) hint.textContent = 'tap image to reveal notes';
 
         if (isTouch) {
-          document.querySelectorAll('.tl-entry').forEach(function(entry) {
-            entry.style.cursor = 'pointer';
-            entry.style.touchAction = 'manipulation';
+          document.querySelectorAll('.tl-img').forEach(function(img) {
+            var entry = img.closest('.tl-entry');
+            img.style.cursor = 'pointer';
+            img.style.touchAction = 'manipulation';
             var fired = false;
-            entry.addEventListener('touchend', function(e) {
+            img.addEventListener('touchend', function(e) {
               e.preventDefault();
               fired = true;
               var isOpen = entry.classList.contains('tl-tapped');
@@ -939,7 +940,7 @@ function highlightsScript() {
               });
               if (!isOpen) entry.classList.add('tl-tapped');
             });
-            entry.addEventListener('click', function() {
+            img.addEventListener('click', function() {
               if (fired) { fired = false; return; }
               var isOpen = entry.classList.contains('tl-tapped');
               document.querySelectorAll('.tl-entry.tl-tapped').forEach(function(el) {
