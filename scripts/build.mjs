@@ -856,7 +856,7 @@ function highlightsStyles() {
       }
 
       .tl-body:hover .tl-note {
-        max-height: 10rem;
+        max-height: 50vh;
         opacity: 1;
         margin-top: 0.45rem;
         transform: translateY(0);
@@ -885,7 +885,7 @@ function highlightsStyles() {
       }
 
       .tl-entry.tl-tapped .tl-note {
-        max-height: 10rem;
+        max-height: 50vh;
         opacity: 1;
         margin-top: 0.45rem;
         transform: translateY(0);
@@ -921,16 +921,29 @@ function highlightsScript() {
         }, { threshold: 0.15 });
         entries.forEach(function(el) { entryObserver.observe(el); });
 
-        if (window.matchMedia('(hover: none)').matches) {
-          var hint = document.querySelector('.tl-hint');
-          if (hint) hint.textContent = 'tap events for notes';
+        var isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+        var hint = document.querySelector('.tl-hint');
+        if (hint && isTouch) hint.textContent = 'tap events for notes';
 
+        if (isTouch) {
           document.querySelectorAll('.tl-entry').forEach(function(entry) {
             entry.style.cursor = 'pointer';
-            entry.addEventListener('click', function() {
+            entry.style.touchAction = 'manipulation';
+            var fired = false;
+            entry.addEventListener('touchend', function(e) {
+              e.preventDefault();
+              fired = true;
               var isOpen = entry.classList.contains('tl-tapped');
-              document.querySelectorAll('.tl-entry.tl-tapped').forEach(function(e) {
-                e.classList.remove('tl-tapped');
+              document.querySelectorAll('.tl-entry.tl-tapped').forEach(function(el) {
+                el.classList.remove('tl-tapped');
+              });
+              if (!isOpen) entry.classList.add('tl-tapped');
+            });
+            entry.addEventListener('click', function() {
+              if (fired) { fired = false; return; }
+              var isOpen = entry.classList.contains('tl-tapped');
+              document.querySelectorAll('.tl-entry.tl-tapped').forEach(function(el) {
+                el.classList.remove('tl-tapped');
               });
               if (!isOpen) entry.classList.add('tl-tapped');
             });
