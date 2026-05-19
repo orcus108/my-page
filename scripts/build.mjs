@@ -1066,8 +1066,7 @@ ${header("", "Vedant Misra", null, null, [{ href: "about/index.html", text: "abo
       <section>
         <h2>currently reading</h2>
         <ul>
-          <li class="list-item"><span class="list-title">apple in china</span><span class="list-meta" style="display:inline;margin-left:0.4rem;">· patrick mcgee</span></li>
-          <li class="list-item"><span class="list-title">building a storybrand 2.0</span><span class="list-meta" style="display:inline;margin-left:0.4rem;">· donald miller</span></li>
+          <li class="list-item"><span class="list-title">high output management</span><span class="list-meta" style="display:inline;margin-left:0.4rem;">· andy grove</span></li>
         </ul>
       </section>
 
