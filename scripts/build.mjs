@@ -409,6 +409,14 @@ function baseStyles() {
       a { transition: color 0.15s ease; }
       footer a:hover { color: var(--fg); }
 
+      .log-day { margin-bottom: 2rem; }
+      .log-day:last-child { margin-bottom: 0; }
+      .log-day-label { font-size: 0.78rem; color: var(--fg); font-weight: 500; margin-bottom: 0.65rem; }
+      .log-entry { margin-bottom: 0.9rem; }
+      .log-entry:last-child { margin-bottom: 0; }
+      .log-time { font-size: 0.72rem; color: var(--muted); margin-bottom: 0.2rem; font-variant-numeric: tabular-nums; }
+      .log-body p { margin: 0; }
+      .log-body p + p { margin-top: 0.5rem; }
 
       .list-item-link { transition: transform 0.15s ease; }
       .list-item-link:hover { transform: translateX(4px); }
@@ -1005,9 +1013,66 @@ ${header("../index.html", "home")}
   );
 }
 
+async function loadLogs() {
+  const logsFile = path.join(contentDir, "logs.md");
+  try {
+    const raw = await fs.readFile(logsFile, "utf8");
+    const sections = raw.split(/^## /m).filter(s => s.trim());
+    return sections.map(section => {
+      const newlineIdx = section.indexOf("\n");
+      if (newlineIdx === -1) return null;
+      const timestamp = section.slice(0, newlineIdx).trim();
+      const body = section.slice(newlineIdx + 1).trim();
+      return timestamp && body ? { timestamp, body } : null;
+    }).filter(Boolean);
+  } catch {
+    return [];
+  }
+}
+
+async function buildLogsPage(logs) {
+  const days = [];
+  const dayMap = new Map();
+  for (const log of logs) {
+    const [date, time = ""] = log.timestamp.split(" · ");
+    if (!dayMap.has(date)) {
+      const day = { date, entries: [] };
+      days.push(day);
+      dayMap.set(date, day);
+    }
+    dayMap.get(date).entries.push({ time, body: log.body });
+  }
+
+  const daysHtml = days.length
+    ? days.map(day => `
+      <div class="log-day">
+        <div class="log-day-label">${escapeHtml(day.date)}</div>
+        ${day.entries.map(e => `<div class="log-entry">
+          <div class="log-time">${escapeHtml(e.time)}</div>
+          <div class="log-body">${markdownToHtml(e.body)}</div>
+        </div>`).join("")}
+      </div>`).join("")
+    : `<p class="muted">no logs yet.</p>`;
+
+  const body = `
+${header("../index.html", "home")}
+
+      <section>
+        <h2>logs</h2>
+        <div style="margin-top:1.25rem;">
+          ${daysHtml}
+        </div>
+      </section>
+  `;
+
+  await ensureDir(path.join(rootDir, "logs"));
+  await writeFile(path.join(rootDir, "logs", "index.html"), shell("Logs - Vedant Misra", body));
+}
+
 async function build() {
   const projects = await loadCollection(projectsDir, "project");
   const posts = await loadCollection(blogDir, "blog");
+  const logs = await loadLogs();
 
   await ensureDir(path.join(rootDir, "projects"));
   await ensureDir(path.join(rootDir, "blog"));
@@ -1027,7 +1092,7 @@ async function build() {
   const contribHtml = "";
 
   const homeBody = `
-${header("", "Vedant Misra", null, null, [{ href: "about/index.html", text: "about" }])}
+${header("", "Vedant Misra", null, null, [{ href: "about/index.html", text: "about" }, { href: "logs/index.html", text: "logs" }])}
 
       <section>
         <p class="muted">iit madras. ai and what to build with it.</p>
@@ -1183,6 +1248,7 @@ ${header("../index.html", "home")}
 
   await fs.rm(path.join(rootDir, "highlights"), { recursive: true, force: true });
   await buildAboutPage();
+  await buildLogsPage(logs);
 
   console.log(`Built ${projects.length} projects, ${posts.length} blog posts, and about page.`);
 }

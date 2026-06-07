@@ -2,6 +2,7 @@
   "name": "pers-site",
   "private": true,
   "scripts": {
-    "build": "node scripts/build.mjs"
+    "build": "node scripts/build.mjs",
+    "log": "node scripts/log.mjs"
   }
 }
