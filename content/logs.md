@@ -1,3 +1,7 @@
+## Jun 8 · 11:49 AM
+friday dev now in full effect. had a nice discussion with claude regarding the
+ stack etc. a fully local assistant that lives on ur mac, remembers stuff about you and can do a bunch of tasks. this might actually work out.
+
 ## Jun 7 · 1:15 PM
 unfortunately since the architecture is very simple i'm gonna have to commit/push everytime i add a  new log. this will artificially inflate my activity on github... yea, might seem like im tryna make it look like im very active on it by doing nonsense but. i have no other choice, for now.
 
