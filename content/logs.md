@@ -1,3 +1,6 @@
+## Jun 10 · 7:42 PM
+made my multi-board version of excalidraw public. ishaan wanted a multi-board version and i told him i had made one, he asked for it, i deployed and now its live. asked Fable to optimise SEO. first fable prompt lol. im calling it notexcalidraw (credit to kavin). domain is like 10 dollars per anum, not bad. but i dont have any traction only, lets not get ahead of ourselves. one more side project, a very minimal low effort one - shipped.
+
 ## Jun 10 · 6:05 PM
 polished the friday UI. now it lives in the notch. looks so cool man, i keep taking my cursor in and out of it just to see the panel lol. even the active states animation is perf. claude too goated. will need to finesse the contents and finish v2 to 5
 
