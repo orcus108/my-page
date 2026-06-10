@@ -1,3 +1,6 @@
+## Jun 10 · 12:52 PM
+this tts is gonna be the end of me. WHY DOES IT RANDOMLY STOP WORKING
+
 ## Jun 10 · 11:40 AM
 friday v1 is finally done lessgooo. its working beautifully, latency also is very low. im actually very surprised. the tts also sounds decently natural. this might actually work lol. 1 done, 4 to go. next up adding the memory layer for v2.
 
