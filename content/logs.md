@@ -1,3 +1,6 @@
+## Jun 10 · 9:57 PM
+no one can comprehend my decision. this is the most contrarian i've ever felt. dont know if im being stupid or smart. but ive given it enough thought. im going back home.
+
 ## Jun 10 · 7:42 PM
 made my multi-board version of excalidraw public. ishaan wanted a multi-board version and i told him i had made one, he asked for it, i deployed and now its live. asked Fable to optimise SEO. first fable prompt lol. im calling it notexcalidraw (credit to kavin). domain is like 10 dollars per anum, not bad. but i dont have any traction only, lets not get ahead of ourselves. one more side project, a very minimal low effort one - shipped.
 
