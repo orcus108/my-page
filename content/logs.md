@@ -1,3 +1,6 @@
+## Jun 10 · 1:03 PM
+memory is turning out to be a bit of a pain. it's calling the llm twice, once for user's request and once for the memory layer so OOM error came and my local model aborted. using the embeddings i tried making my own lite memory retriever that does sort of a semantic search and gets the 5 most relevant embeddings but then my TTS started showing some problem. I rewinded code back to v1 but TTS is still giving problems. maybe the memory layer wasnt the problem at all. smh. will take a break now. enough tech, now some marketing/consumer understanding. specifically, why is it that indians barely pay for subscriptions etc. to help wisprflow get better conversion hopefully
+
 ## Jun 10 · 12:52 PM
 this tts is gonna be the end of me. WHY DOES IT RANDOMLY STOP WORKING
 
