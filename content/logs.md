@@ -1,3 +1,6 @@
+## Jun 11 · 9:31 PM
+v2 - memory done. re-did the planned roadmap with claude fable. seems like its pretty good. lets see.
+
 ## Jun 10 · 9:57 PM
 no one can comprehend my decision. this is the most contrarian i've ever felt. dont know if im being stupid or smart. but ive given it enough thought. im going back home.
 
