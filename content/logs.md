@@ -1,3 +1,6 @@
+## Jun 11 · 11:24 PM
+i'd really like to have some users man. i think my strength is in understanding what the user wants, their pain points, listen to their feedback and iterate and build something great. it's funny i think this inspite of never having a single user for anything i built. i dont even want it for the money or popularity (though, yes those things are also nice - especially the money lol), i just wanna go through the process of building, talking to users and then improving. right now, no one gives a damn about anything ive made coz im the only one who uses whatever ive made. but i guess ill have to keep my head down and just keep learning and building and trust that one day it'll happen. i have to believe that i will be rewarded for the work i put in. it's hard but... i have no choice.
+
 ## Jun 11 · 9:31 PM
 v2 - memory done. re-did the planned roadmap with claude fable. seems like its pretty good. lets see.
 
