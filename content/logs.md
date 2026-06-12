@@ -1,3 +1,6 @@
+## Jun 13 · 2:02 AM
+WOW I JUST TESTED THE WAKE WORD AND ITS SO COOL. I CAN JUST SAY 'HEY FRIDAY' AND IT ACTUALLY LISTENS TO ME! IDK IF THIS IS LIKE, A VERY BASIC THING FROM A TECHNICAL POV OR WHAT BUT IT LOOKS SO COOL. FINALLY FEELS LIKE AN ALWAYS ON ASSISTANT. LESSGO
+
 ## Jun 13 · 1:45 AM
 this kickbacks.ai idea of showing ads in ur spinner in claude code is such genius man. he's even splitting the revenue with the users. it's a win-win-win literally. wow. when will i get such ideas lol
 
