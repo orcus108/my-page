@@ -1,3 +1,6 @@
+## Jun 13 · 1:45 AM
+this kickbacks.ai idea of showing ads in ur spinner in claude code is such genius man. he's even splitting the revenue with the users. it's a win-win-win literally. wow. when will i get such ideas lol
+
 ## Jun 12 · 8:12 PM
 been working on friday and it's starting to get real frustrating. im starting to question whether i will really be able to build a really good user experience while keeping this insane constraint of only running a local model. maybe i can do this, develop the core functionalities etc using a cloud model, get all of it to work and then later on we can switch the brain to a local one? STT and TTS is already working fine. It's the brain that's the issue. what if i start with cloud then once thats working shift to local... hmm. interesting.
 
