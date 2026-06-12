@@ -1,3 +1,6 @@
+## Jun 12 · 8:12 PM
+been working on friday and it's starting to get real frustrating. im starting to question whether i will really be able to build a really good user experience while keeping this insane constraint of only running a local model. maybe i can do this, develop the core functionalities etc using a cloud model, get all of it to work and then later on we can switch the brain to a local one? STT and TTS is already working fine. It's the brain that's the issue. what if i start with cloud then once thats working shift to local... hmm. interesting.
+
 ## Jun 12 · 3:06 PM
 working on v3 right now - basic agentic stuff using connectors like with github, notion etc but its just not working man. so frustrating. to make the connecting process easier i wired up composio. but friday still isn't smart enough (i guess?) to actually do it. i need to figure out how to make it work on local. is it even possible to have a good enough model that works locally or am i just fooling myself. idk. local is definitely a challenge but if i manage to overcome it, ill have something great on my hands. so i think its worth trying at least. im using fable but i dont think im using it correctly.
 
