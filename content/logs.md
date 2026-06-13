@@ -1,3 +1,6 @@
+## Jun 13 · 2:17 PM
+welp, the US govt blocked Fable 5. might be the first (of many?) major instance of a govt restricting access to AI. a big wake up call (yet another) for india. i rly hope we do something man. i wanna contribute too but idk what to do. ill look into that. where tf are our rich guys.
+
 ## Jun 13 · 2:02 AM
 WOW I JUST TESTED THE WAKE WORD AND ITS SO COOL. I CAN JUST SAY 'HEY FRIDAY' AND IT ACTUALLY LISTENS TO ME! IDK IF THIS IS LIKE, A VERY BASIC THING FROM A TECHNICAL POV OR WHAT BUT IT LOOKS SO COOL. FINALLY FEELS LIKE AN ALWAYS ON ASSISTANT. LESSGO
 
