@@ -1,3 +1,6 @@
+## Jun 22 · 12:34 PM
+ayo what my twitter account got banned for unauthentic behaviour????? how bruv. i haven't done anything that even remotely violates the rules. thats unfortunate. i have filed an appeal, let's see
+
 ## Jun 13 · 2:17 PM
 welp, the US govt blocked Fable 5. might be the first (of many?) major instance of a govt restricting access to AI. a big wake up call (yet another) for india. i rly hope we do something man. i wanna contribute too but idk what to do. ill look into that. where tf are our rich guys.
 
