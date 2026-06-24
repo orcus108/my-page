@@ -7,7 +7,7 @@ status: shipped
 repo: https://github.com/orcus108/clippy
 demo: https://getclippy.vercel.app
 featured: true
-order: 1
+order: 2
 ---
 
 macOS Tahoe ships clipboard history, but the shortcut is two steps. one too many. Clippy collapses it to one: hit Cmd+Shift+V from any app, a floating panel appears, pick a clip, paste. that's it.

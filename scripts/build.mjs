@@ -1,6 +1,8 @@
 import { promises as fs } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { buildPreviewB as runPreviewB } from "./preview-b.mjs";
+import { buildPreviewC as runPreviewC } from "./preview-c.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const rootDir = path.resolve(__dirname, "..");
@@ -709,6 +711,7 @@ async function loadCollection(dir, type) {
       demo: attrs.demo || "",
       featured: attrs.featured === "true",
       order: attrs.order ? parseInt(attrs.order, 10) : null,
+      image: attrs.image || "",
       date,
       body,
       htmlBody: markdownToHtml(body)
@@ -1253,7 +1256,54 @@ ${header("../index.html", "home")}
   console.log(`Built ${projects.length} projects, ${posts.length} blog posts, and about page.`);
 }
 
-build().catch((err) => {
-  console.error(err);
-  process.exitCode = 1;
-});
+async function buildPreviewB() {
+  await runPreviewB({
+    rootDir,
+    contentDir,
+    projectsDir,
+    blogDir,
+    loadCollection,
+    loadLogs,
+    markdownToHtml,
+    escapeHtml,
+    formatDate,
+    ensureDir,
+    writeFile,
+    vercelAnalyticsScript,
+  });
+}
+
+async function buildPreviewC() {
+  await runPreviewC({
+    rootDir,
+    contentDir,
+    projectsDir,
+    blogDir,
+    loadCollection,
+    loadLogs,
+    markdownToHtml,
+    escapeHtml,
+    formatDate,
+    ensureDir,
+    writeFile,
+    vercelAnalyticsScript,
+  });
+}
+
+const mode = process.argv[2];
+if (mode === "preview-b") {
+  buildPreviewB().catch((err) => {
+    console.error(err);
+    process.exitCode = 1;
+  });
+} else if (mode === "preview-c") {
+  buildPreviewC().catch((err) => {
+    console.error(err);
+    process.exitCode = 1;
+  });
+} else {
+  build().catch((err) => {
+    console.error(err);
+    process.exitCode = 1;
+  });
+}

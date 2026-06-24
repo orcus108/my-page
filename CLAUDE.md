@@ -40,4 +40,4 @@ All CSS is embedded directly in generated HTML by `build.mjs`. There is no exter
 
 ### Deployment
 
-Deployed on Vercel. `vercel.json` sets `buildCommand: npm run build` and `outputDirectory: .` (repo root). The generated HTML files are committed to the repo and served directly.
+Deployed on Vercel. `vercel.json` sets `buildCommand: npm run build` and `outputDirectory: preview-c`, so the live site is the preview-c design (`scripts/preview-c.mjs`). `npm run build` regenerates both the legacy root site and `preview-c/`; only `preview-c/` is served. The local content dashboard (`npm run dashboard`) writes to `content/`, rebuilds preview-c, and previews it.

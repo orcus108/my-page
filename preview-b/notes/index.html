@@ -1,0 +1,479 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Notes - Vedant Misra (Preview)</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <style>
+
+      :root {
+        --white: #ffffff;
+        --black: #0a0a0a;
+        --muted: #6a6a6a;
+        --line: #ececec;
+        --font: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+        --max: 1120px;
+        --pad: clamp(1.25rem, 4vw, 3rem);
+        --gradient-url: url("../assets/hero-gradient.png");
+      }
+
+      * { box-sizing: border-box; }
+
+      body {
+        margin: 0;
+        font-family: var(--font);
+        background: var(--white);
+        color: var(--black);
+        line-height: 1.65;
+        font-size: 0.9375rem;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      a { color: inherit; text-underline-offset: 0.15em; }
+      a:hover { opacity: 0.65; }
+
+      .preview-banner {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 1rem;
+        padding: 0.45rem 1rem;
+        background: var(--black);
+        color: #f0f0f0;
+        font-size: 0.7rem;
+        font-weight: 500;
+      }
+
+      .preview-banner a { color: #f0f0f0; }
+
+      .nav-pill-wrap {
+        position: fixed;
+        top: 1.15rem;
+        left: 0;
+        right: 0;
+        z-index: 90;
+        display: flex;
+        justify-content: center;
+        padding: 0 1rem;
+        pointer-events: none;
+        transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.35s ease;
+      }
+
+      .nav-pill-wrap.is-hidden {
+        transform: translateY(calc(-100% - 1.5rem));
+        opacity: 0;
+      }
+
+      .nav-pill {
+        pointer-events: auto;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.9rem;
+        padding: 0.42rem 0.95rem;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.88);
+        backdrop-filter: blur(14px);
+        -webkit-backdrop-filter: blur(14px);
+        border: 1px solid rgba(0, 0, 0, 0.07);
+        box-shadow: 0 1px 8px rgba(0, 0, 0, 0.05);
+      }
+
+      .nav-pill a {
+        font-size: 0.75rem;
+        font-weight: 500;
+        text-decoration: none;
+        color: var(--muted);
+        white-space: nowrap;
+      }
+
+      .nav-pill a:hover,
+      .nav-pill a.is-active {
+        color: var(--black);
+        opacity: 1;
+      }
+
+      .mesh-bg {
+        background-image: var(--gradient-url);
+        background-size: cover;
+        background-position: center;
+      }
+
+      .landing-gradient {
+        min-height: min(72vh, 640px);
+      }
+
+      .landing-intro {
+        background: var(--white);
+      }
+
+      .landing-intro-inner {
+        max-width: var(--max);
+        margin: 0 auto;
+        padding: clamp(2rem, 5vw, 2.75rem) var(--pad);
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: clamp(2rem, 6vw, 5rem);
+        align-items: center;
+      }
+
+      .landing-name {
+        margin: 0;
+        font-size: clamp(2.5rem, 7vw, 4.5rem);
+        font-weight: 500;
+        line-height: 1.02;
+        letter-spacing: -0.04em;
+      }
+
+      .landing-bio {
+        margin: 0;
+        font-size: clamp(0.9rem, 1.3vw, 1rem);
+        line-height: 1.75;
+        color: var(--black);
+        max-width: 38ch;
+        justify-self: end;
+      }
+
+      .content {
+        max-width: var(--max);
+        margin: 0 auto;
+        padding: clamp(2.5rem, 5vw, 3.5rem) var(--pad) 2rem;
+      }
+
+      .block { margin-top: 2.75rem; }
+      .block:first-child { margin-top: 0; }
+
+      .label {
+        margin: 0 0 1rem;
+        font-size: 0.7rem;
+        font-weight: 600;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+
+      .plain-list {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+      }
+
+      .plain-list li + li { margin-top: 0.85rem; }
+
+      .plain-list a {
+        text-decoration: none;
+        font-weight: 600;
+      }
+
+      .plain-list a:hover { text-decoration: underline; opacity: 1; }
+
+      .plain-list .sub {
+        display: block;
+        margin-top: 0.15rem;
+        font-weight: 400;
+        color: var(--muted);
+      }
+
+      .muted-line {
+        margin: 0;
+        color: var(--muted);
+      }
+
+      .page-head {
+        margin: 0 0 2rem;
+      }
+
+      .page-head h1 {
+        margin: 0;
+        font-size: clamp(1.75rem, 4vw, 2.25rem);
+        font-weight: 700;
+        letter-spacing: -0.035em;
+        line-height: 1.1;
+      }
+
+      .page-head .lead {
+        margin: 0.6rem 0 0;
+        color: var(--muted);
+        max-width: 48ch;
+      }
+
+      .page-head .meta {
+        margin: 0.5rem 0 0;
+        font-size: 0.8rem;
+        color: var(--muted);
+      }
+
+      .inline-links {
+        margin-top: 1rem;
+        font-size: 0.875rem;
+      }
+
+      .inline-links a { margin-right: 1rem; }
+
+      article p { margin: 0.9rem 0 0; }
+      article p:first-child { margin-top: 0; }
+      article ul, article ol { margin: 0.9rem 0 0; padding-left: 1.15rem; }
+      article li + li { margin-top: 0.3rem; }
+      article h2 {
+        margin: 1.75rem 0 0;
+        font-size: 1.1rem;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+      }
+      article h3 { margin: 1.25rem 0 0; font-size: 0.95rem; font-weight: 600; }
+      article blockquote {
+        margin: 1.25rem 0 0;
+        padding-left: 0.85rem;
+        border-left: 1px solid var(--line);
+        color: var(--muted);
+      }
+
+      .md-image {
+        display: block;
+        max-width: 100%;
+        height: auto;
+        margin-top: 0.9rem;
+      }
+
+      p:has(> .md-image + .md-image) {
+        display: flex;
+        gap: 0.75rem;
+        margin-top: 0.9rem;
+      }
+
+      p:has(> .md-image + .md-image) .md-image { flex: 1; min-width: 0; margin-top: 0; }
+
+      .md-hr { border: 0; border-top: 1px solid var(--line); margin: 1.25rem 0; }
+
+      .md-table-wrap { overflow-x: auto; margin-top: 0.9rem; }
+
+      .md-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.85rem;
+      }
+
+      .md-table th, .md-table td {
+        padding: 0.45rem 0.65rem;
+        border: 1px solid var(--line);
+        text-align: left;
+      }
+
+      .md-table th { color: var(--muted); font-weight: 500; }
+
+      .depth-section { margin-top: 2.5rem; }
+
+      .depth-toggle {
+        padding: 0;
+        border: 0;
+        background: none;
+        color: var(--muted);
+        font: inherit;
+        font-size: 0.875rem;
+        cursor: pointer;
+        text-decoration: underline;
+        text-underline-offset: 0.15em;
+      }
+
+      .depth-toggle:hover { color: var(--black); }
+
+      .depth-panel {
+        margin-top: 1.25rem;
+        padding-top: 1.25rem;
+        border-top: 1px solid var(--line);
+      }
+
+      .depth-panel[hidden] { display: none; }
+
+      .notes-day { margin-bottom: 1.75rem; }
+      .notes-day-label {
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: var(--muted);
+        margin-bottom: 0.6rem;
+      }
+
+      .notes-entry + .notes-entry { margin-top: 1rem; }
+
+      .notes-time {
+        font-size: 0.72rem;
+        color: var(--muted);
+        margin-bottom: 0.15rem;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .site-footer {
+        max-width: var(--max);
+        margin: 0 auto;
+        padding: 2rem var(--pad) 2.5rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        gap: 1.5rem;
+        flex-wrap: wrap;
+        font-size: 0.8125rem;
+        color: var(--muted);
+        border-top: 1px solid var(--line);
+      }
+
+      .site-footer a {
+        color: var(--muted);
+        text-decoration: none;
+      }
+
+      .site-footer a:hover { color: var(--black); opacity: 1; }
+
+      @media (max-width: 768px) {
+        .landing-intro-inner { grid-template-columns: 1fr; }
+        .landing-bio { justify-self: start; max-width: none; }
+        .nav-pill { gap: 0.65rem; padding: 0.38rem 0.75rem; }
+        .nav-pill a { font-size: 0.7rem; }
+      }
+
+      @media (max-width: 520px) {
+        .nav-pill { gap: 0.55rem; padding: 0.36rem 0.7rem; }
+      }
+  
+    </style>
+  </head>
+  <body>
+    <aside class="preview-banner">
+      <span>preview</span>
+      <a href="../../index.html">current site</a>
+    </aside>
+
+    <div class="nav-pill-wrap">
+      <nav class="nav-pill" aria-label="Main"><a href="../work/index.html" class="">work</a><a href="../writing/index.html" class="">writing</a><a href="../notes/index.html" class="is-active">notes</a><a href="../about/index.html" class="">about</a><a href="mailto:misravedantsocials@gmail.com" class="">email</a></nav>
+    </div>
+
+    <div class="content">
+      <header class="page-head"><h1>notes</h1></header>
+      
+      <div class="notes-day">
+        <div class="notes-day-label">Jun 13</div>
+        <div class="notes-entry">
+          <div class="notes-time">2:17 PM</div>
+          <div><p>welp, the US govt blocked Fable 5. might be the first (of many?) major instance of a govt restricting access to AI. a big wake up call (yet another) for india. i rly hope we do something man. i wanna contribute too but idk what to do. ill look into that. where tf are our rich guys.</p></div>
+        </div><div class="notes-entry">
+          <div class="notes-time">2:02 AM</div>
+          <div><p>WOW I JUST TESTED THE WAKE WORD AND ITS SO COOL. I CAN JUST SAY &#39;HEY FRIDAY&#39; AND IT ACTUALLY LISTENS TO ME! IDK IF THIS IS LIKE, A VERY BASIC THING FROM A TECHNICAL POV OR WHAT BUT IT LOOKS SO COOL. FINALLY FEELS LIKE AN ALWAYS ON ASSISTANT. LESSGO</p></div>
+        </div><div class="notes-entry">
+          <div class="notes-time">1:45 AM</div>
+          <div><p>this kickbacks.ai idea of showing ads in ur spinner in claude code is such genius man. he&#39;s even splitting the revenue with the users. it&#39;s a win-win-win literally. wow. when will i get such ideas lol</p></div>
+        </div>
+      </div>
+      <div class="notes-day">
+        <div class="notes-day-label">Jun 12</div>
+        <div class="notes-entry">
+          <div class="notes-time">8:12 PM</div>
+          <div><p>been working on friday and it&#39;s starting to get real frustrating. im starting to question whether i will really be able to build a really good user experience while keeping this insane constraint of only running a local model. maybe i can do this, develop the core functionalities etc using a cloud model, get all of it to work and then later on we can switch the brain to a local one? STT and TTS is already working fine. It&#39;s the brain that&#39;s the issue. what if i start with cloud then once thats working shift to local... hmm. interesting.</p></div>
+        </div><div class="notes-entry">
+          <div class="notes-time">3:06 PM</div>
+          <div><p>working on v3 right now - basic agentic stuff using connectors like with github, notion etc but its just not working man. so frustrating. to make the connecting process easier i wired up composio. but friday still isn&#39;t smart enough (i guess?) to actually do it. i need to figure out how to make it work on local. is it even possible to have a good enough model that works locally or am i just fooling myself. idk. local is definitely a challenge but if i manage to overcome it, ill have something great on my hands. so i think its worth trying at least. im using fable but i dont think im using it correctly.</p></div>
+        </div>
+      </div>
+      <div class="notes-day">
+        <div class="notes-day-label">Jun 11</div>
+        <div class="notes-entry">
+          <div class="notes-time">11:24 PM</div>
+          <div><p>i&#39;d really like to have some users man. i think my strength is in understanding what the user wants, their pain points, listen to their feedback and iterate and build something great. it&#39;s funny i think this inspite of never having a single user for anything i built. i dont even want it for the money or popularity (though, yes those things are also nice - especially the money lol), i just wanna go through the process of building, talking to users and then improving. right now, no one gives a damn about anything ive made coz im the only one who uses whatever ive made. but i guess ill have to keep my head down and just keep learning and building and trust that one day it&#39;ll happen. i have to believe that i will be rewarded for the work i put in. it&#39;s hard but... i have no choice.</p></div>
+        </div><div class="notes-entry">
+          <div class="notes-time">9:31 PM</div>
+          <div><p>v2 - memory done. re-did the planned roadmap with claude fable. seems like its pretty good. lets see.</p></div>
+        </div>
+      </div>
+      <div class="notes-day">
+        <div class="notes-day-label">Jun 10</div>
+        <div class="notes-entry">
+          <div class="notes-time">9:57 PM</div>
+          <div><p>no one can comprehend my decision. this is the most contrarian i&#39;ve ever felt. dont know if im being stupid or smart. but ive given it enough thought. im going back home.</p></div>
+        </div><div class="notes-entry">
+          <div class="notes-time">7:42 PM</div>
+          <div><p>made my multi-board version of excalidraw public. ishaan wanted a multi-board version and i told him i had made one, he asked for it, i deployed and now its live. asked Fable to optimise SEO. first fable prompt lol. im calling it notexcalidraw (credit to kavin). domain is like 10 dollars per anum, not bad. but i dont have any traction only, lets not get ahead of ourselves. one more side project, a very minimal low effort one - shipped.</p></div>
+        </div><div class="notes-entry">
+          <div class="notes-time">6:05 PM</div>
+          <div><p>polished the friday UI. now it lives in the notch. looks so cool man, i keep taking my cursor in and out of it just to see the panel lol. even the active states animation is perf. claude too goated. will need to finesse the contents and finish v2 to 5</p></div>
+        </div><div class="notes-entry">
+          <div class="notes-time">1:03 PM</div>
+          <div><p>memory is turning out to be a bit of a pain. it&#39;s calling the llm twice, once for user&#39;s request and once for the memory layer so OOM error came and my local model aborted. using the embeddings i tried making my own lite memory retriever that does sort of a semantic search and gets the 5 most relevant embeddings but then my TTS started showing some problem. I rewinded code back to v1 but TTS is still giving problems. maybe the memory layer wasnt the problem at all. smh. will take a break now. enough tech, now some marketing/consumer understanding. specifically, why is it that indians barely pay for subscriptions etc. to help wisprflow get better conversion hopefully</p></div>
+        </div><div class="notes-entry">
+          <div class="notes-time">12:52 PM</div>
+          <div><p>this tts is gonna be the end of me. WHY DOES IT RANDOMLY STOP WORKING</p></div>
+        </div><div class="notes-entry">
+          <div class="notes-time">11:40 AM</div>
+          <div><p>friday v1 is finally done lessgooo. its working beautifully, latency also is very low. im actually very surprised. the tts also sounds decently natural. this might actually work lol. 1 done, 4 to go. next up adding the memory layer for v2.</p></div>
+        </div>
+      </div>
+      <div class="notes-day">
+        <div class="notes-day-label">Jun 8</div>
+        <div class="notes-entry">
+          <div class="notes-time">11:49 AM</div>
+          <div><p>friday dev now in full effect. had a nice discussion with claude regarding the stack etc. a fully local assistant that lives on ur mac, remembers stuff about you and can do a bunch of tasks. this might actually work out.</p></div>
+        </div>
+      </div>
+      <div class="notes-day">
+        <div class="notes-day-label">Jun 7</div>
+        <div class="notes-entry">
+          <div class="notes-time">1:15 PM</div>
+          <div><p>unfortunately since the architecture is very simple i&#39;m gonna have to commit/push everytime i add a  new log. this will artificially inflate my activity on github... yea, might seem like im tryna make it look like im very active on it by doing nonsense but. i have no other choice, for now.</p></div>
+        </div><div class="notes-entry">
+          <div class="notes-time">1:11 PM</div>
+          <div><p>adding this logs section on my site so that i can rant when i keep running into fricking bugs</p></div>
+        </div>
+      </div>
+    </div>
+  
+
+    <footer class="site-footer">
+      <a href="mailto:misravedantsocials@gmail.com">misravedantsocials@gmail.com</a>
+      <a href="https://x.com/orcus108" target="_blank" rel="noopener noreferrer">x</a>
+    </footer>
+
+    <script defer src="/_vercel/insights/script.js"></script>
+  
+
+    <script>
+      (function() {
+        var wrap = document.querySelector('.nav-pill-wrap');
+        if (!wrap) return;
+        var lastY = window.scrollY;
+        var ticking = false;
+
+        window.addEventListener('scroll', function() {
+          if (ticking) return;
+          ticking = true;
+          requestAnimationFrame(function() {
+            var y = window.scrollY;
+            if (y > 64 && y > lastY + 4) {
+              wrap.classList.add('is-hidden');
+            } else if (y < lastY - 4) {
+              wrap.classList.remove('is-hidden');
+            }
+            lastY = y;
+            ticking = false;
+          });
+        }, { passive: true });
+      })();
+    </script>
+  
+
+    <script>
+      document.querySelectorAll('.depth-toggle').forEach(function(btn) {
+        var panel = document.getElementById(btn.getAttribute('aria-controls'));
+        if (!panel) return;
+        btn.addEventListener('click', function() {
+          var open = btn.getAttribute('aria-expanded') === 'true';
+          btn.setAttribute('aria-expanded', open ? 'false' : 'true');
+          panel.hidden = open;
+          btn.querySelector('.depth-toggle-text').textContent = open
+            ? 'technical details'
+            : 'hide technical details';
+        });
+      });
+    </script>
+  
+  </body>
+</html>

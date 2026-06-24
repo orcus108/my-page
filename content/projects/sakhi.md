@@ -2,12 +2,10 @@
 title: Sakhi
 slug: sakhi
 summary: ai for india’s frontline health workers
-date: 2026-04-7
-status: In progress
-featured: true
-order: 1
 repo: https://github.com/orcus108/sakhi
 demo: https://sakhi-asha.vercel.app
+featured: true
+order: 1
 ---
 
 across India, ASHA workers are the backbone of community healthcare. they support families through pregnancy, childhood illnesses, chronic conditions, immunizations, and public health outreach. for many villages, she is the first — and sometimes only — link to the healthcare system.

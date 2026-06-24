@@ -1,0 +1,28 @@
+[
+  { "title": "High Output Management", "author": "Andy Grove", "shelf": "currently", "color": "#46566a" },
+
+  { "title": "The Age of AI", "author": "Kissinger, Schmidt & Huttenlocher", "shelf": "ai & what's next", "color": "#1f3a4d" },
+  { "title": "Life 3.0", "author": "Max Tegmark", "shelf": "ai & what's next", "color": "#2b2e4a" },
+  { "title": "The Coming Wave", "author": "Mustafa Suleyman", "shelf": "ai & what's next", "color": "#14463f" },
+  { "title": "Power and Progress", "author": "Acemoglu & Johnson", "shelf": "ai & what's next", "color": "#5a2f38" },
+
+  { "title": "Steve Jobs", "author": "Walter Isaacson", "shelf": "builders & biographies", "color": "#262626" },
+  { "title": "Elon Musk", "author": "Walter Isaacson", "shelf": "builders & biographies", "color": "#3a2c47" },
+  { "title": "The Innovators", "author": "Walter Isaacson", "shelf": "builders & biographies", "color": "#20405e" },
+  { "title": "The Code Breaker", "author": "Walter Isaacson", "shelf": "builders & biographies", "color": "#4a3a1e" },
+  { "title": "Creativity, Inc.", "author": "Ed Catmull", "shelf": "builders & biographies", "color": "#6b4a1f" },
+  { "title": "The Hard Thing About Hard Things", "author": "Ben Horowitz", "shelf": "builders & biographies", "color": "#2c3a2c" },
+
+  { "title": "Chip War", "author": "Chris Miller", "shelf": "business & economics", "color": "#5c3a1f" },
+  { "title": "Apple in China", "author": "Patrick McGee", "shelf": "business & economics", "color": "#7a2f2f" },
+  { "title": "The Undercover Economist", "author": "Tim Harford", "shelf": "business & economics", "color": "#2f4a3a" },
+  { "title": "The India Way", "author": "S. Jaishankar", "shelf": "business & economics", "color": "#5a4a20" },
+  { "title": "Breaking the Mould", "author": "Raghuram Rajan & Rohit Lamba", "shelf": "business & economics", "color": "#2f3a4a" },
+  { "title": "Predictably Irrational", "author": "Dan Ariely", "shelf": "business & economics", "color": "#4a2f49" },
+  { "title": "Never Split the Difference", "author": "Chris Voss", "shelf": "business & economics", "color": "#1e1e2c" },
+
+  { "title": "The Splendid and the Vile", "author": "Erik Larson", "shelf": "history & ideas", "color": "#3a3a28" },
+  { "title": "The Spy and the Traitor", "author": "Ben Macintyre", "shelf": "history & ideas", "color": "#582d2d" },
+  { "title": "The Denial of Death", "author": "Ernest Becker", "shelf": "history & ideas", "color": "#28283a" },
+  { "title": "Hard Times", "author": "Studs Terkel", "shelf": "history & ideas", "color": "#3a3330" }
+]

@@ -1,0 +1,723 @@
+import { promises as fs } from "node:fs";
+import path from "node:path";
+
+const PREVIEW_EMAIL = "misravedantsocials@gmail.com";
+
+export function splitProjectBody(body) {
+  const match = body.match(/^([\s\S]*?)^## tech stack\s*$/im);
+  if (!match) return { story: body.trim(), technical: "" };
+  return {
+    story: match[1].trim(),
+    technical: body.slice(match[0].length).trim(),
+  };
+}
+
+function previewHead(depth = 2) {
+  const gradient = depth === 1 ? "assets/hero-gradient.png" : "../assets/hero-gradient.png";
+  return `
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <style>
+${previewStyles(gradient)}
+    </style>`;
+}
+
+function previewStyles(gradientPath) {
+  return `
+      :root {
+        --white: #ffffff;
+        --black: #0a0a0a;
+        --muted: #6a6a6a;
+        --line: #ececec;
+        --font: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+        --max: 1120px;
+        --pad: clamp(1.25rem, 4vw, 3rem);
+        --gradient-url: url("${gradientPath}");
+      }
+
+      * { box-sizing: border-box; }
+
+      body {
+        margin: 0;
+        font-family: var(--font);
+        background: var(--white);
+        color: var(--black);
+        line-height: 1.65;
+        font-size: 0.9375rem;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      a { color: inherit; text-underline-offset: 0.15em; }
+      a:hover { opacity: 0.65; }
+
+      .preview-banner {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 1rem;
+        padding: 0.45rem 1rem;
+        background: var(--black);
+        color: #f0f0f0;
+        font-size: 0.7rem;
+        font-weight: 500;
+      }
+
+      .preview-banner a { color: #f0f0f0; }
+
+      .nav-pill-wrap {
+        position: fixed;
+        top: 1.15rem;
+        left: 0;
+        right: 0;
+        z-index: 90;
+        display: flex;
+        justify-content: center;
+        padding: 0 1rem;
+        pointer-events: none;
+        transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.35s ease;
+      }
+
+      .nav-pill-wrap.is-hidden {
+        transform: translateY(calc(-100% - 1.5rem));
+        opacity: 0;
+      }
+
+      .nav-pill {
+        pointer-events: auto;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.9rem;
+        padding: 0.42rem 0.95rem;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.88);
+        backdrop-filter: blur(14px);
+        -webkit-backdrop-filter: blur(14px);
+        border: 1px solid rgba(0, 0, 0, 0.07);
+        box-shadow: 0 1px 8px rgba(0, 0, 0, 0.05);
+      }
+
+      .nav-pill a {
+        font-size: 0.75rem;
+        font-weight: 500;
+        text-decoration: none;
+        color: var(--muted);
+        white-space: nowrap;
+      }
+
+      .nav-pill a:hover,
+      .nav-pill a.is-active {
+        color: var(--black);
+        opacity: 1;
+      }
+
+      .mesh-bg {
+        background-image: var(--gradient-url);
+        background-size: cover;
+        background-position: center;
+      }
+
+      .landing-gradient {
+        min-height: min(72vh, 640px);
+      }
+
+      .landing-intro {
+        background: var(--white);
+      }
+
+      .landing-intro-inner {
+        max-width: var(--max);
+        margin: 0 auto;
+        padding: clamp(2rem, 5vw, 2.75rem) var(--pad);
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: clamp(2rem, 6vw, 5rem);
+        align-items: center;
+      }
+
+      .landing-name {
+        margin: 0;
+        font-size: clamp(2.5rem, 7vw, 4.5rem);
+        font-weight: 500;
+        line-height: 1.02;
+        letter-spacing: -0.04em;
+      }
+
+      .landing-bio {
+        margin: 0;
+        font-size: clamp(0.9rem, 1.3vw, 1rem);
+        line-height: 1.75;
+        color: var(--black);
+        max-width: 38ch;
+        justify-self: end;
+      }
+
+      .content {
+        max-width: var(--max);
+        margin: 0 auto;
+        padding: clamp(2.5rem, 5vw, 3.5rem) var(--pad) 2rem;
+      }
+
+      .block { margin-top: 2.75rem; }
+      .block:first-child { margin-top: 0; }
+
+      .label {
+        margin: 0 0 1rem;
+        font-size: 0.7rem;
+        font-weight: 600;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+
+      .plain-list {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+      }
+
+      .plain-list li + li { margin-top: 0.85rem; }
+
+      .plain-list a {
+        text-decoration: none;
+        font-weight: 600;
+      }
+
+      .plain-list a:hover { text-decoration: underline; opacity: 1; }
+
+      .plain-list .sub {
+        display: block;
+        margin-top: 0.15rem;
+        font-weight: 400;
+        color: var(--muted);
+      }
+
+      .muted-line {
+        margin: 0;
+        color: var(--muted);
+      }
+
+      .page-head {
+        margin: 0 0 2rem;
+      }
+
+      .page-head h1 {
+        margin: 0;
+        font-size: clamp(1.75rem, 4vw, 2.25rem);
+        font-weight: 700;
+        letter-spacing: -0.035em;
+        line-height: 1.1;
+      }
+
+      .page-head .lead {
+        margin: 0.6rem 0 0;
+        color: var(--muted);
+        max-width: 48ch;
+      }
+
+      .page-head .meta {
+        margin: 0.5rem 0 0;
+        font-size: 0.8rem;
+        color: var(--muted);
+      }
+
+      .inline-links {
+        margin-top: 1rem;
+        font-size: 0.875rem;
+      }
+
+      .inline-links a { margin-right: 1rem; }
+
+      article p { margin: 0.9rem 0 0; }
+      article p:first-child { margin-top: 0; }
+      article ul, article ol { margin: 0.9rem 0 0; padding-left: 1.15rem; }
+      article li + li { margin-top: 0.3rem; }
+      article h2 {
+        margin: 1.75rem 0 0;
+        font-size: 1.1rem;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+      }
+      article h3 { margin: 1.25rem 0 0; font-size: 0.95rem; font-weight: 600; }
+      article blockquote {
+        margin: 1.25rem 0 0;
+        padding-left: 0.85rem;
+        border-left: 1px solid var(--line);
+        color: var(--muted);
+      }
+
+      .md-image {
+        display: block;
+        max-width: 100%;
+        height: auto;
+        margin-top: 0.9rem;
+      }
+
+      p:has(> .md-image + .md-image) {
+        display: flex;
+        gap: 0.75rem;
+        margin-top: 0.9rem;
+      }
+
+      p:has(> .md-image + .md-image) .md-image { flex: 1; min-width: 0; margin-top: 0; }
+
+      .md-hr { border: 0; border-top: 1px solid var(--line); margin: 1.25rem 0; }
+
+      .md-table-wrap { overflow-x: auto; margin-top: 0.9rem; }
+
+      .md-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.85rem;
+      }
+
+      .md-table th, .md-table td {
+        padding: 0.45rem 0.65rem;
+        border: 1px solid var(--line);
+        text-align: left;
+      }
+
+      .md-table th { color: var(--muted); font-weight: 500; }
+
+      .depth-section { margin-top: 2.5rem; }
+
+      .depth-toggle {
+        padding: 0;
+        border: 0;
+        background: none;
+        color: var(--muted);
+        font: inherit;
+        font-size: 0.875rem;
+        cursor: pointer;
+        text-decoration: underline;
+        text-underline-offset: 0.15em;
+      }
+
+      .depth-toggle:hover { color: var(--black); }
+
+      .depth-panel {
+        margin-top: 1.25rem;
+        padding-top: 1.25rem;
+        border-top: 1px solid var(--line);
+      }
+
+      .depth-panel[hidden] { display: none; }
+
+      .notes-day { margin-bottom: 1.75rem; }
+      .notes-day-label {
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: var(--muted);
+        margin-bottom: 0.6rem;
+      }
+
+      .notes-entry + .notes-entry { margin-top: 1rem; }
+
+      .notes-time {
+        font-size: 0.72rem;
+        color: var(--muted);
+        margin-bottom: 0.15rem;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .site-footer {
+        max-width: var(--max);
+        margin: 0 auto;
+        padding: 2rem var(--pad) 2.5rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        gap: 1.5rem;
+        flex-wrap: wrap;
+        font-size: 0.8125rem;
+        color: var(--muted);
+        border-top: 1px solid var(--line);
+      }
+
+      .site-footer a {
+        color: var(--muted);
+        text-decoration: none;
+      }
+
+      .site-footer a:hover { color: var(--black); opacity: 1; }
+
+      @media (max-width: 768px) {
+        .landing-intro-inner { grid-template-columns: 1fr; }
+        .landing-bio { justify-self: start; max-width: none; }
+        .nav-pill { gap: 0.65rem; padding: 0.38rem 0.75rem; }
+        .nav-pill a { font-size: 0.7rem; }
+      }
+
+      @media (max-width: 520px) {
+        .nav-pill { gap: 0.55rem; padding: 0.36rem 0.7rem; }
+      }
+  `;
+}
+
+function previewNavScrollScript() {
+  return `
+    <script>
+      (function() {
+        var wrap = document.querySelector('.nav-pill-wrap');
+        if (!wrap) return;
+        var lastY = window.scrollY;
+        var ticking = false;
+
+        window.addEventListener('scroll', function() {
+          if (ticking) return;
+          ticking = true;
+          requestAnimationFrame(function() {
+            var y = window.scrollY;
+            if (y > 64 && y > lastY + 4) {
+              wrap.classList.add('is-hidden');
+            } else if (y < lastY - 4) {
+              wrap.classList.remove('is-hidden');
+            }
+            lastY = y;
+            ticking = false;
+          });
+        }, { passive: true });
+      })();
+    </script>
+  `;
+}
+
+function previewDepthScript() {
+  return `
+    <script>
+      document.querySelectorAll('.depth-toggle').forEach(function(btn) {
+        var panel = document.getElementById(btn.getAttribute('aria-controls'));
+        if (!panel) return;
+        btn.addEventListener('click', function() {
+          var open = btn.getAttribute('aria-expanded') === 'true';
+          btn.setAttribute('aria-expanded', open ? 'false' : 'true');
+          panel.hidden = open;
+          btn.querySelector('.depth-toggle-text').textContent = open
+            ? 'technical details'
+            : 'hide technical details';
+        });
+      });
+    </script>
+  `;
+}
+
+function previewMenuBar(base = "", active = "") {
+  const links = [
+    { key: "work", href: `${base}work/index.html`, label: "work" },
+    { key: "writing", href: `${base}writing/index.html`, label: "writing" },
+    { key: "notes", href: `${base}notes/index.html`, label: "notes" },
+    { key: "about", href: `${base}about/index.html`, label: "about" },
+    { key: "email", href: `mailto:${PREVIEW_EMAIL}`, label: "email" },
+  ];
+
+  const items = links
+    .map((l) => {
+      const cls = active === l.key ? "is-active" : "";
+      return `<a href="${l.href}" class="${cls}">${l.label}</a>`;
+    })
+    .join("");
+
+  return `
+    <div class="nav-pill-wrap">
+      <nav class="nav-pill" aria-label="Main">${items}</nav>
+    </div>`;
+}
+
+function previewFooter() {
+  return `
+    <footer class="site-footer">
+      <a href="mailto:${PREVIEW_EMAIL}">misravedantsocials@gmail.com</a>
+      <a href="https://x.com/orcus108" target="_blank" rel="noopener noreferrer">x</a>
+    </footer>`;
+}
+
+function previewShell({ title, body, depth = 2, footerBase = "", active = "", vercelAnalyticsScript }) {
+  const currentSite = depth === 1 ? "../index.html" : "../../index.html";
+
+  return `<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>${title}</title>
+${previewHead(depth)}
+  </head>
+  <body>
+    <aside class="preview-banner">
+      <span>preview</span>
+      <a href="${currentSite}">current site</a>
+    </aside>
+${previewMenuBar(footerBase, active)}
+${body}
+${previewFooter()}
+${vercelAnalyticsScript()}
+${previewNavScrollScript()}
+${previewDepthScript()}
+  </body>
+</html>`;
+}
+
+export async function buildPreviewB({
+  rootDir,
+  contentDir,
+  projectsDir,
+  blogDir,
+  loadCollection,
+  loadLogs,
+  markdownToHtml,
+  escapeHtml,
+  formatDate,
+  ensureDir,
+  writeFile,
+  vercelAnalyticsScript,
+}) {
+  const previewRoot = path.join(rootDir, "preview-b");
+  const projects = await loadCollection(projectsDir, "project");
+  const posts = await loadCollection(blogDir, "blog");
+  const logs = await loadLogs();
+  const homeConfig = JSON.parse(
+    await fs.readFile(path.join(contentDir, "preview", "home.json"), "utf8")
+  );
+  const aboutRaw = await fs.readFile(path.join(contentDir, "preview", "about.md"), "utf8");
+
+  await ensureDir(path.join(previewRoot, "assets"));
+  await ensureDir(path.join(previewRoot, "work"));
+  await ensureDir(path.join(previewRoot, "writing"));
+  await ensureDir(path.join(previewRoot, "notes"));
+  await ensureDir(path.join(previewRoot, "about"));
+
+  await fs.copyFile(
+    path.join(contentDir, "preview", "hero-gradient.png"),
+    path.join(previewRoot, "assets", "hero-gradient.png")
+  );
+
+  const featuredProjects = projects
+    .filter((p) => p.featured)
+    .sort((a, b) => (a.order ?? Infinity) - (b.order ?? Infinity));
+  const homeProjects = featuredProjects.length > 0 ? featuredProjects : projects.slice(0, 3);
+  const homePosts = posts.slice(0, 3);
+
+  const shell = (title, body, depth = 2, footerBase = "../", active = "") =>
+    previewShell({
+      title: escapeHtml(title),
+      body,
+      depth,
+      footerBase,
+      active,
+      vercelAnalyticsScript,
+    });
+
+  const workListHtml = homeProjects
+    .map(
+      (p) => `
+        <li>
+          <a href="work/${p.slug}.html">${escapeHtml(p.title)}</a>
+          <span class="sub">${escapeHtml(p.summary)}</span>
+        </li>`
+    )
+    .join("");
+
+  const writingListHtml = homePosts
+    .map(
+      (p) => `
+        <li>
+          <a href="writing/${p.slug}.html">${escapeHtml(p.title)}</a>
+          <span class="sub">${escapeHtml(p.summary)}</span>
+        </li>`
+    )
+    .join("");
+
+  const homeBody = `
+    <section class="landing">
+      <div class="landing-gradient mesh-bg"></div>
+      <div class="landing-intro">
+        <div class="landing-intro-inner">
+          <h1 class="landing-name">${escapeHtml(homeConfig.hero.name)}</h1>
+          <p class="landing-bio">${escapeHtml(homeConfig.hero.bio)}</p>
+        </div>
+      </div>
+    </section>
+
+    <div class="content">
+      <section class="block">
+        <p class="label">work</p>
+        <ul class="plain-list">${workListHtml}</ul>
+      </section>
+
+      <section class="block">
+        <p class="label">writing</p>
+        <ul class="plain-list">${writingListHtml}</ul>
+      </section>
+
+      <section class="block">
+        <p class="label">reading</p>
+        <p class="muted-line"><strong style="color:var(--black);font-weight:600;">${escapeHtml(homeConfig.reading.title)}</strong> · ${escapeHtml(homeConfig.reading.author)}</p>
+      </section>
+    </div>
+  `;
+
+  await writeFile(
+    path.join(previewRoot, "index.html"),
+    previewShell({
+      title: "Vedant Misra (Preview)",
+      body: homeBody,
+      depth: 1,
+      footerBase: "",
+      active: "",
+      vercelAnalyticsScript,
+    })
+  );
+
+  for (const project of projects) {
+    const { story, technical } = splitProjectBody(project.body);
+    const panelId = `depth-${project.slug}`;
+
+    const projectBody = `
+    <div class="content">
+      <header class="page-head">
+        <h1>${escapeHtml(project.title)}</h1>
+        <p class="lead">${escapeHtml(project.summary)}</p>
+        ${
+          project.demo || project.repo
+            ? `<div class="inline-links">
+          ${project.demo ? `<a href="${escapeHtml(project.demo)}" target="_blank" rel="noopener noreferrer">demo</a>` : ""}
+          ${project.repo ? `<a href="${escapeHtml(project.repo)}" target="_blank" rel="noopener noreferrer">source</a>` : ""}
+        </div>`
+            : ""
+        }
+      </header>
+      <article>${markdownToHtml(story)}</article>
+      ${
+        technical
+          ? `<section class="depth-section">
+        <button type="button" class="depth-toggle" aria-expanded="false" aria-controls="${panelId}">
+          <span class="depth-toggle-text">technical details</span>
+        </button>
+        <div class="depth-panel" id="${panelId}" hidden>
+          <article>${markdownToHtml(technical)}</article>
+        </div>
+      </section>`
+          : ""
+      }
+    </div>
+  `;
+
+    await writeFile(
+      path.join(previewRoot, "work", `${project.slug}.html`),
+      shell(`${project.title} - Vedant Misra (Preview)`, projectBody, 2, "../", "work")
+    );
+  }
+
+  const allWorkBody = `
+    <div class="content">
+      <header class="page-head">
+        <h1>work</h1>
+      </header>
+      <ul class="plain-list">
+        ${projects
+          .map(
+            (p) => `
+          <li>
+            <a href="${p.slug}.html">${escapeHtml(p.title)}</a>
+            <span class="sub">${escapeHtml(p.summary)}</span>
+          </li>`
+          )
+          .join("")}
+      </ul>
+    </div>
+  `;
+
+  await writeFile(path.join(previewRoot, "work", "index.html"), shell("Work - Vedant Misra (Preview)", allWorkBody, 2, "../", "work"));
+
+  for (const post of posts) {
+    const postMeta = [formatDate(post.date), post.readTime].filter(Boolean).join(" · ");
+    const postBody = `
+    <div class="content">
+      <header class="page-head">
+        <h1>${escapeHtml(post.title)}</h1>
+        ${post.summary ? `<p class="lead">${escapeHtml(post.summary)}</p>` : ""}
+        <p class="meta">${escapeHtml(postMeta)}</p>
+      </header>
+      <article>${post.htmlBody}</article>
+    </div>
+  `;
+
+    await writeFile(
+      path.join(previewRoot, "writing", `${post.slug}.html`),
+      shell(`${post.title} - Vedant Misra (Preview)`, postBody, 2, "../", "writing")
+    );
+  }
+
+  const allWritingBody = `
+    <div class="content">
+      <header class="page-head"><h1>writing</h1></header>
+      <ul class="plain-list">
+        ${posts
+          .map(
+            (p) => `
+          <li>
+            <a href="${p.slug}.html">${escapeHtml(p.title)}</a>
+            <span class="sub">${escapeHtml(p.summary)}</span>
+          </li>`
+          )
+          .join("")}
+      </ul>
+    </div>
+  `;
+
+  await writeFile(
+    path.join(previewRoot, "writing", "index.html"),
+    shell("Writing - Vedant Misra (Preview)", allWritingBody, 2, "../", "writing")
+  );
+
+  const days = [];
+  const dayMap = new Map();
+  for (const log of logs) {
+    const [date, time = ""] = log.timestamp.split(" · ");
+    if (!dayMap.has(date)) {
+      const day = { date, entries: [] };
+      days.push(day);
+      dayMap.set(date, day);
+    }
+    dayMap.get(date).entries.push({ time, body: log.body });
+  }
+
+  const notesHtml = days.length
+    ? days
+        .map(
+          (day) => `
+      <div class="notes-day">
+        <div class="notes-day-label">${escapeHtml(day.date)}</div>
+        ${day.entries
+          .map(
+            (e) => `<div class="notes-entry">
+          <div class="notes-time">${escapeHtml(e.time)}</div>
+          <div>${markdownToHtml(e.body)}</div>
+        </div>`
+          )
+          .join("")}
+      </div>`
+        )
+        .join("")
+    : `<p class="muted-line">no notes yet.</p>`;
+
+  const notesBody = `
+    <div class="content">
+      <header class="page-head"><h1>notes</h1></header>
+      ${notesHtml}
+    </div>
+  `;
+
+  await writeFile(path.join(previewRoot, "notes", "index.html"), shell("Notes - Vedant Misra (Preview)", notesBody, 2, "../", "notes"));
+
+  const aboutBody = `
+    <div class="content">
+      <header class="page-head"><h1>about</h1></header>
+      <article>${markdownToHtml(aboutRaw)}</article>
+    </div>
+  `;
+
+  await writeFile(path.join(previewRoot, "about", "index.html"), shell("About - Vedant Misra (Preview)", aboutBody, 2, "../", "about"));
+
+  console.log(`Built preview at preview-b/ (${homeProjects.length} work items, ${posts.length} essays).`);
+}

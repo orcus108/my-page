@@ -1,0 +1,485 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>The Illusion of Understanding in the Age of LLMs - Vedant Misra (Preview)</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <style>
+
+      :root {
+        --white: #ffffff;
+        --black: #0a0a0a;
+        --muted: #6a6a6a;
+        --line: #ececec;
+        --font: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+        --max: 1120px;
+        --pad: clamp(1.25rem, 4vw, 3rem);
+        --gradient-url: url("../assets/hero-gradient.png");
+      }
+
+      * { box-sizing: border-box; }
+
+      body {
+        margin: 0;
+        font-family: var(--font);
+        background: var(--white);
+        color: var(--black);
+        line-height: 1.65;
+        font-size: 0.9375rem;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      a { color: inherit; text-underline-offset: 0.15em; }
+      a:hover { opacity: 0.65; }
+
+      .preview-banner {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 1rem;
+        padding: 0.45rem 1rem;
+        background: var(--black);
+        color: #f0f0f0;
+        font-size: 0.7rem;
+        font-weight: 500;
+      }
+
+      .preview-banner a { color: #f0f0f0; }
+
+      .nav-pill-wrap {
+        position: fixed;
+        top: 1.15rem;
+        left: 0;
+        right: 0;
+        z-index: 90;
+        display: flex;
+        justify-content: center;
+        padding: 0 1rem;
+        pointer-events: none;
+        transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.35s ease;
+      }
+
+      .nav-pill-wrap.is-hidden {
+        transform: translateY(calc(-100% - 1.5rem));
+        opacity: 0;
+      }
+
+      .nav-pill {
+        pointer-events: auto;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.9rem;
+        padding: 0.42rem 0.95rem;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.88);
+        backdrop-filter: blur(14px);
+        -webkit-backdrop-filter: blur(14px);
+        border: 1px solid rgba(0, 0, 0, 0.07);
+        box-shadow: 0 1px 8px rgba(0, 0, 0, 0.05);
+      }
+
+      .nav-pill a {
+        font-size: 0.75rem;
+        font-weight: 500;
+        text-decoration: none;
+        color: var(--muted);
+        white-space: nowrap;
+      }
+
+      .nav-pill a:hover,
+      .nav-pill a.is-active {
+        color: var(--black);
+        opacity: 1;
+      }
+
+      .mesh-bg {
+        background-image: var(--gradient-url);
+        background-size: cover;
+        background-position: center;
+      }
+
+      .landing-gradient {
+        min-height: min(72vh, 640px);
+      }
+
+      .landing-intro {
+        background: var(--white);
+      }
+
+      .landing-intro-inner {
+        max-width: var(--max);
+        margin: 0 auto;
+        padding: clamp(2rem, 5vw, 2.75rem) var(--pad);
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: clamp(2rem, 6vw, 5rem);
+        align-items: center;
+      }
+
+      .landing-name {
+        margin: 0;
+        font-size: clamp(2.5rem, 7vw, 4.5rem);
+        font-weight: 500;
+        line-height: 1.02;
+        letter-spacing: -0.04em;
+      }
+
+      .landing-bio {
+        margin: 0;
+        font-size: clamp(0.9rem, 1.3vw, 1rem);
+        line-height: 1.75;
+        color: var(--black);
+        max-width: 38ch;
+        justify-self: end;
+      }
+
+      .content {
+        max-width: var(--max);
+        margin: 0 auto;
+        padding: clamp(2.5rem, 5vw, 3.5rem) var(--pad) 2rem;
+      }
+
+      .block { margin-top: 2.75rem; }
+      .block:first-child { margin-top: 0; }
+
+      .label {
+        margin: 0 0 1rem;
+        font-size: 0.7rem;
+        font-weight: 600;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+
+      .plain-list {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+      }
+
+      .plain-list li + li { margin-top: 0.85rem; }
+
+      .plain-list a {
+        text-decoration: none;
+        font-weight: 600;
+      }
+
+      .plain-list a:hover { text-decoration: underline; opacity: 1; }
+
+      .plain-list .sub {
+        display: block;
+        margin-top: 0.15rem;
+        font-weight: 400;
+        color: var(--muted);
+      }
+
+      .muted-line {
+        margin: 0;
+        color: var(--muted);
+      }
+
+      .page-head {
+        margin: 0 0 2rem;
+      }
+
+      .page-head h1 {
+        margin: 0;
+        font-size: clamp(1.75rem, 4vw, 2.25rem);
+        font-weight: 700;
+        letter-spacing: -0.035em;
+        line-height: 1.1;
+      }
+
+      .page-head .lead {
+        margin: 0.6rem 0 0;
+        color: var(--muted);
+        max-width: 48ch;
+      }
+
+      .page-head .meta {
+        margin: 0.5rem 0 0;
+        font-size: 0.8rem;
+        color: var(--muted);
+      }
+
+      .inline-links {
+        margin-top: 1rem;
+        font-size: 0.875rem;
+      }
+
+      .inline-links a { margin-right: 1rem; }
+
+      article p { margin: 0.9rem 0 0; }
+      article p:first-child { margin-top: 0; }
+      article ul, article ol { margin: 0.9rem 0 0; padding-left: 1.15rem; }
+      article li + li { margin-top: 0.3rem; }
+      article h2 {
+        margin: 1.75rem 0 0;
+        font-size: 1.1rem;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+      }
+      article h3 { margin: 1.25rem 0 0; font-size: 0.95rem; font-weight: 600; }
+      article blockquote {
+        margin: 1.25rem 0 0;
+        padding-left: 0.85rem;
+        border-left: 1px solid var(--line);
+        color: var(--muted);
+      }
+
+      .md-image {
+        display: block;
+        max-width: 100%;
+        height: auto;
+        margin-top: 0.9rem;
+      }
+
+      p:has(> .md-image + .md-image) {
+        display: flex;
+        gap: 0.75rem;
+        margin-top: 0.9rem;
+      }
+
+      p:has(> .md-image + .md-image) .md-image { flex: 1; min-width: 0; margin-top: 0; }
+
+      .md-hr { border: 0; border-top: 1px solid var(--line); margin: 1.25rem 0; }
+
+      .md-table-wrap { overflow-x: auto; margin-top: 0.9rem; }
+
+      .md-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.85rem;
+      }
+
+      .md-table th, .md-table td {
+        padding: 0.45rem 0.65rem;
+        border: 1px solid var(--line);
+        text-align: left;
+      }
+
+      .md-table th { color: var(--muted); font-weight: 500; }
+
+      .depth-section { margin-top: 2.5rem; }
+
+      .depth-toggle {
+        padding: 0;
+        border: 0;
+        background: none;
+        color: var(--muted);
+        font: inherit;
+        font-size: 0.875rem;
+        cursor: pointer;
+        text-decoration: underline;
+        text-underline-offset: 0.15em;
+      }
+
+      .depth-toggle:hover { color: var(--black); }
+
+      .depth-panel {
+        margin-top: 1.25rem;
+        padding-top: 1.25rem;
+        border-top: 1px solid var(--line);
+      }
+
+      .depth-panel[hidden] { display: none; }
+
+      .notes-day { margin-bottom: 1.75rem; }
+      .notes-day-label {
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: var(--muted);
+        margin-bottom: 0.6rem;
+      }
+
+      .notes-entry + .notes-entry { margin-top: 1rem; }
+
+      .notes-time {
+        font-size: 0.72rem;
+        color: var(--muted);
+        margin-bottom: 0.15rem;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .site-footer {
+        max-width: var(--max);
+        margin: 0 auto;
+        padding: 2rem var(--pad) 2.5rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        gap: 1.5rem;
+        flex-wrap: wrap;
+        font-size: 0.8125rem;
+        color: var(--muted);
+        border-top: 1px solid var(--line);
+      }
+
+      .site-footer a {
+        color: var(--muted);
+        text-decoration: none;
+      }
+
+      .site-footer a:hover { color: var(--black); opacity: 1; }
+
+      @media (max-width: 768px) {
+        .landing-intro-inner { grid-template-columns: 1fr; }
+        .landing-bio { justify-self: start; max-width: none; }
+        .nav-pill { gap: 0.65rem; padding: 0.38rem 0.75rem; }
+        .nav-pill a { font-size: 0.7rem; }
+      }
+
+      @media (max-width: 520px) {
+        .nav-pill { gap: 0.55rem; padding: 0.36rem 0.7rem; }
+      }
+  
+    </style>
+  </head>
+  <body>
+    <aside class="preview-banner">
+      <span>preview</span>
+      <a href="../../index.html">current site</a>
+    </aside>
+
+    <div class="nav-pill-wrap">
+      <nav class="nav-pill" aria-label="Main"><a href="../work/index.html" class="">work</a><a href="../writing/index.html" class="is-active">writing</a><a href="../notes/index.html" class="">notes</a><a href="../about/index.html" class="">about</a><a href="mailto:misravedantsocials@gmail.com" class="">email</a></nav>
+    </div>
+
+    <div class="content">
+      <header class="page-head">
+        <h1>The Illusion of Understanding in the Age of LLMs</h1>
+        <p class="lead">reading is not knowing</p>
+        <p class="meta">Dec 26, 2025 · 6 min read</p>
+      </header>
+      <article><p>large language models are very good at explaining things. you can ask about quantum mechanics, reinforcement learning, roman politics, or startup strategy, and within seconds you get a clear, well-structured answer. it feels like learning has become effortless.</p>
+        <p>but there’s a problem.</p>
+        <p>llms can make it feel like you understand something long before you actually do.</p>
+        <p>this isn’t because the models are evil or misleading. it’s because they are extremely fluent. and fluency is powerful. when an explanation sounds smooth and coherent, your brain tends to assume it is correct and that you have absorbed it. the experience of reading it feels like understanding. but that feeling can be misleading.</p>
+        <p>this matters a lot for builders, students, and researchers — the people who rely on real understanding to create new things.</p>
+        <hr class="md-hr" />
+        <h2>why smooth language feels like understanding</h2>
+        <p>humans are wired to trust clarity. when something is expressed in simple, clean sentences, it reduces mental effort. your brain interprets that ease as a sign that the concept itself is simple and grasped.</p>
+        <p>psychologists call this the “fluency effect.” when information is easy to process, we judge it as more true and more familiar. llms are optimized to produce highly fluent text. they remove hesitation, uncertainty, and the messy parts of thinking. the result reads like a polished final draft.</p>
+        <p>but real understanding rarely feels smooth at first. it feels confusing. it includes false starts. it includes moments where you realize you don’t know what a term really means. it includes struggling to apply an idea without looking it up.</p>
+        <p>llms compress that entire messy process into a clean paragraph. you see the result, not the struggle that produced it.</p>
+        <p>so your brain mistakes the polished summary for your own understanding.</p>
+        <hr class="md-hr" />
+        <h2>the difference between recognition and recall</h2>
+        <p>here is a simple test.</p>
+        <p>after reading an explanation from an llm, close the tab. now try to explain the concept from scratch without looking at anything.</p>
+        <p>most people can’t.</p>
+        <p>they can recognize the explanation when they see it. it feels familiar. but they can’t recall it independently. recognition is passive. recall is active. real understanding shows up when you can reconstruct an idea yourself, apply it in a new context, or spot when something is wrong.</p>
+        <p>llms are excellent at giving you something that feels recognizable. they are less helpful in forcing you to wrestle with the idea.</p>
+        <p>that wrestling is where learning actually happens.</p>
+        <hr class="md-hr" />
+        <h2>why this is risky for builders</h2>
+        <p>if you are building products, writing code, or doing research, shallow understanding becomes expensive.</p>
+        <p>when you are learning something new — say distributed systems, attention mechanisms, or database indexing — an llm can give you a summary that makes everything sound manageable. you feel ready to move on.</p>
+        <p>but when you try to build, the cracks show. you don’t know which trade-offs matter. you don’t know the edge cases. you don’t know why a design works one way instead of another. you only know the surface explanation.</p>
+        <p>real builders need what you might call “mechanical understanding.” you should be able to explain how the system behaves when something goes wrong. you should know which assumptions it depends on. you should be able to reason about changes.</p>
+        <p>llms can describe a system. they cannot transfer experience into your head.</p>
+        <p>that gap becomes visible only when you try to use the knowledge.</p>
+        <hr class="md-hr" />
+        <h2>why it’s even riskier for students</h2>
+        <p>students are especially vulnerable because school rewards the appearance of understanding.</p>
+        <p>if you can produce a correct explanation in clear language, you often get full credit. llms are very good at producing exactly that. it becomes easy to read an answer, nod along, and move on.</p>
+        <p>but exams, interviews, and real projects test something deeper. they test whether you can solve a slightly different problem. they test whether you can derive a formula instead of quoting it. they test whether you can spot a flawed argument.</p>
+        <p>if your learning process mostly involves reading fluent explanations, you may overestimate your preparation.</p>
+        <p>the danger is subtle. you don’t feel ignorant. you feel informed. that is what makes it dangerous.</p>
+        <hr class="md-hr" />
+        <h2>the compression problem</h2>
+        <p>llms are trained to compress large amounts of information into compact summaries. this is useful. it saves time. it helps you get oriented quickly.</p>
+        <p>but compression hides structure.</p>
+        <p>when you read a textbook chapter, you see definitions, examples, proofs, counterexamples, diagrams, and exercises. the repetition and variation are not accidental. they build mental models gradually.</p>
+        <p>when an llm explains the same topic, it often condenses the main points into a short, smooth narrative. you get the “what” and sometimes the “why,” but you miss the long path that makes the idea stable in your mind.</p>
+        <p>it is like watching a highlight reel instead of playing the full game. you see the key moves, but you don’t feel the tension or understand the failed attempts.</p>
+        <p>understanding grows from interacting with the full process, not just the summary.</p>
+        <hr class="md-hr" />
+        <h2>the confidence trap</h2>
+        <p>another effect is overconfidence.</p>
+        <p>because llms respond quickly and confidently, you rarely see uncertainty. even when the model hedges, the text still feels polished. this creates an illusion that the topic itself is settled and straightforward.</p>
+        <p>in reality, many topics — especially in science and engineering — involve debate, trade-offs, and incomplete knowledge. when you only see clean explanations, you may miss where the edges are.</p>
+        <p>you might think, “i understand transformers,” when what you really understand is a simplified story about them.</p>
+        <p>confidence without depth can slow down growth. if you believe you already understand something, you stop digging.</p>
+        <hr class="md-hr" />
+        <h2>what real understanding feels like</h2>
+        <p>real understanding feels slower.</p>
+        <p>it includes moments where you can explain an idea in your own words, using your own examples. it includes the ability to predict what will happen if you change a variable. it includes noticing when two explanations contradict each other.</p>
+        <p>it often feels uncomfortable at first. you discover gaps. you realize that a term you have been using casually actually has a precise meaning. you try to derive something and fail.</p>
+        <p>that discomfort is not a sign of weakness. it is a sign that you are building real structure in your mind.</p>
+        <p>llms remove much of that discomfort. that is convenient, but it can also remove the signal that tells you learning is happening.</p>
+        <hr class="md-hr" />
+        <h2>how to use llms without being fooled</h2>
+        <p>the solution is not to avoid llms. they are powerful tools. the key is to change how you use them.</p>
+        <p>first, treat explanations as starting points, not endpoints. after reading one, close it and try to reconstruct the idea from memory. write it down. teach it to someone else. if you cannot, you have found a gap.</p>
+        <p>second, ask the model to generate problems instead of answers. try solving them before looking at any solution. this shifts you from passive reading to active thinking.</p>
+        <p>third, request counterexamples and edge cases. ask what breaks if an assumption changes. this forces you to see the structure of the concept, not just its surface form.</p>
+        <p>finally, build something. even a small project exposes shallow understanding quickly. when your code fails or your reasoning collapses, you learn where your mental model is weak.</p>
+        <p>use the model as a tutor that challenges you, not as a replacement for thinking.</p>
+        <hr class="md-hr" />
+        <h2>a new skill: resisting fluency</h2>
+        <p>in the past, learning required effort because information was scarce and hard to access. now information is abundant and easy to consume. the challenge has shifted.</p>
+        <p>the new skill is resisting the comfort of fluency.</p>
+        <p>when something sounds smooth, pause and ask: can i derive this myself? can i apply it in a new situation? do i know why each step is true?</p>
+        <p>if not, you are still at the surface.</p>
+        <p>llms are remarkable tools. they can accelerate learning dramatically. but they also create a new kind of illusion — the illusion that reading equals knowing.</p>
+        <p>for builders, students, and researchers, the real advantage will not go to those who consume the most explanations. it will go to those who convert explanations into understanding.</p>
+        <p>that conversion still requires effort. no model can remove that part.</p>
+        <p>and that is probably a good thing.</p></article>
+    </div>
+  
+
+    <footer class="site-footer">
+      <a href="mailto:misravedantsocials@gmail.com">misravedantsocials@gmail.com</a>
+      <a href="https://x.com/orcus108" target="_blank" rel="noopener noreferrer">x</a>
+    </footer>
+
+    <script defer src="/_vercel/insights/script.js"></script>
+  
+
+    <script>
+      (function() {
+        var wrap = document.querySelector('.nav-pill-wrap');
+        if (!wrap) return;
+        var lastY = window.scrollY;
+        var ticking = false;
+
+        window.addEventListener('scroll', function() {
+          if (ticking) return;
+          ticking = true;
+          requestAnimationFrame(function() {
+            var y = window.scrollY;
+            if (y > 64 && y > lastY + 4) {
+              wrap.classList.add('is-hidden');
+            } else if (y < lastY - 4) {
+              wrap.classList.remove('is-hidden');
+            }
+            lastY = y;
+            ticking = false;
+          });
+        }, { passive: true });
+      })();
+    </script>
+  
+
+    <script>
+      document.querySelectorAll('.depth-toggle').forEach(function(btn) {
+        var panel = document.getElementById(btn.getAttribute('aria-controls'));
+        if (!panel) return;
+        btn.addEventListener('click', function() {
+          var open = btn.getAttribute('aria-expanded') === 'true';
+          btn.setAttribute('aria-expanded', open ? 'false' : 'true');
+          panel.hidden = open;
+          btn.querySelector('.depth-toggle-text').textContent = open
+            ? 'technical details'
+            : 'hide technical details';
+        });
+      });
+    </script>
+  
+  </body>
+</html>

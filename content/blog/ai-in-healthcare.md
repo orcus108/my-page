@@ -5,6 +5,7 @@ date: 2026-01-15
 read_time: 8 min read
 summary: rethinking healthcare for a billion people
 ---
+
 when most people think about ai in healthcare, they imagine robots doing surgery or chatbots answering medical questions. that’s the version we usually see in tech news.
 
 but india’s story with ai in healthcare is different.

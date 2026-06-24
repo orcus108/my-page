@@ -4,8 +4,8 @@ slug: odds
 summary: polymarket for IIT Madras
 date: 2026-03-24
 status: Shipped
-featured: true
-order: 2
+featured: false
+order: 4
 repo: https://github.com/orcus108/odds
 demo: https://playodds.vercel.app/
 ---

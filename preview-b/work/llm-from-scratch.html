@@ -1,0 +1,429 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>llm from scratch - Vedant Misra (Preview)</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <style>
+
+      :root {
+        --white: #ffffff;
+        --black: #0a0a0a;
+        --muted: #6a6a6a;
+        --line: #ececec;
+        --font: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+        --max: 1120px;
+        --pad: clamp(1.25rem, 4vw, 3rem);
+        --gradient-url: url("../assets/hero-gradient.png");
+      }
+
+      * { box-sizing: border-box; }
+
+      body {
+        margin: 0;
+        font-family: var(--font);
+        background: var(--white);
+        color: var(--black);
+        line-height: 1.65;
+        font-size: 0.9375rem;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      a { color: inherit; text-underline-offset: 0.15em; }
+      a:hover { opacity: 0.65; }
+
+      .preview-banner {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 1rem;
+        padding: 0.45rem 1rem;
+        background: var(--black);
+        color: #f0f0f0;
+        font-size: 0.7rem;
+        font-weight: 500;
+      }
+
+      .preview-banner a { color: #f0f0f0; }
+
+      .nav-pill-wrap {
+        position: fixed;
+        top: 1.15rem;
+        left: 0;
+        right: 0;
+        z-index: 90;
+        display: flex;
+        justify-content: center;
+        padding: 0 1rem;
+        pointer-events: none;
+        transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.35s ease;
+      }
+
+      .nav-pill-wrap.is-hidden {
+        transform: translateY(calc(-100% - 1.5rem));
+        opacity: 0;
+      }
+
+      .nav-pill {
+        pointer-events: auto;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.9rem;
+        padding: 0.42rem 0.95rem;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.88);
+        backdrop-filter: blur(14px);
+        -webkit-backdrop-filter: blur(14px);
+        border: 1px solid rgba(0, 0, 0, 0.07);
+        box-shadow: 0 1px 8px rgba(0, 0, 0, 0.05);
+      }
+
+      .nav-pill a {
+        font-size: 0.75rem;
+        font-weight: 500;
+        text-decoration: none;
+        color: var(--muted);
+        white-space: nowrap;
+      }
+
+      .nav-pill a:hover,
+      .nav-pill a.is-active {
+        color: var(--black);
+        opacity: 1;
+      }
+
+      .mesh-bg {
+        background-image: var(--gradient-url);
+        background-size: cover;
+        background-position: center;
+      }
+
+      .landing-gradient {
+        min-height: min(72vh, 640px);
+      }
+
+      .landing-intro {
+        background: var(--white);
+      }
+
+      .landing-intro-inner {
+        max-width: var(--max);
+        margin: 0 auto;
+        padding: clamp(2rem, 5vw, 2.75rem) var(--pad);
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: clamp(2rem, 6vw, 5rem);
+        align-items: center;
+      }
+
+      .landing-name {
+        margin: 0;
+        font-size: clamp(2.5rem, 7vw, 4.5rem);
+        font-weight: 500;
+        line-height: 1.02;
+        letter-spacing: -0.04em;
+      }
+
+      .landing-bio {
+        margin: 0;
+        font-size: clamp(0.9rem, 1.3vw, 1rem);
+        line-height: 1.75;
+        color: var(--black);
+        max-width: 38ch;
+        justify-self: end;
+      }
+
+      .content {
+        max-width: var(--max);
+        margin: 0 auto;
+        padding: clamp(2.5rem, 5vw, 3.5rem) var(--pad) 2rem;
+      }
+
+      .block { margin-top: 2.75rem; }
+      .block:first-child { margin-top: 0; }
+
+      .label {
+        margin: 0 0 1rem;
+        font-size: 0.7rem;
+        font-weight: 600;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+
+      .plain-list {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+      }
+
+      .plain-list li + li { margin-top: 0.85rem; }
+
+      .plain-list a {
+        text-decoration: none;
+        font-weight: 600;
+      }
+
+      .plain-list a:hover { text-decoration: underline; opacity: 1; }
+
+      .plain-list .sub {
+        display: block;
+        margin-top: 0.15rem;
+        font-weight: 400;
+        color: var(--muted);
+      }
+
+      .muted-line {
+        margin: 0;
+        color: var(--muted);
+      }
+
+      .page-head {
+        margin: 0 0 2rem;
+      }
+
+      .page-head h1 {
+        margin: 0;
+        font-size: clamp(1.75rem, 4vw, 2.25rem);
+        font-weight: 700;
+        letter-spacing: -0.035em;
+        line-height: 1.1;
+      }
+
+      .page-head .lead {
+        margin: 0.6rem 0 0;
+        color: var(--muted);
+        max-width: 48ch;
+      }
+
+      .page-head .meta {
+        margin: 0.5rem 0 0;
+        font-size: 0.8rem;
+        color: var(--muted);
+      }
+
+      .inline-links {
+        margin-top: 1rem;
+        font-size: 0.875rem;
+      }
+
+      .inline-links a { margin-right: 1rem; }
+
+      article p { margin: 0.9rem 0 0; }
+      article p:first-child { margin-top: 0; }
+      article ul, article ol { margin: 0.9rem 0 0; padding-left: 1.15rem; }
+      article li + li { margin-top: 0.3rem; }
+      article h2 {
+        margin: 1.75rem 0 0;
+        font-size: 1.1rem;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+      }
+      article h3 { margin: 1.25rem 0 0; font-size: 0.95rem; font-weight: 600; }
+      article blockquote {
+        margin: 1.25rem 0 0;
+        padding-left: 0.85rem;
+        border-left: 1px solid var(--line);
+        color: var(--muted);
+      }
+
+      .md-image {
+        display: block;
+        max-width: 100%;
+        height: auto;
+        margin-top: 0.9rem;
+      }
+
+      p:has(> .md-image + .md-image) {
+        display: flex;
+        gap: 0.75rem;
+        margin-top: 0.9rem;
+      }
+
+      p:has(> .md-image + .md-image) .md-image { flex: 1; min-width: 0; margin-top: 0; }
+
+      .md-hr { border: 0; border-top: 1px solid var(--line); margin: 1.25rem 0; }
+
+      .md-table-wrap { overflow-x: auto; margin-top: 0.9rem; }
+
+      .md-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.85rem;
+      }
+
+      .md-table th, .md-table td {
+        padding: 0.45rem 0.65rem;
+        border: 1px solid var(--line);
+        text-align: left;
+      }
+
+      .md-table th { color: var(--muted); font-weight: 500; }
+
+      .depth-section { margin-top: 2.5rem; }
+
+      .depth-toggle {
+        padding: 0;
+        border: 0;
+        background: none;
+        color: var(--muted);
+        font: inherit;
+        font-size: 0.875rem;
+        cursor: pointer;
+        text-decoration: underline;
+        text-underline-offset: 0.15em;
+      }
+
+      .depth-toggle:hover { color: var(--black); }
+
+      .depth-panel {
+        margin-top: 1.25rem;
+        padding-top: 1.25rem;
+        border-top: 1px solid var(--line);
+      }
+
+      .depth-panel[hidden] { display: none; }
+
+      .notes-day { margin-bottom: 1.75rem; }
+      .notes-day-label {
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: var(--muted);
+        margin-bottom: 0.6rem;
+      }
+
+      .notes-entry + .notes-entry { margin-top: 1rem; }
+
+      .notes-time {
+        font-size: 0.72rem;
+        color: var(--muted);
+        margin-bottom: 0.15rem;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .site-footer {
+        max-width: var(--max);
+        margin: 0 auto;
+        padding: 2rem var(--pad) 2.5rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        gap: 1.5rem;
+        flex-wrap: wrap;
+        font-size: 0.8125rem;
+        color: var(--muted);
+        border-top: 1px solid var(--line);
+      }
+
+      .site-footer a {
+        color: var(--muted);
+        text-decoration: none;
+      }
+
+      .site-footer a:hover { color: var(--black); opacity: 1; }
+
+      @media (max-width: 768px) {
+        .landing-intro-inner { grid-template-columns: 1fr; }
+        .landing-bio { justify-self: start; max-width: none; }
+        .nav-pill { gap: 0.65rem; padding: 0.38rem 0.75rem; }
+        .nav-pill a { font-size: 0.7rem; }
+      }
+
+      @media (max-width: 520px) {
+        .nav-pill { gap: 0.55rem; padding: 0.36rem 0.7rem; }
+      }
+  
+    </style>
+  </head>
+  <body>
+    <aside class="preview-banner">
+      <span>preview</span>
+      <a href="../../index.html">current site</a>
+    </aside>
+
+    <div class="nav-pill-wrap">
+      <nav class="nav-pill" aria-label="Main"><a href="../work/index.html" class="is-active">work</a><a href="../writing/index.html" class="">writing</a><a href="../notes/index.html" class="">notes</a><a href="../about/index.html" class="">about</a><a href="mailto:misravedantsocials@gmail.com" class="">email</a></nav>
+    </div>
+
+    <div class="content">
+      <header class="page-head">
+        <h1>llm from scratch</h1>
+        <p class="lead">building an llm from scratch</p>
+        <div class="inline-links">
+          
+          <a href="https://github.com/orcus108/llm-from-scratch" target="_blank" rel="noopener noreferrer">source</a>
+        </div>
+      </header>
+      <article><p>building every single component of an LLM from scratch using PyTorch.</p>
+        <p>the goal is to understand how llms actually work from first principles.</p>
+        <hr class="md-hr" />
+        <p>covered so far: <br /> <br /> <strong>1. data &amp; tokenization pipeline</strong></p>
+        <ul><li>text cleaning and normalization</li><li>tokenization pipeline for autoregressive training</li><li>dataset integration using hugging face corpora</li></ul>
+        <p><strong>2. positional encoding strategies</strong></p>
+        <ul><li>learned (linear) positional embeddings</li><li>rotary positional embeddings (rope)</li></ul>
+        <p><strong>3. attention mechanisms</strong></p>
+        <ul><li>scaled dot-product attention</li><li>multi-head attention</li><li>advanced attention variants:</li><li>grouped query attention (gqa)</li><li>multi-head latent attention (mla)</li><li>sliding window attention (swa)</li></ul>
+        <p><strong>4. transformer architecture design</strong></p>
+        <ul><li>complete transformer block implementation</li><li>layer normalization</li><li>mlp / feed-forward networks</li><li>residual connections</li></ul>
+        <p><strong>5. scaling &amp; efficiency techniques</strong></p>
+        <ul><li>mixture-of-experts (moe) routing</li><li>kv caching for optimized inference</li></ul>
+        <p><strong>6. training &amp; adaptation</strong></p>
+        <ul><li>autoregressive pretraining on large-scale corpora</li><li>classification fine-tuning</li><li>supervised instruction fine-tuning</li></ul></article>
+      
+    </div>
+  
+
+    <footer class="site-footer">
+      <a href="mailto:misravedantsocials@gmail.com">misravedantsocials@gmail.com</a>
+      <a href="https://x.com/orcus108" target="_blank" rel="noopener noreferrer">x</a>
+    </footer>
+
+    <script defer src="/_vercel/insights/script.js"></script>
+  
+
+    <script>
+      (function() {
+        var wrap = document.querySelector('.nav-pill-wrap');
+        if (!wrap) return;
+        var lastY = window.scrollY;
+        var ticking = false;
+
+        window.addEventListener('scroll', function() {
+          if (ticking) return;
+          ticking = true;
+          requestAnimationFrame(function() {
+            var y = window.scrollY;
+            if (y > 64 && y > lastY + 4) {
+              wrap.classList.add('is-hidden');
+            } else if (y < lastY - 4) {
+              wrap.classList.remove('is-hidden');
+            }
+            lastY = y;
+            ticking = false;
+          });
+        }, { passive: true });
+      })();
+    </script>
+  
+
+    <script>
+      document.querySelectorAll('.depth-toggle').forEach(function(btn) {
+        var panel = document.getElementById(btn.getAttribute('aria-controls'));
+        if (!panel) return;
+        btn.addEventListener('click', function() {
+          var open = btn.getAttribute('aria-expanded') === 'true';
+          btn.setAttribute('aria-expanded', open ? 'false' : 'true');
+          panel.hidden = open;
+          btn.querySelector('.depth-toggle-text').textContent = open
+            ? 'technical details'
+            : 'hide technical details';
+        });
+      });
+    </script>
+  
+  </body>
+</html>
