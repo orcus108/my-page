@@ -1,1 +1,5 @@
 .vercel
+node_modules/
+.writing-*.png
+adapted-*-DESIGN.md
+images/Untitled-*.png

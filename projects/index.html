@@ -129,21 +129,48 @@
       article ol { list-style: decimal; padding-left: 1.1rem; }
       article li + li { margin-top: 0.45rem; }
       .md-image { display: block; max-width: 100%; height: auto; margin-top: 0.9rem; border-radius: 2px; }
+      .mockup-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 1rem;
+        margin-top: 0.9rem;
+      }
+      .mockup-grid .md-image { margin-top: 0; width: 100%; }
+      @media (max-width: 560px) {
+        .mockup-grid { grid-template-columns: 1fr; }
+      }
+      .video-embed {
+        position: relative;
+        width: 100%;
+        aspect-ratio: 16 / 9;
+        margin-top: 1.25rem;
+        border-radius: 4px;
+        overflow: hidden;
+        background: #000;
+      }
+      .video-embed iframe {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        border: 0;
+      }
+      .video-embed-link {
+        margin: 0.65rem 0 0;
+        font-size: 0.85rem;
+        color: var(--muted);
+      }
+      .video-embed-link a {
+        text-decoration: underline;
+        text-underline-offset: 0.18em;
+        text-decoration-color: var(--line);
+      }
+      .video-embed-link a:hover { text-decoration-color: currentColor; }
       p:has(> .md-image + .md-image) { display: flex; gap: 1.5rem; align-items: flex-start; margin-top: 0.9rem; }
       p:has(> .md-image + .md-image) .md-image { flex: 1; min-width: 0; margin-top: 0; }
       .md-hr { border: 0; border-top: 1px solid var(--line); margin: 1.2rem 0; }
       blockquote { margin: 1.5rem 0 0; padding-left: 1rem; border-left: 2px solid var(--line); }
       blockquote p { margin: 0; color: var(--muted); line-height: 1.6; }
-      .status-chip {
-        display: inline-block;
-        padding: 0.15rem 0.4rem;
-        border-radius: 2px;
-        font-size: 0.72rem;
-        border: 1px solid var(--line);
-        color: var(--muted);
-        position: relative;
-        cursor: default;
-      }
       .stack-chip {
         display: inline-block;
         padding: 0.15rem 0.4rem;
@@ -152,28 +179,6 @@
         border: 1px solid var(--line);
         color: var(--muted);
       }
-      .status-chip.status-in-progress { border-color: #7c3aed; color: #7c3aed; }
-      .status-chip.status-shipped { border-color: #059669; color: #059669; }
-      .status-chip.status-archived { border-color: var(--line); color: var(--muted); }
-      [data-theme="dark"] .status-chip.status-in-progress { border-color: #a78bfa; color: #a78bfa; }
-      [data-theme="dark"] .status-chip.status-shipped { border-color: #6ee7b7; color: #6ee7b7; }
-      .status-chip[data-tooltip]::after {
-        content: attr(data-tooltip);
-        position: absolute;
-        bottom: calc(100% + 6px);
-        left: 50%;
-        transform: translateX(-50%);
-        background: var(--fg);
-        color: var(--bg);
-        font-size: 0.7rem;
-        white-space: nowrap;
-        padding: 0.2rem 0.45rem;
-        border-radius: 2px;
-        pointer-events: none;
-        opacity: 0;
-        transition: opacity 0.15s ease;
-      }
-      .status-chip[data-tooltip]:hover::after { opacity: 1; }
 
       .md-table-wrap { overflow-x: auto; margin-top: 0.9rem; }
       .md-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
@@ -206,17 +211,6 @@
 
       .list-item-link { transition: transform 0.15s ease; }
       .list-item-link:hover { transform: translateX(4px); }
-
-      @keyframes chip-glow-light {
-        0%, 100% { box-shadow: 0 0 0 0 rgba(124, 58, 237, 0); }
-        50% { box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.2); }
-      }
-      @keyframes chip-glow-dark {
-        0%, 100% { box-shadow: 0 0 0 0 rgba(167, 139, 250, 0); }
-        50% { box-shadow: 0 0 0 3px rgba(167, 139, 250, 0.2); }
-      }
-      .status-chip.status-in-progress { animation: chip-glow-light 2.5s ease-in-out infinite; }
-      [data-theme="dark"] .status-chip.status-in-progress { animation: chip-glow-dark 2.5s ease-in-out infinite; }
 
 @media (max-width: 640px) {
         main {
@@ -281,6 +275,52 @@
           font-size: 0.75rem;
         }
       }
+
+      .md-image { cursor: zoom-in; }
+      .lightbox {
+        position: fixed;
+        inset: 0;
+        z-index: 3000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: clamp(1rem, 4vw, 2.5rem);
+        background: rgba(0, 0, 0, 0.9);
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.2s ease, visibility 0.2s ease;
+      }
+      .lightbox.is-open {
+        opacity: 1;
+        visibility: visible;
+      }
+      .lightbox img {
+        display: block;
+        max-width: min(100%, 1200px);
+        max-height: calc(100vh - 5rem);
+        width: auto;
+        height: auto;
+        object-fit: contain;
+        border-radius: 4px;
+        box-shadow: 0 24px 80px rgba(0, 0, 0, 0.45);
+      }
+      .lightbox-close {
+        position: absolute;
+        top: clamp(0.75rem, 3vw, 1.25rem);
+        right: clamp(0.75rem, 3vw, 1.25rem);
+        width: 2.5rem;
+        height: 2.5rem;
+        border: 0;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.12);
+        color: #fff;
+        font-size: 1.5rem;
+        line-height: 1;
+        cursor: pointer;
+      }
+      .lightbox-close:hover { background: rgba(255, 255, 255, 0.22); }
+      body.lightbox-open { overflow: hidden; }
+
   
     </style>
   </head>
@@ -305,11 +345,11 @@
         <ul>
           <li class="list-item"><a class="list-item-link" href="friday.html"><span class="list-link list-title">friday</span><div class="list-meta">a fully local voice assistant for your mac</div></a></li>
           <li class="list-item"><a class="list-item-link" href="clippy.html"><span class="list-link list-title">clippy</span><div class="list-meta">a privacy-first clipboard manager for macos</div></a></li>
+          <li class="list-item"><a class="list-item-link" href="sakhi.html"><span class="list-link list-title">sakhi</span><div class="list-meta">ai for india’s frontline health workers</div></a></li>
           <li class="list-item"><a class="list-item-link" href="odds.html"><span class="list-link list-title">odds</span><div class="list-meta">polymarket for iit madras</div></a></li>
           <li class="list-item"><a class="list-item-link" href="llm-from-scratch.html"><span class="list-link list-title">llm from scratch</span><div class="list-meta">building an llm from scratch</div></a></li>
           <li class="list-item"><a class="list-item-link" href="cartoonification.html"><span class="list-link list-title">image cartoonification</span><div class="list-meta">pix2pix conditional gan implementation</div></a></li>
           <li class="list-item"><a class="list-item-link" href="catgpt.html"><span class="list-link list-title">catgpt</span><div class="list-meta">chatgpt but with whiskers</div></a></li>
-          <li class="list-item"><a class="list-item-link" href="sakhi.html"><span class="list-link list-title">sakhi</span><div class="list-meta">ai for india’s frontline health workers</div></a></li>
         </ul>
       </section>
   
@@ -396,5 +436,57 @@
       });
     </script>
   
+<script>
+      (function () {
+        var lb = null;
+        var lbImg = null;
+        var lbClose = null;
+
+        function ensureLightbox() {
+          if (lb) return;
+          lb = document.createElement("div");
+          lb.className = "lightbox";
+          lb.setAttribute("role", "dialog");
+          lb.setAttribute("aria-modal", "true");
+          lb.setAttribute("aria-label", "Expanded image");
+          lb.innerHTML = '<button type="button" class="lightbox-close" aria-label="Close">&times;</button><img alt="">';
+          lbImg = lb.querySelector("img");
+          lbClose = lb.querySelector(".lightbox-close");
+          lbClose.addEventListener("click", close);
+          lb.addEventListener("click", function (e) {
+            if (e.target === lb) close();
+          });
+          document.body.appendChild(lb);
+        }
+
+        function open(src, alt) {
+          ensureLightbox();
+          lbImg.src = src;
+          lbImg.alt = alt || "";
+          lb.classList.add("is-open");
+          document.body.classList.add("lightbox-open");
+          document.addEventListener("keydown", onKey);
+          lbClose.focus();
+        }
+
+        function close() {
+          if (!lb) return;
+          lb.classList.remove("is-open");
+          document.body.classList.remove("lightbox-open");
+          document.removeEventListener("keydown", onKey);
+          lbImg.removeAttribute("src");
+        }
+
+        function onKey(e) {
+          if (e.key === "Escape") close();
+        }
+
+        document.addEventListener("click", function (e) {
+          var img = e.target.closest(".md-image");
+          if (!img || !img.src) return;
+          e.preventDefault();
+          open(img.currentSrc || img.src, img.alt);
+        });
+      })();</script>
   </body>
 </html>

@@ -3,6 +3,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { buildPreviewB as runPreviewB } from "./preview-b.mjs";
 import { buildPreviewC as runPreviewC } from "./preview-c.mjs";
+import { lightboxStyles, lightboxScript } from "./lightbox.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const rootDir = path.resolve(__dirname, "..");
@@ -54,6 +55,26 @@ function parseFrontmatter(raw) {
   return { attrs, body };
 }
 
+function youtubeVideoId(input) {
+  const s = String(input || "").trim();
+  const patterns = [
+    /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/,
+    /^([a-zA-Z0-9_-]{11})$/,
+  ];
+  for (const pattern of patterns) {
+    const match = s.match(pattern);
+    if (match) return match[1];
+  }
+  return null;
+}
+
+function youtubeEmbedHtml(urlOrId) {
+  const id = youtubeVideoId(urlOrId);
+  if (!id) return "";
+  const watchUrl = `https://www.youtube.com/watch?v=${id}`;
+  return `<div class="video-embed"><iframe src="https://www.youtube-nocookie.com/embed/${escapeHtml(id)}" title="YouTube video" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen loading="lazy"></iframe></div><p class="video-embed-link"><a href="${escapeHtml(watchUrl)}" target="_blank" rel="noopener noreferrer">watch on youtube</a></p>`;
+}
+
 function normalizeImageSrc(src) {
   if (src.startsWith("http://") || src.startsWith("https://") || src.startsWith("/")) {
     return src;
@@ -67,6 +88,13 @@ function normalizeImageSrc(src) {
   return src;
 }
 
+function externalLinkAttrs(href) {
+  if (/^https?:\/\//i.test(String(href).trim())) {
+    return ' target="_blank" rel="noopener noreferrer"';
+  }
+  return "";
+}
+
 function inlineMarkdown(text) {
   const escaped = escapeHtml(text);
   return escaped
@@ -76,7 +104,7 @@ function inlineMarkdown(text) {
       return `<img class="md-image" src="${escapeHtml(normalizedSrc)}" alt="${escapeHtml(alt)}" loading="lazy" decoding="async" />`;
     })
     .replace(/\[([^\]]+)\]\(([^)]+)\)/g, (_m, label, href) => {
-      return `<a href="${escapeHtml(href)}">${escapeHtml(label)}</a>`;
+      return `<a href="${escapeHtml(href)}"${externalLinkAttrs(href)}>${escapeHtml(label)}</a>`;
     })
     .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
     .replace(/__([^_]+)__/g, "<strong>$1</strong>")
@@ -92,6 +120,10 @@ function markdownToHtml(markdown) {
   let orderedList = [];
   let tableLines = [];
   let blockquote = [];
+  let mockupLines = [];
+  let inMockups = false;
+  let inYoutube = false;
+  let youtubeUrl = "";
 
   const flushParagraph = () => {
     if (!paragraph.length) return;
@@ -118,6 +150,33 @@ function markdownToHtml(markdown) {
     blockquote = [];
   };
 
+  const flushMockups = () => {
+    if (!mockupLines.length) return;
+    const imgs = mockupLines
+      .map((line) => {
+        const m = line.match(/^!\[([^\]]*)\]\(([^)]+)\)$/);
+        if (!m) return "";
+        const normalizedSrc = normalizeImageSrc(m[2]);
+        return `<img class="md-image" src="${escapeHtml(normalizedSrc)}" alt="${escapeHtml(m[1])}" loading="lazy" decoding="async" />`;
+      })
+      .filter(Boolean)
+      .join("");
+    if (imgs) out.push(`<div class="mockup-grid">${imgs}</div>`);
+    mockupLines = [];
+    inMockups = false;
+  };
+
+  const flushYoutube = () => {
+    if (!youtubeUrl) {
+      inYoutube = false;
+      return;
+    }
+    const embed = youtubeEmbedHtml(youtubeUrl);
+    if (embed) out.push(embed);
+    youtubeUrl = "";
+    inYoutube = false;
+  };
+
   const flushTable = () => {
     if (!tableLines.length) return;
     const [headerLine, , ...bodyLines] = tableLines;
@@ -135,6 +194,46 @@ function markdownToHtml(markdown) {
 
   for (const lineRaw of lines) {
     const line = lineRaw.trim();
+
+    if (inYoutube) {
+      if (line === ":::") {
+        flushYoutube();
+        continue;
+      }
+      if (line) youtubeUrl = line;
+      continue;
+    }
+
+    if (inMockups) {
+      if (line === ":::") {
+        flushMockups();
+        continue;
+      }
+      if (line) mockupLines.push(line);
+      continue;
+    }
+
+    if (line === "::: youtube") {
+      flushParagraph();
+      flushList();
+      flushOrderedList();
+      flushBlockquote();
+      flushTable();
+      inYoutube = true;
+      youtubeUrl = "";
+      continue;
+    }
+
+    if (line === "::: mockups") {
+      flushParagraph();
+      flushList();
+      flushOrderedList();
+      flushBlockquote();
+      flushTable();
+      inMockups = true;
+      mockupLines = [];
+      continue;
+    }
 
     // Table row detection
     if (line.startsWith("|") && line.endsWith("|")) {
@@ -218,6 +317,8 @@ function markdownToHtml(markdown) {
   flushOrderedList();
   flushBlockquote();
   flushTable();
+  flushMockups();
+  flushYoutube();
   return out.join("\n        ");
 }
 
@@ -345,21 +446,48 @@ function baseStyles() {
       article ol { list-style: decimal; padding-left: 1.1rem; }
       article li + li { margin-top: 0.45rem; }
       .md-image { display: block; max-width: 100%; height: auto; margin-top: 0.9rem; border-radius: 2px; }
+      .mockup-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 1rem;
+        margin-top: 0.9rem;
+      }
+      .mockup-grid .md-image { margin-top: 0; width: 100%; }
+      @media (max-width: 560px) {
+        .mockup-grid { grid-template-columns: 1fr; }
+      }
+      .video-embed {
+        position: relative;
+        width: 100%;
+        aspect-ratio: 16 / 9;
+        margin-top: 1.25rem;
+        border-radius: 4px;
+        overflow: hidden;
+        background: #000;
+      }
+      .video-embed iframe {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        border: 0;
+      }
+      .video-embed-link {
+        margin: 0.65rem 0 0;
+        font-size: 0.85rem;
+        color: var(--muted);
+      }
+      .video-embed-link a {
+        text-decoration: underline;
+        text-underline-offset: 0.18em;
+        text-decoration-color: var(--line);
+      }
+      .video-embed-link a:hover { text-decoration-color: currentColor; }
       p:has(> .md-image + .md-image) { display: flex; gap: 1.5rem; align-items: flex-start; margin-top: 0.9rem; }
       p:has(> .md-image + .md-image) .md-image { flex: 1; min-width: 0; margin-top: 0; }
       .md-hr { border: 0; border-top: 1px solid var(--line); margin: 1.2rem 0; }
       blockquote { margin: 1.5rem 0 0; padding-left: 1rem; border-left: 2px solid var(--line); }
       blockquote p { margin: 0; color: var(--muted); line-height: 1.6; }
-      .status-chip {
-        display: inline-block;
-        padding: 0.15rem 0.4rem;
-        border-radius: 2px;
-        font-size: 0.72rem;
-        border: 1px solid var(--line);
-        color: var(--muted);
-        position: relative;
-        cursor: default;
-      }
       .stack-chip {
         display: inline-block;
         padding: 0.15rem 0.4rem;
@@ -368,28 +496,6 @@ function baseStyles() {
         border: 1px solid var(--line);
         color: var(--muted);
       }
-      .status-chip.status-in-progress { border-color: #7c3aed; color: #7c3aed; }
-      .status-chip.status-shipped { border-color: #059669; color: #059669; }
-      .status-chip.status-archived { border-color: var(--line); color: var(--muted); }
-      [data-theme="dark"] .status-chip.status-in-progress { border-color: #a78bfa; color: #a78bfa; }
-      [data-theme="dark"] .status-chip.status-shipped { border-color: #6ee7b7; color: #6ee7b7; }
-      .status-chip[data-tooltip]::after {
-        content: attr(data-tooltip);
-        position: absolute;
-        bottom: calc(100% + 6px);
-        left: 50%;
-        transform: translateX(-50%);
-        background: var(--fg);
-        color: var(--bg);
-        font-size: 0.7rem;
-        white-space: nowrap;
-        padding: 0.2rem 0.45rem;
-        border-radius: 2px;
-        pointer-events: none;
-        opacity: 0;
-        transition: opacity 0.15s ease;
-      }
-      .status-chip[data-tooltip]:hover::after { opacity: 1; }
 
       .md-table-wrap { overflow-x: auto; margin-top: 0.9rem; }
       .md-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
@@ -422,17 +528,6 @@ function baseStyles() {
 
       .list-item-link { transition: transform 0.15s ease; }
       .list-item-link:hover { transform: translateX(4px); }
-
-      @keyframes chip-glow-light {
-        0%, 100% { box-shadow: 0 0 0 0 rgba(124, 58, 237, 0); }
-        50% { box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.2); }
-      }
-      @keyframes chip-glow-dark {
-        0%, 100% { box-shadow: 0 0 0 0 rgba(167, 139, 250, 0); }
-        50% { box-shadow: 0 0 0 3px rgba(167, 139, 250, 0.2); }
-      }
-      .status-chip.status-in-progress { animation: chip-glow-light 2.5s ease-in-out infinite; }
-      [data-theme="dark"] .status-chip.status-in-progress { animation: chip-glow-dark 2.5s ease-in-out infinite; }
 
 @media (max-width: 640px) {
         main {
@@ -497,6 +592,7 @@ function baseStyles() {
           font-size: 0.75rem;
         }
       }
+${lightboxStyles}
   `;
 }
 
@@ -680,6 +776,7 @@ ${body}
 ${vercelAnalyticsScript()}
 ${easterEggScript()}
 ${themeScript()}
+${lightboxScript()}
   </body>
 </html>
 `;
@@ -712,6 +809,7 @@ async function loadCollection(dir, type) {
       featured: attrs.featured === "true",
       order: attrs.order ? parseInt(attrs.order, 10) : null,
       image: attrs.image || "",
+      banner: attrs.banner || "",
       date,
       body,
       htmlBody: markdownToHtml(body)
@@ -1165,10 +1263,7 @@ ${header("../index.html", "home", "index.html", "projects")}
             : ""}
         </div>
         <p class="muted">${escapeHtml(project.summary.toLowerCase())}</p>
-        <div style="display:flex;align-items:center;gap:0.6rem;flex-wrap:wrap;margin-top:0.6rem;">
-          ${project.status ? `<span class="status-chip status-${project.status.toLowerCase().replace(/\s+/g, "-")}" data-tooltip="${{ shipped: "live and done", "in-progress": "currently being built", archived: "put on hold" }[project.status.toLowerCase().replace(/\s+/g, "-")] || ""}">${escapeHtml(project.status.toLowerCase())}</span>` : ""}
-          ${project.date ? `<span class="muted" style="font-size:0.72rem;">${formatMonthYear(project.date)}</span>` : ""}
-        </div>
+        ${project.date ? `<div style="margin-top:0.6rem;"><span class="muted" style="font-size:0.72rem;">${formatMonthYear(project.date)}</span></div>` : ""}
       </section>
 
       <section>

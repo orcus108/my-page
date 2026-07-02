@@ -3,7 +3,6 @@ title: Clippy
 slug: clippy
 summary: a privacy-first clipboard manager for macOS
 date: 2026-04-24
-status: shipped
 repo: https://github.com/orcus108/clippy
 demo: https://getclippy.vercel.app
 featured: true

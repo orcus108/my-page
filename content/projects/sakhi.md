@@ -2,85 +2,108 @@
 title: Sakhi
 slug: sakhi
 summary: ai for india’s frontline health workers
+date: 2026-03-27
+banner: "#2563eb"
 repo: https://github.com/orcus108/sakhi
 demo: https://sakhi-asha.vercel.app
 featured: true
 order: 1
 ---
 
-across India, ASHA workers are the backbone of community healthcare. they support families through pregnancy, childhood illnesses, chronic conditions, immunizations, and public health outreach. for many villages, she is the first — and sometimes only — link to the healthcare system.
+india's maternal mortality ratio is 97 per 100,000 live births, concentrated in rural areas. about a million ASHA workers make life-critical referral decisions alone in the field. they can take BP, check fetal heart rates, and observe newborns, but have no tool to tell them when a reading warrants emergency referral vs. routine follow-up.
 
-yet her work is burdened by paper registers, complex protocols, manual newborn visit scheduling, and opaque incentive (salary) claim processes. she tracks households across multiple notebooks, memorizes evolving guidelines, and escalates doubts to seniors when immediate clarity isn’t available. the administrative load is heavy, especially in low-connectivity settings.
+**sakhi** (sakhī, hindi for "female friend") is a mobile-first clinical companion built for ASHA workers. built for the [MedGemma Impact Challenge](https://www.kaggle.com/competitions/med-gemma-impact-challenge), it gives grounded decision support for antenatal and newborn visits when connectivity and senior clinicians aren't available.
 
-**sakhi** (hindi for "female friend") is a multilingual, voice-first, offline AI companion built to support ASHA workers in the field. it digitizes registers through guided voice interaction, automates visit scheduling, provides real-time protocol guidance, and tracks incentive claims transparently. powered by MedGemma’s medical text capabilities, sakhi can offer grounded general medical guidance when needed. using multimodal understanding, it can also analyze images, such as visible symptoms or medical documents, and generate preliminary structured insights to assist frontline decision-making.
+three constraints shaped how i built it:
 
-sakhi isn't here to replace ASHA workers, it's here to assist her in doing what she does best.
+- **offline:** villages often have no signal. the app shell caches locally, patient data stays on-device, and MOHFW rule-based triage runs without connectivity. when signal returns, pending visits sync and AI results replace local ones in-place.
+- **voice-first:** during a home visit, speaking is faster than typing, especially for workers more comfortable talking than filling forms. checkup flows and ask sakhi support voice input.
+- **multi-lingual:** impact at scale means the product can't be English-only. shipped with English and Hindi across the UI and AI responses; embeddings and clinical guidelines indexed for multilingual retrieval.
 
----
+::: youtube
+https://www.youtube.com/watch?v=2yPCEbAqwoI
+:::
 
-i started building this for [The MedGemma Impact Challenge](https://www.kaggle.com/competitions/med-gemma-impact-challenge). 
+### a day with sakhi
 
-*12-2-2026*
+you're an ASHA worker. fifteen households in your village. three visits due today. one mother already overdue.
 
-this project is a work in progress. currently I've built the first minimum viable product (mvp). this includes the website and app for both android and iOS with some basic functionalities.
+you open sakhi.
 
-a screenshot of the first version of sakhi:
-![a screenshot of sakhi v1](images/sakhi-v1.png)
+![sakhi home — your patients, sorted by urgency](images/sakhi-home.png)
 
----
+the list is already sorted. overdue at the top. high risk in red. monitor in yellow. normal in green. kamla verma is thirty-one weeks pregnant, high risk, one day late. you don't flip through a register to find her. she's the first thing you see.
 
-*27-3-2026*
+you tap in.
 
-here's the updated product ([live demo](https://sakhi-asha.vercel.app) also available) — a major improvement from that first version i showed on top. check out the repo for more details.
+![sakhi profile — history, vitals, and what's next](images/sakhi-profile.png)
 
-![sakhi-top-row](images/sakhi-top-row.png)
+one screen: who this patient is, how far along they are, weight or vitals over time, when the next visit falls. ABHA linked if they're on the national health ID. everything you need before you knock on the door.
 
-![sakhi-middle-row](images/sakhi-middle-row.png)
+you walk to the house. no signal. doesn't matter.
 
-![sakhi-bottom-row](images/sakhi-bottom-row.png)
+you run the checkup on your phone: vitals, symptoms, what you're observing. speak instead of type if that's faster. hindi if that's how you think. the form is two steps, not a notebook.
 
-<br>
+then sakhi answers.
+
+![sakhi assessment — risk level, what to say, what to do next](images/sakhi-assessment.png)
+
+not a wall of medical text. a risk level: green, yellow, or red. what sakhi noticed in what you entered. what to tell the mother, in plain language. the next action. a follow-up date. the same screen whether the answer came from the AI model or the offline rule engine on your phone. offline is not a worse version of the product.
+
+walking to the next house, a question hits you. what BP is normal at this stage? when do i refer to the PHC?
+
+![sakhi ask — questions in the field, even offline](images/sakhi-ask.png)
+
+you ask sakhi. pull in the patient you're about to see if you want context. tap a common question or just speak it. the schedule keeps the rest of the week honest: overdue, today, coming up. so when you're juggling dozens of families, nothing buried in the back of a notebook slips through.
+
+that's the loop. open → patient → checkup → answer → next household.
+
+sakhi isn't here to replace ASHA workers. it's here to assist her in doing what she does best.
+
+millions of decisions like kamla's happen every year with no clinician on call. sakhi is my attempt to put backup in every ASHA worker's pocket: the same workflow online or off, the same language she thinks in, a clear answer at the end of every visit. if you want the engineering behind it, the fine-tuned model, guideline retrieval, and offline architecture are in technical details below.
+
+[try the demo](https://sakhi-asha.vercel.app) · [kaggle writeup](https://www.kaggle.com/competitions/med-gemma-impact-challenge/writeups/new-writeup-1771944147349) · [fine-tuned model](https://huggingface.co/docvm/sakhi-medgemma-1.5-4b-maternal-GGUF)
 
 ## tech stack
 
-| Layer            | Technology                                                                 |
-|------------------|----------------------------------------------------------------------------|
-| *Frontend*     | React + Vite + Tailwind CSS                                                |
-| *Mobile*       | Capacitor (Android APK / Play Store)                                       |
-| *Backend*      | FastAPI (Python)                                                           |
-| *AI Inference* | Ollama (GGUF / llama.cpp) on Hugging Face Spaces                           |
-| *Vector DB*    | ChromaDB                                                                   |
-| *Embeddings*   | sentence-transformers (paraphrase-multilingual-MiniLM-L12-v2)              |
-| *i18n*         | i18next (English + Hindi)                                                  |
-| *State Mgmt*   | React Context + localStorage                                               |
-| *Deployment*   | Vercel (Frontend) + Hugging Face Spaces (Backend + Model)                  |
+| Layer | Technology |
+|---|---|
+| *Frontend* | React + Vite + Tailwind CSS |
+| *Mobile* | Capacitor (Android APK) |
+| *Backend* | FastAPI (Python) |
+| *AI model* | Custom QLoRA fine-tuned MedGemma 1.5 4B IT → GGUF `Q4_K_M` (~2.5 GB), served via Ollama on Hugging Face Spaces |
+| *RAG* | ChromaDB + paraphrase-multilingual-MiniLM-L12-v2 over 10 WHO/MOHFW guideline PDFs |
+| *Offline* | Workbox PWA shell + MOHFW rule-based triage in `localAssessment.js` |
+| *i18n* | i18next (English + Hindi) |
+| *Deployment* | Vercel (frontend) + Hugging Face Spaces (backend + model) |
 
-<br> 
+## ai stack
 
-## hacks
+primary model: QLoRA fine-tuned MedGemma 1.5 4B IT on ~6,800 maternal/neonatal examples, targeting Indian clinical risk factors (severe anaemia, eclampsia patterns) and JSON schema compliance for production reliability.
 
-i had a strict zero budget so had to get real creative with a lot of things. 
+fine-tuning pipeline (3 Kaggle notebooks, zero budget):
 
-the model hosting for example, i set it up on a huggingface space but the free one goes offline if it stays inactive for 10 minutes so i set up a bot that pings the space every 5 minutes, that way the space is always active and hence model always responds. 
+1. QLoRA fine-tune → [LoRA adapter on HF Hub](https://huggingface.co/docvm/sakhi-medgemma-1.5-4b-maternal)
+2. merge LoRA → convert to GGUF → `Q4_K_M` quantization → [GGUF on HF Hub](https://huggingface.co/docvm/sakhi-medgemma-1.5-4b-maternal-GGUF)
+3. serve via Ollama on a Hugging Face Space
 
-also maxed out on three kaggle accounts' gpus.
+training: LoRA rank 16, 2×T4 on Kaggle, ~4.2 hrs, 0.89% trainable params, final loss 2.13.
 
----
+evaluation: 75 labelled MOHFW/WHO-aligned maternal triage cases. primary safety metric is false negative rate for high risk.
 
-## what next
+model cascade (auto-fallback): fine-tuned MedGemma → Gemma 3n E4B IT → Gemini 2.5 Flash Lite → Llama 3.1 8B. missing API keys are skipped automatically.
 
-they three key features i wanted to keep were: <br>
-1. offline (since villages won't have good internet connectivity) <br>
-2. voice first (since ASHA's will find speaking easier than typing) <br>
-3. multi-lingual (to have real large scale impact, it'll have to be able to speak a lot of languages)
+## offline architecture
 
-i've achieved all of them to a reasonable extent but i can still make a lot more improvements, which is what i'm doing right now.
+- app shell cached by Workbox service worker, opens with no connectivity
+- patient data persists to localStorage, namespaced by ASHA ID
+- offline triage implements MOHFW rules locally (BP ≥ 140/90 → red, Hb < 7 → red, weight < 1.5kg → red, etc.) and returns the identical response shape as the AI endpoint
+- sync queue replays pending submissions on reconnect; AI result replaces the local one in-place
 
-also, major update: google released the new Gemma 4 models which has a 2B variant that is natively multi-modal (text, image and audio), can think, runs locally on edge devices and multi-lingual (over 140 languages according to them) which seems like a perfect fit for sakhi.
-i'm currently running medical benchmarks specific to maternal and newborns to check its capabilities, after which i'll fine tune and do some RL optmization (DPO) followed by quantization.
-google has also revamped LiteRT-LM which is like a super fast and efficient inference engine for language models on phone. plan to incorporate this too.
-but for all this i'll have to first convert the codebase from react to kotlin and properly set up the database etc. working on that right now.
+## engineering notes
 
-i've also reached out to a bunch of NGO's and govt orgs who deal with ASHA workers to get a first hand account of what problems they face. enough building in isolation from those whose problems i'm trying to solve.
-
-exciting times ahead.
+- `backend/model.py` is the only file that calls any AI model
+- offline fallback returns the exact same JSON shape as the AI endpoint, no special-casing in the UI
+- ABHA (Ayushman Bharat Health Account) OTP verification proxied server-side
+- HF Space kept warm with a `/health` ping every 5 minutes (free tier sleeps after 10 min idle)
+- temperature 0.2 across all providers for clinical consistency

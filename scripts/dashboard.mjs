@@ -5,13 +5,16 @@ import path from "node:path";
 import http from "node:http";
 import { fileURLToPath } from "node:url";
 import { exec } from "node:child_process";
+import { lookupBook, fetchCoverBuffer, dominantColor } from "./lib/book-lookup.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const rootDir = path.resolve(__dirname, "..");
 const contentDir = path.join(rootDir, "content");
 const dirs = { project: path.join(contentDir, "projects"), blog: path.join(contentDir, "blog") };
 const cardsDir = path.join(rootDir, "images", "cards");
-const PORT = 4321;
+const booksJsonPath = path.join(contentDir, "preview", "books.json");
+const booksDir = path.join(contentDir, "preview", "books");
+const PORT = Number(process.env.PORT) || 4321;
 
 const EXT_BY_MIME = { "image/png": "png", "image/jpeg": "jpg", "image/jpg": "jpg", "image/webp": "webp" };
 
@@ -49,6 +52,24 @@ async function listType(type) {
     items.push({ file: name, slug, title: attrs.title || slug, summary: attrs.summary || "", date: attrs.date || "", image });
   }
   return items.sort((a, b) => (b.date || "").localeCompare(a.date || ""));
+}
+
+async function readBooks() {
+  try { return JSON.parse(await fs.readFile(booksJsonPath, "utf8")); } catch { return []; }
+}
+async function writeBooks(books) {
+  await fs.writeFile(booksJsonPath, JSON.stringify(books, null, 2) + "\n");
+}
+function listBooks(books) {
+  return books.map((b) => ({
+    slug: b.slug,
+    title: b.title,
+    author: b.author || "",
+    pages: b.pages || null,
+    color: b.color || "#33384a",
+    shelf: b.shelf || "",
+    image: b.coverFile ? `/content/preview/${b.coverFile}` : null,
+  }));
 }
 
 // ---- substack import helpers ----
@@ -238,7 +259,6 @@ function buildFrontmatter(type, f) {
   } else {
     add("summary", f.summary);
     add("date", f.date);
-    add("status", f.status);
     add("stack", f.stack);
     add("repo", f.repo);
     add("demo", f.demo);
@@ -279,7 +299,96 @@ const server = http.createServer(async (req, res) => {
     if (req.method === "GET" && url.pathname === "/") return send(res, 200, PAGE, "text/html; charset=utf-8");
 
     if (req.method === "GET" && url.pathname === "/api/list") {
-      return send(res, 200, { project: await listType("project"), blog: await listType("blog") });
+      return send(res, 200, {
+        project: await listType("project"),
+        blog: await listType("blog"),
+        book: listBooks(await readBooks()),
+      });
+    }
+
+    if (req.method === "GET" && url.pathname === "/api/book") {
+      const slug = url.searchParams.get("slug");
+      const book = (await readBooks()).find((b) => b.slug === slug);
+      if (!book) return send(res, 404, { error: "not found" });
+      return send(res, 200, { book });
+    }
+
+    if (req.method === "POST" && url.pathname === "/api/book-lookup") {
+      const { title, author } = JSON.parse((await readBody(req)).toString("utf8"));
+      if (!title) return send(res, 400, { error: "enter a book title" });
+      console.log(`  looking up "${title}"…`);
+      const meta = await lookupBook(title, author || "");
+      if (!meta) return send(res, 404, { error: "no match on open library — try adding the author" });
+      let coverDataUrl = null, color = null;
+      const cover = await fetchCoverBuffer(meta).catch(() => null);
+      if (cover) {
+        coverDataUrl = `data:image/jpeg;base64,${cover.buffer.toString("base64")}`;
+        color = dominantColor(cover.buffer);
+      }
+      console.log(`  ✓ "${meta.title}" — cover=${cover ? "ok" : "none"} pages=${meta.pages || "?"}`);
+      return send(res, 200, {
+        fields: {
+          title: meta.title,
+          author: meta.author,
+          pages: meta.pages,
+          isbn: meta.isbn,
+          color: color || "#33384a",
+        },
+        coverDataUrl,
+      });
+    }
+
+    if (req.method === "POST" && url.pathname === "/api/book-save") {
+      const data = JSON.parse((await readBody(req)).toString("utf8"));
+      const f = data.fields || {};
+      if (!f.title) return send(res, 400, { error: "title is required" });
+      const slug = slugify(f.slug || f.title);
+      const dir = path.join(booksDir, slug);
+
+      let color = (f.color || "").trim();
+      let coverFile = data.existingCoverFile || null;
+      if (data.coverDataUrl) {
+        const m = data.coverDataUrl.match(/^data:([^;]+);base64,(.+)$/);
+        if (!m) return send(res, 400, { error: "bad cover data" });
+        const buf = Buffer.from(m[2], "base64");
+        await fs.mkdir(dir, { recursive: true });
+        await fs.writeFile(path.join(dir, "cover.jpg"), buf);
+        coverFile = `books/${slug}/cover.jpg`;
+        if (!color) color = dominantColor(buf) || "#33384a";
+      }
+      if (!color) color = "#33384a";
+
+      const books = await readBooks();
+      const entry = {
+        title: f.title.trim(),
+        author: (f.author || "").trim(),
+        shelf: (f.shelf || "").trim(),
+        color,
+        slug,
+        isbn: (f.isbn || "").trim() || null,
+        pages: f.pages ? parseInt(String(f.pages).replace(/\D/g, ""), 10) || null : null,
+        coverFile,
+        spineFile: null,
+        spineSource: null,
+      };
+      const idx = books.findIndex((b) => b.slug === slug);
+      if (idx >= 0) books[idx] = { ...books[idx], ...entry };
+      else books.push(entry);
+      await writeBooks(books);
+      console.log(`  saved book ${slug} — rebuilding…`);
+      const build = await runBuild();
+      console.log(build.ok ? `  ✓ rebuilt` : `  ✗ build error:\n${build.log}`);
+      return send(res, 200, { ok: true, slug, coverFile, color, build });
+    }
+
+    if (req.method === "POST" && url.pathname === "/api/book-delete") {
+      const { slug } = JSON.parse((await readBody(req)).toString("utf8"));
+      if (!slug) return send(res, 400, { error: "bad request" });
+      const books = (await readBooks()).filter((b) => b.slug !== slug);
+      await writeBooks(books);
+      await fs.rm(path.join(booksDir, slug), { recursive: true, force: true });
+      const build = await runBuild();
+      return send(res, 200, { ok: true, build });
     }
 
     if (req.method === "GET" && url.pathname === "/api/item") {
@@ -497,9 +606,28 @@ const PAGE = `<!doctype html>
   .pv-imgerr { display:block; margin-top:1.2rem; padding:0.6rem 0.8rem; border:1px dashed var(--err); border-radius:6px; color:var(--err); font-size:0.76rem; word-break:break-all; }
 
   [hidden] { display:none !important; }
-  .only-project, .only-blog { display:none; }
+  .only-project, .only-blog, .only-book, .only-doc { display:none; }
   body[data-type=project] .only-project { display:block; }
   body[data-type=blog] .only-blog { display:block; }
+  body[data-type=book] .only-book { display:block; }
+  body[data-type=project] .only-doc, body[data-type=blog] .only-doc { display:block; }
+
+  .prev-book { width:72px; height:104px; aspect-ratio:auto; }
+  .color-row { display:flex; align-items:center; gap:0.6rem; margin-top:0.3rem; }
+  .color-row input[type=color] { width:42px; height:34px; padding:2px; border:1px solid var(--line); border-radius:8px; background:var(--panel); cursor:pointer; flex:0 0 auto; }
+  .color-row input[type=text] { width:110px; flex:0 0 auto; font-family:ui-monospace,Menlo,monospace; }
+
+  /* book live preview: a mini shelf scene */
+  .bk-prev { display:flex; align-items:flex-end; justify-content:center; gap:2px; padding:2.2rem 1rem 1.6rem; background:linear-gradient(180deg,#1c1a17,#2a2723); border-radius:10px; min-height:280px; }
+  .bk-prev .spine { width:42px; border-radius:1px 2px 2px 1px; display:flex; align-items:center; justify-content:center; color:#f4f1ea; box-shadow:inset 0 1px 0 rgba(255,255,255,0.22), inset 0 -2px 3px rgba(0,0,0,0.34); position:relative; }
+  .bk-prev .spine .st { writing-mode:vertical-rl; text-orientation:mixed; display:flex; align-items:center; gap:0.8em; max-height:84%; white-space:nowrap; text-shadow:0 1px 1px rgba(0,0,0,0.4); }
+  .bk-prev .spine .stt { font-weight:700; font-size:12px; letter-spacing:0.015em; overflow:hidden; text-overflow:ellipsis; }
+  .bk-prev .spine .sta { font-weight:500; font-size:8px; opacity:0.7; overflow:hidden; text-overflow:ellipsis; }
+  .bk-prev .ghost-spine { width:18px; height:78%; border-radius:1px; background:linear-gradient(180deg,#3a3733,#2d2a27); opacity:0.55; }
+  .bk-cover-prev { width:150px; aspect-ratio:2/3; border-radius:2px 5px 5px 2px; background:#33384a center/cover; box-shadow:0 18px 30px -16px rgba(0,0,0,0.7), inset 0 0 0 1px rgba(0,0,0,0.25); margin-left:14px; display:flex; align-items:flex-end; }
+  .bk-cover-prev .cap { font-size:0.7rem; color:#fff; background:rgba(0,0,0,0.35); padding:0.3rem 0.45rem; border-radius:0 0 2px 5px; width:100%; }
+  .bk-prev-meta { text-align:center; color:var(--muted); font-size:0.82rem; padding:1rem 1rem 0; }
+  .bk-prev-meta b { color:var(--fg); font-weight:600; }
 
   @media (max-width:1080px) {
     .wrap { grid-template-columns:248px 1fr; }
@@ -525,6 +653,7 @@ const PAGE = `<!doctype html>
       <button class="new" onclick="newItem()">+ new entry</button>
       <div class="side-sec"><h2>blog</h2><div id="list-blog"></div></div>
       <div class="side-sec"><h2>projects</h2><div id="list-project"></div></div>
+      <div class="side-sec"><h2>bookshelf</h2><div id="list-book"></div></div>
     </aside>
 
     <main class="editor">
@@ -532,6 +661,7 @@ const PAGE = `<!doctype html>
         <div class="tabs">
           <button type="button" id="tab-blog" class="on" onclick="setType('blog')">blog post</button>
           <button type="button" id="tab-project" onclick="setType('project')">project</button>
+          <button type="button" id="tab-book" onclick="setType('book')">book</button>
         </div>
 
         <div class="only-blog import">
@@ -542,51 +672,83 @@ const PAGE = `<!doctype html>
           <div class="hint">pulls title, body, images &amp; cover, converts to markdown, fills the form. review, then save.</div>
         </div>
 
+        <div class="only-book import">
+          <div class="import-row">
+            <input type="text" id="lookupTitle" placeholder="book title…" />
+            <input type="text" id="lookupAuthor" placeholder="author (optional)" style="flex:0 0 38%" />
+            <button type="button" id="lookupBtn" onclick="lookupBook()">look up</button>
+          </div>
+          <div class="hint">finds the cover, author, page count &amp; spine colour automatically. review, then save.</div>
+        </div>
+
         <form id="form" onsubmit="return false">
           <label>title</label>
           <input type="text" id="title" oninput="autoSlug()" placeholder="a clear title" />
-          <div class="row">
-            <div><label>slug</label><input type="text" id="slug" placeholder="auto-from-title" /></div>
-            <div><label>date</label><input type="date" id="date" /></div>
-          </div>
-          <label>summary</label>
-          <input type="text" id="summary" placeholder="one line shown under the title" />
+          <label>slug</label>
+          <input type="text" id="slug" placeholder="auto-from-title" />
 
-          <div class="only-blog"><label>read time</label><input type="text" id="read_time" placeholder="e.g. 6 min read" /></div>
-
-          <div class="only-project">
+          <div class="only-doc">
             <div class="row">
-              <div><label>status</label><select id="status"><option value="">—</option><option>in-progress</option><option>shipped</option><option>archived</option></select></div>
-              <div><label>order (featured sort)</label><input type="text" id="order" placeholder="1" /></div>
+              <div><label>date</label><input type="date" id="date" /></div>
+              <div class="only-blog"><label>read time</label><input type="text" id="read_time" placeholder="e.g. 6 min read" /></div>
             </div>
-            <label>stack (comma separated)</label><input type="text" id="stack" placeholder="python, pytorch" />
-            <div class="row">
-              <div><label>repo url</label><input type="text" id="repo" /></div>
-              <div><label>demo url</label><input type="text" id="demo" /></div>
+            <label>summary</label>
+            <input type="text" id="summary" placeholder="one line shown under the title" />
+
+            <div class="only-project">
+              <label>order (featured sort)</label><input type="text" id="order" placeholder="1" />
+              <label>stack (comma separated)</label><input type="text" id="stack" placeholder="python, pytorch" />
+              <div class="row">
+                <div><label>repo url</label><input type="text" id="repo" /></div>
+                <div><label>demo url</label><input type="text" id="demo" /></div>
+              </div>
+              <label class="chk"><input type="checkbox" id="featured" /> feature on home page</label>
             </div>
-            <label class="chk"><input type="checkbox" id="featured" /> feature on home page</label>
-          </div>
 
-          <label>card image <span class="faint">(writing grid thumbnail)</span></label>
-          <div class="drop" id="drop">
-            <div class="prev" id="prevImg"></div>
-            <div class="txt" id="droptxt">drop an image or click to choose<br /><span class="faint">png / jpg / webp · shown 4:3 · saved on save</span></div>
-            <input type="file" id="file" accept="image/png,image/jpeg,image/webp" hidden />
-          </div>
-
-          <div class="only-blog">
-            <label>in-post image <span class="faint">(hero at top of article)</span></label>
-            <div class="drop" id="bodyDrop">
-              <div class="prev" id="bodyPrevImg"></div>
-              <div class="txt" id="bodyDroptxt">drop an image or click to choose<br /><span class="faint">updates the first ![](…) in body · saved on save</span></div>
-              <input type="file" id="bodyFile" accept="image/png,image/jpeg,image/webp" hidden />
+            <label>card image <span class="faint">(writing grid thumbnail)</span></label>
+            <div class="drop" id="drop">
+              <div class="prev" id="prevImg"></div>
+              <div class="txt" id="droptxt">drop an image or click to choose<br /><span class="faint">png / jpg / webp · shown 4:3 · saved on save</span></div>
+              <input type="file" id="file" accept="image/png,image/jpeg,image/webp" hidden />
             </div>
-          </div>
 
-          <label>body (markdown)</label>
-          <textarea id="body" placeholder="# heading
+            <div class="only-blog">
+              <label>in-post image <span class="faint">(hero at top of article)</span></label>
+              <div class="drop" id="bodyDrop">
+                <div class="prev" id="bodyPrevImg"></div>
+                <div class="txt" id="bodyDroptxt">drop an image or click to choose<br /><span class="faint">updates the first ![](…) in body · saved on save</span></div>
+                <input type="file" id="bodyFile" accept="image/png,image/jpeg,image/webp" hidden />
+              </div>
+            </div>
+
+            <label>body (markdown)</label>
+            <textarea id="body" placeholder="# heading
 
 write here — the preview updates as you type"></textarea>
+          </div>
+
+          <div class="only-book">
+            <div class="row">
+              <div><label>author</label><input type="text" id="author" placeholder="author name" /></div>
+              <div><label>pages</label><input type="text" id="pages" placeholder="e.g. 320" /></div>
+            </div>
+            <div class="row">
+              <div><label>shelf <span class="faint">(optional label)</span></label><input type="text" id="shelf" placeholder="e.g. ai &amp; what's next" /></div>
+              <div><label>isbn</label><input type="text" id="isbn" placeholder="auto" /></div>
+            </div>
+            <label>cover <span class="faint">(auto-fetched · drop to replace)</span></label>
+            <div class="drop" id="bookDrop">
+              <div class="prev prev-book" id="bookPrevImg"></div>
+              <div class="txt" id="bookDroptxt">look up a title above, or drop a cover<br /><span class="faint">png / jpg · spine colour recolours on save</span></div>
+              <input type="file" id="bookFile" accept="image/png,image/jpeg,image/webp" hidden />
+            </div>
+            <label>spine colour</label>
+            <div class="color-row">
+              <input type="color" id="color" value="#33384a" oninput="onColorInput()" />
+              <input type="text" id="colorHex" placeholder="#33384a" oninput="onColorHex()" />
+              <span class="faint">pulled from the cover — tweak if you like</span>
+            </div>
+          </div>
         </form>
       </div>
 
@@ -607,7 +769,8 @@ write here — the preview updates as you type"></textarea>
   </div>
 
 <script>
-  let type = "blog", editingSlug = null, imageDataUrl = null, bodyImageDataUrl = null, currentImageUrl = null, currentBodyImageUrl = null, listCache = { blog: [], project: [] }, pvNonce = Date.now();
+  let type = "blog", editingSlug = null, imageDataUrl = null, bodyImageDataUrl = null, currentImageUrl = null, currentBodyImageUrl = null, listCache = { blog: [], project: [], book: [] }, pvNonce = Date.now();
+  let coverDataUrl = null, currentCoverUrl = null, existingCoverFile = null;
   const $ = (id) => document.getElementById(id);
   const val = (id) => { const e = $(id); return e ? e.value.trim() : ""; };
 
@@ -631,10 +794,14 @@ write here — the preview updates as you type"></textarea>
     if (u.charAt(0) === "/") u += (u.indexOf("?") < 0 ? "?" : "&") + "v=" + pvNonce;
     return u;
   }
+  function externalLinkAttrs(h) {
+    if (/^https?:\\/\\//i.test(String(h).trim())) return ' target="_blank" rel="noopener noreferrer"';
+    return "";
+  }
   function inlineMd(t) {
     return esc(t)
       .replace(/!\\[([^\\]]*)\\]\\(([^)]+)\\)/g, function (m, a, s) { return '<img class="pv-img" src="' + normImg(s) + '" alt="' + a + '">'; })
-      .replace(/\\[([^\\]]+)\\]\\(([^)]+)\\)/g, function (m, l, h) { return '<a href="' + h + '">' + l + '</a>'; })
+      .replace(/\\[([^\\]]+)\\]\\(([^)]+)\\)/g, function (m, l, h) { return '<a href="' + h + '"' + externalLinkAttrs(h) + '>' + l + '</a>'; })
       .replace(/\\*\\*([^*]+)\\*\\*/g, '<strong>$1</strong>')
       .replace(/__([^_]+)__/g, '<strong>$1</strong>')
       .replace(/\\*([^*]+)\\*/g, '<em>$1</em>')
@@ -674,6 +841,7 @@ write here — the preview updates as you type"></textarea>
   }
 
   function updatePreview() {
+    if (type === "book") return updateBookPreview();
     var title = val("title") || "untitled";
     var summary = val("summary");
     var body = $("body").value;
@@ -685,7 +853,7 @@ write here — the preview updates as you type"></textarea>
     }
     var meta = type === "blog"
       ? [val("date"), val("read_time")].filter(Boolean).join(" · ")
-      : [val("status"), val("date")].filter(Boolean).join(" · ");
+      : [val("date")].filter(Boolean).join(" · ");
     var img = imageDataUrl || currentImageUrl;
     var bodyImg = bodyImageDataUrl || currentBodyImageUrl;
     var html = "";
@@ -707,6 +875,37 @@ write here — the preview updates as you type"></textarea>
       });
     });
   }
+  function lum(hex) {
+    const h = String(hex || "").replace("#", "");
+    const r = parseInt(h.slice(0, 2), 16) || 0, g = parseInt(h.slice(2, 4), 16) || 0, b = parseInt(h.slice(4, 6), 16) || 0;
+    return (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
+  }
+  function updateBookPreview() {
+    var title = val("title") || "untitled";
+    var author = val("author");
+    var pages = val("pages");
+    var color = val("colorHex") || "#33384a";
+    var cover = coverDataUrl || currentCoverUrl;
+    var sc = lum(color) > 0.58 ? "#23211c" : "#f4f1ea";
+    // spine height scales a touch with page count, like the real shelf
+    var p = parseInt(String(pages).replace(/\\D/g, ""), 10) || 300;
+    var h = Math.round(150 + Math.min(p, 720) * 0.05);
+    var html = '<div class="bk-prev">'
+      + '<span class="ghost-spine"></span>'
+      + '<span class="spine" style="height:' + h + 'px;background:' + esc(color) + ';color:' + sc + '">'
+      + '<span class="st"><span class="stt">' + esc(title) + '</span>'
+      + (author ? '<span class="sta" style="color:' + sc + '">' + esc(author) + '</span>' : '')
+      + '</span></span>'
+      + '<span class="bk-cover-prev" style="' + (cover ? 'background-image:' + cssUrl(cover) : 'background:' + esc(color)) + '">'
+      + (cover ? '' : '<span class="cap">' + esc(title) + '</span>')
+      + '</span>'
+      + '<span class="ghost-spine"></span>'
+      + '</div>'
+      + '<div class="bk-prev-meta"><b>' + esc(title.toLowerCase()) + '</b>'
+      + (author ? ' · ' + esc(author.toLowerCase()) : '')
+      + (pages ? ' · ' + esc(String(pages)) + ' pages' : '') + '</div>';
+    $("pv").innerHTML = html;
+  }
   var pvTimer;
   function schedulePreview() { clearTimeout(pvTimer); pvTimer = setTimeout(updatePreview, 110); }
 
@@ -714,6 +913,7 @@ write here — the preview updates as you type"></textarea>
     type = t; document.body.dataset.type = t;
     $("tab-blog").classList.toggle("on", t === "blog");
     $("tab-project").classList.toggle("on", t === "project");
+    $("tab-book").classList.toggle("on", t === "book");
     setLiveLink(); updatePreview();
   }
   function slugify(v) { return v.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, ""); }
@@ -721,22 +921,44 @@ write here — the preview updates as you type"></textarea>
 
   function setLiveLink() {
     const el = $("pvLive");
+    if (type === "book") { el.href = "/preview-c/about/index.html#bookshelf"; el.hidden = false; return; }
     if (editingSlug) { el.href = "/preview-c/" + (type === "blog" ? "writing" : "work") + "/" + editingSlug + ".html"; el.hidden = false; }
     else el.hidden = true;
   }
 
   function clearForm() {
     editingSlug = null; imageDataUrl = null; bodyImageDataUrl = null; currentImageUrl = null; currentBodyImageUrl = null;
-    ["title","slug","summary","read_time","status","order","stack","repo","demo","body","impurl"].forEach(function (id) { const e = $(id); if (e) e.value = ""; });
+    coverDataUrl = null; currentCoverUrl = null; existingCoverFile = null;
+    ["title","slug","summary","read_time","order","stack","repo","demo","body","impurl","author","pages","shelf","isbn","lookupTitle","lookupAuthor"].forEach(function (id) { const e = $(id); if (e) e.value = ""; });
     $("slug").dataset.touched = "";
     $("featured").checked = false;
     $("date").value = new Date().toISOString().slice(0, 10);
+    setColor("#33384a");
     setPrevImg(null);
     setBodyPrevImg(null);
+    setBookPrevImg(null);
     $("del").hidden = true;
     setLiveLink(); setStatus(""); markSel(null); updatePreview();
   }
-  function newItem() { clearForm(); $("title").focus(); }
+  function newItem() { clearForm(); $(type === "book" ? "lookupTitle" : "title").focus(); }
+
+  function setBookPrevImg(url) {
+    setThumbStyle($("bookPrevImg"), url);
+    $("bookDroptxt").firstChild.textContent = url ? "cover set — drop to replace" : "look up a title above, or drop a cover";
+  }
+  function setColor(hex) {
+    hex = (hex || "#33384a").trim();
+    if (!/^#?[0-9a-fA-F]{6}$/.test(hex)) return;
+    if (hex[0] !== "#") hex = "#" + hex;
+    $("color").value = hex.toLowerCase();
+    $("colorHex").value = hex.toLowerCase();
+  }
+  function onColorInput() { $("colorHex").value = $("color").value; schedulePreview(); }
+  function onColorHex() {
+    const v = val("colorHex");
+    if (/^#?[0-9a-fA-F]{6}$/.test(v)) { $("color").value = (v[0] === "#" ? v : "#" + v).toLowerCase(); }
+    schedulePreview();
+  }
 
   function setPrevImg(url) {
     setThumbStyle($("prevImg"), url);
@@ -780,23 +1002,57 @@ write here — the preview updates as you type"></textarea>
     r.readAsDataURL(f);
   }
 
+  const bookDrop = $("bookDrop"), bookFile = $("bookFile");
+  bookDrop.onclick = () => bookFile.click();
+  bookDrop.ondragover = (e) => { e.preventDefault(); bookDrop.classList.add("over"); };
+  bookDrop.ondragleave = () => bookDrop.classList.remove("over");
+  bookDrop.ondrop = (e) => { e.preventDefault(); bookDrop.classList.remove("over"); if (e.dataTransfer.files[0]) readCoverImg(e.dataTransfer.files[0]); };
+  bookFile.onchange = () => { if (bookFile.files[0]) readCoverImg(bookFile.files[0]); };
+  function readCoverImg(f) {
+    const r = new FileReader();
+    r.onload = () => { coverDataUrl = r.result; setBookPrevImg(coverDataUrl); updatePreview(); };
+    r.readAsDataURL(f);
+  }
+
+  async function lookupBook() {
+    const title = val("lookupTitle");
+    if (!title) { setStatus("enter a book title first", "err"); return; }
+    const b = $("lookupBtn"); b.disabled = true; b.textContent = "looking…"; setStatus("searching open library…");
+    try {
+      const r = await fetch("/api/book-lookup", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ title, author: val("lookupAuthor") }) });
+      const j = await r.json();
+      if (j.error) throw new Error(j.error);
+      const f = j.fields;
+      const set = (id, v) => { const e = $(id); if (e) e.value = v == null ? "" : v; };
+      set("title", f.title); set("author", f.author); set("pages", f.pages); set("isbn", f.isbn);
+      $("slug").value = slugify(f.title); $("slug").dataset.touched = "1";
+      if (f.color) setColor(f.color);
+      if (j.coverDataUrl) { coverDataUrl = j.coverDataUrl; setBookPrevImg(coverDataUrl); }
+      setStatus(j.coverDataUrl ? "found ✓ — review and save" : "found, but no cover — drop one in", j.coverDataUrl ? "ok" : "err");
+      updatePreview();
+    } catch (e) { setStatus("lookup failed: " + (e.message || e), "err"); }
+    b.disabled = false; b.textContent = "look up";
+  }
+
   function markSel(slug) { document.querySelectorAll(".item").forEach(function (el) { el.classList.toggle("sel", el.dataset.slug === slug); }); }
 
   async function loadList() {
     const data = await (await fetch("/api/list")).json();
     listCache = data;
-    ["blog", "project"].forEach(function (t) {
-      $("list-" + t).innerHTML = data[t].map(function (it) {
+    ["blog", "project", "book"].forEach(function (t) {
+      $("list-" + t).innerHTML = (data[t] || []).map(function (it) {
         const bg = it.image ? cssUrl(it.image + "?t=" + Date.now()) : "none";
+        const sub = t === "book" ? esc(it.author || "") : (it.date || "");
         return \`<button class="item" data-slug="\${esc(it.slug)}" onclick="loadItem('\${t}','\${it.slug}')">
           <span class="th" style="--thumb:\${bg}"></span>
-          <span><span class="t">\${esc(it.title)}</span><br /><span class="d">\${it.date || ""}</span></span>
+          <span><span class="t">\${esc(it.title)}</span><br /><span class="d">\${sub}</span></span>
         </button>\`;
       }).join("") || '<div class="d" style="padding:0 1.1rem 0.5rem;color:#bbb">none yet</div>';
     });
   }
 
   async function loadItem(t, slug) {
+    if (t === "book") return loadBook(slug);
     setType(t);
     const res = await (await fetch("/api/item?type=" + t + "&slug=" + encodeURIComponent(slug))).json();
     clearForm();
@@ -804,7 +1060,7 @@ write here — the preview updates as you type"></textarea>
     const a = res.attrs || {};
     const set = (id, v) => { const e = $(id); if (e) e.value = v || ""; };
     set("title", a.title); set("slug", a.slug || slug); set("summary", a.summary); set("date", a.date);
-    set("read_time", a.read_time); set("status", a.status); set("order", a.order); set("stack", a.stack);
+    set("read_time", a.read_time); set("order", a.order); set("stack", a.stack);
     set("repo", a.repo); set("demo", a.demo); set("body", res.body);
     $("slug").dataset.touched = "1";
     $("featured").checked = a.featured === "true";
@@ -812,6 +1068,24 @@ write here — the preview updates as you type"></textarea>
     if (found && found.image) { currentImageUrl = found.image + "?t=" + Date.now(); setPrevImg(currentImageUrl); }
     const bodyImg = firstBodyImage(res.body);
     if (bodyImg) { currentBodyImageUrl = "/" + bodyImg + "?t=" + Date.now(); setBodyPrevImg(currentBodyImageUrl); }
+    $("del").hidden = false;
+    pvNonce = Date.now();
+    setLiveLink(); markSel(slug); setStatus(""); updatePreview();
+  }
+
+  async function loadBook(slug) {
+    setType("book");
+    const res = await (await fetch("/api/book?slug=" + encodeURIComponent(slug))).json();
+    clearForm();
+    const b = res.book || {};
+    editingSlug = slug;
+    const set = (id, v) => { const e = $(id); if (e) e.value = v == null ? "" : v; };
+    set("title", b.title); set("slug", b.slug || slug); set("author", b.author);
+    set("pages", b.pages); set("shelf", b.shelf); set("isbn", b.isbn);
+    $("slug").dataset.touched = "1";
+    setColor(b.color || "#33384a");
+    existingCoverFile = b.coverFile || null;
+    if (b.coverFile) { currentCoverUrl = "/content/preview/" + b.coverFile + "?t=" + Date.now(); setBookPrevImg(currentCoverUrl); }
     $("del").hidden = false;
     pvNonce = Date.now();
     setLiveLink(); markSel(slug); setStatus(""); updatePreview();
@@ -837,9 +1111,35 @@ write here — the preview updates as you type"></textarea>
     b.disabled = false; b.textContent = "import";
   }
 
-  async function save() {
+  async function saveBook() {
     const fields = {};
-    ["title","slug","summary","date","read_time","status","order","stack","repo","demo"].forEach(function (id) { fields[id] = val(id); });
+    ["title","slug","author","pages","shelf","isbn"].forEach(function (id) { fields[id] = val(id); });
+    fields.color = val("colorHex") || val("color");
+    if (!fields.title) { setStatus("title is required", "err"); return; }
+    const btn = $("save"); btn.disabled = true; btn.textContent = "saving…"; setStatus("saving & rebuilding shelf…");
+    try {
+      const r = await fetch("/api/book-save", { method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ fields, coverDataUrl, existingCoverFile }) });
+      const j = await r.json();
+      if (!j.ok) throw new Error(j.error || "save failed");
+      editingSlug = j.slug; coverDataUrl = null; existingCoverFile = j.coverFile || existingCoverFile;
+      if (j.color) setColor(j.color);
+      const bad = j.build && !j.build.ok;
+      setStatus(bad ? "saved, but the build errored — check the terminal" : "saved & rebuilt ✓ — commit & push to deploy", bad ? "err" : "ok");
+      $("del").hidden = false;
+      await loadList(); markSel(j.slug);
+      const found = (listCache.book || []).find(function (x) { return x.slug === j.slug; });
+      if (found && found.image) { currentCoverUrl = found.image + "?t=" + Date.now(); setBookPrevImg(currentCoverUrl); }
+      pvNonce = Date.now();
+      setLiveLink(); updatePreview();
+    } catch (e) { setStatus(String(e.message || e), "err"); }
+    btn.disabled = false; btn.textContent = "save";
+  }
+
+  async function save() {
+    if (type === "book") return saveBook();
+    const fields = {};
+    ["title","slug","summary","date","read_time","order","stack","repo","demo"].forEach(function (id) { fields[id] = val(id); });
     fields.featured = $("featured").checked;
     if (!fields.title) { setStatus("title is required", "err"); return; }
     const btn = $("save"); btn.disabled = true; btn.textContent = "saving…"; setStatus("writing files & rebuilding…");
@@ -867,17 +1167,25 @@ write here — the preview updates as you type"></textarea>
   }
 
   async function del() {
-    if (!editingSlug || !confirm("delete " + editingSlug + "? this removes the file and its card image.")) return;
+    if (!editingSlug || !confirm("delete " + editingSlug + "?")) return;
     setStatus("deleting…");
+    if (type === "book") {
+      const r = await fetch("/api/book-delete", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ slug: editingSlug }) });
+      const j = await r.json();
+      if (j.ok) { clearForm(); setStatus("deleted ✓", "ok"); await loadList(); } else setStatus(j.error || "failed", "err");
+      return;
+    }
     const r = await fetch("/api/delete", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ type, slug: editingSlug }) });
     const j = await r.json();
     if (j.ok) { clearForm(); setStatus("deleted ✓", "ok"); await loadList(); } else setStatus(j.error || "failed", "err");
   }
 
   // live preview wiring + shortcuts
-  ["title","summary","body","date","read_time","stack"].forEach(function (id) { const e = $(id); if (e) e.addEventListener("input", schedulePreview); });
-  $("status").addEventListener("change", schedulePreview);
+  ["title","summary","body","date","read_time","stack","author","pages"].forEach(function (id) { const e = $(id); if (e) e.addEventListener("input", schedulePreview); });
   $("slug").addEventListener("input", function (e) { e.target.dataset.touched = "1"; });
+  ["lookupTitle","lookupAuthor"].forEach(function (id) {
+    const e = $(id); if (e) e.addEventListener("keydown", function (ev) { if (ev.key === "Enter") { ev.preventDefault(); lookupBook(); } });
+  });
   document.addEventListener("keydown", function (e) {
     if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "s") { e.preventDefault(); save(); }
   });

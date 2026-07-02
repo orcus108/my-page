@@ -129,21 +129,48 @@
       article ol { list-style: decimal; padding-left: 1.1rem; }
       article li + li { margin-top: 0.45rem; }
       .md-image { display: block; max-width: 100%; height: auto; margin-top: 0.9rem; border-radius: 2px; }
+      .mockup-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 1rem;
+        margin-top: 0.9rem;
+      }
+      .mockup-grid .md-image { margin-top: 0; width: 100%; }
+      @media (max-width: 560px) {
+        .mockup-grid { grid-template-columns: 1fr; }
+      }
+      .video-embed {
+        position: relative;
+        width: 100%;
+        aspect-ratio: 16 / 9;
+        margin-top: 1.25rem;
+        border-radius: 4px;
+        overflow: hidden;
+        background: #000;
+      }
+      .video-embed iframe {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        border: 0;
+      }
+      .video-embed-link {
+        margin: 0.65rem 0 0;
+        font-size: 0.85rem;
+        color: var(--muted);
+      }
+      .video-embed-link a {
+        text-decoration: underline;
+        text-underline-offset: 0.18em;
+        text-decoration-color: var(--line);
+      }
+      .video-embed-link a:hover { text-decoration-color: currentColor; }
       p:has(> .md-image + .md-image) { display: flex; gap: 1.5rem; align-items: flex-start; margin-top: 0.9rem; }
       p:has(> .md-image + .md-image) .md-image { flex: 1; min-width: 0; margin-top: 0; }
       .md-hr { border: 0; border-top: 1px solid var(--line); margin: 1.2rem 0; }
       blockquote { margin: 1.5rem 0 0; padding-left: 1rem; border-left: 2px solid var(--line); }
       blockquote p { margin: 0; color: var(--muted); line-height: 1.6; }
-      .status-chip {
-        display: inline-block;
-        padding: 0.15rem 0.4rem;
-        border-radius: 2px;
-        font-size: 0.72rem;
-        border: 1px solid var(--line);
-        color: var(--muted);
-        position: relative;
-        cursor: default;
-      }
       .stack-chip {
         display: inline-block;
         padding: 0.15rem 0.4rem;
@@ -152,28 +179,6 @@
         border: 1px solid var(--line);
         color: var(--muted);
       }
-      .status-chip.status-in-progress { border-color: #7c3aed; color: #7c3aed; }
-      .status-chip.status-shipped { border-color: #059669; color: #059669; }
-      .status-chip.status-archived { border-color: var(--line); color: var(--muted); }
-      [data-theme="dark"] .status-chip.status-in-progress { border-color: #a78bfa; color: #a78bfa; }
-      [data-theme="dark"] .status-chip.status-shipped { border-color: #6ee7b7; color: #6ee7b7; }
-      .status-chip[data-tooltip]::after {
-        content: attr(data-tooltip);
-        position: absolute;
-        bottom: calc(100% + 6px);
-        left: 50%;
-        transform: translateX(-50%);
-        background: var(--fg);
-        color: var(--bg);
-        font-size: 0.7rem;
-        white-space: nowrap;
-        padding: 0.2rem 0.45rem;
-        border-radius: 2px;
-        pointer-events: none;
-        opacity: 0;
-        transition: opacity 0.15s ease;
-      }
-      .status-chip[data-tooltip]:hover::after { opacity: 1; }
 
       .md-table-wrap { overflow-x: auto; margin-top: 0.9rem; }
       .md-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
@@ -206,17 +211,6 @@
 
       .list-item-link { transition: transform 0.15s ease; }
       .list-item-link:hover { transform: translateX(4px); }
-
-      @keyframes chip-glow-light {
-        0%, 100% { box-shadow: 0 0 0 0 rgba(124, 58, 237, 0); }
-        50% { box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.2); }
-      }
-      @keyframes chip-glow-dark {
-        0%, 100% { box-shadow: 0 0 0 0 rgba(167, 139, 250, 0); }
-        50% { box-shadow: 0 0 0 3px rgba(167, 139, 250, 0.2); }
-      }
-      .status-chip.status-in-progress { animation: chip-glow-light 2.5s ease-in-out infinite; }
-      [data-theme="dark"] .status-chip.status-in-progress { animation: chip-glow-dark 2.5s ease-in-out infinite; }
 
 @media (max-width: 640px) {
         main {
@@ -281,6 +275,52 @@
           font-size: 0.75rem;
         }
       }
+
+      .md-image { cursor: zoom-in; }
+      .lightbox {
+        position: fixed;
+        inset: 0;
+        z-index: 3000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: clamp(1rem, 4vw, 2.5rem);
+        background: rgba(0, 0, 0, 0.9);
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.2s ease, visibility 0.2s ease;
+      }
+      .lightbox.is-open {
+        opacity: 1;
+        visibility: visible;
+      }
+      .lightbox img {
+        display: block;
+        max-width: min(100%, 1200px);
+        max-height: calc(100vh - 5rem);
+        width: auto;
+        height: auto;
+        object-fit: contain;
+        border-radius: 4px;
+        box-shadow: 0 24px 80px rgba(0, 0, 0, 0.45);
+      }
+      .lightbox-close {
+        position: absolute;
+        top: clamp(0.75rem, 3vw, 1.25rem);
+        right: clamp(0.75rem, 3vw, 1.25rem);
+        width: 2.5rem;
+        height: 2.5rem;
+        border: 0;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.12);
+        color: #fff;
+        font-size: 1.5rem;
+        line-height: 1;
+        cursor: pointer;
+      }
+      .lightbox-close:hover { background: rgba(255, 255, 255, 0.22); }
+      body.lightbox-open { overflow: hidden; }
+
   
     </style>
   </head>
@@ -309,46 +349,50 @@
           </nav>
         </div>
         <p class="muted">ai for india’s frontline health workers</p>
-        <div style="display:flex;align-items:center;gap:0.6rem;flex-wrap:wrap;margin-top:0.6rem;">
-          
-          
-        </div>
+        <div style="margin-top:0.6rem;"><span class="muted" style="font-size:0.72rem;">Mar 2026</span></div>
       </section>
 
       <section>
         <h2>overview</h2>
         <article>
-        <p>across India, ASHA workers are the backbone of community healthcare. they support families through pregnancy, childhood illnesses, chronic conditions, immunizations, and public health outreach. for many villages, she is the first — and sometimes only — link to the healthcare system.</p>
-        <p>yet her work is burdened by paper registers, complex protocols, manual newborn visit scheduling, and opaque incentive (salary) claim processes. she tracks households across multiple notebooks, memorizes evolving guidelines, and escalates doubts to seniors when immediate clarity isn’t available. the administrative load is heavy, especially in low-connectivity settings.</p>
-        <p><strong>sakhi</strong> (hindi for &quot;female friend&quot;) is a multilingual, voice-first, offline AI companion built to support ASHA workers in the field. it digitizes registers through guided voice interaction, automates visit scheduling, provides real-time protocol guidance, and tracks incentive claims transparently. powered by MedGemma’s medical text capabilities, sakhi can offer grounded general medical guidance when needed. using multimodal understanding, it can also analyze images, such as visible symptoms or medical documents, and generate preliminary structured insights to assist frontline decision-making.</p>
-        <p>sakhi isn&#39;t here to replace ASHA workers, it&#39;s here to assist her in doing what she does best.</p>
-        <hr class="md-hr" />
-        <p>i started building this for <a href="https://www.kaggle.com/competitions/med-gemma-impact-challenge">The MedGemma Impact Challenge</a>.</p>
-        <p><em>12-2-2026</em></p>
-        <p>this project is a work in progress. currently I&#39;ve built the first minimum viable product (mvp). this includes the website and app for both android and iOS with some basic functionalities.</p>
-        <p>a screenshot of the first version of sakhi: <img class="md-image" src="/images/sakhi-v1.png" alt="a screenshot of sakhi v1" loading="lazy" decoding="async" /></p>
-        <hr class="md-hr" />
-        <p><em>27-3-2026</em></p>
-        <p>here&#39;s the updated product (<a href="https://sakhi-asha.vercel.app">live demo</a> also available) — a major improvement from that first version i showed on top. check out the repo for more details.</p>
-        <p><img class="md-image" src="/images/sakhi-top-row.png" alt="sakhi-top-row" loading="lazy" decoding="async" /></p>
-        <p><img class="md-image" src="/images/sakhi-middle-row.png" alt="sakhi-middle-row" loading="lazy" decoding="async" /></p>
-        <p><img class="md-image" src="/images/sakhi-bottom-row.png" alt="sakhi-bottom-row" loading="lazy" decoding="async" /></p>
-        <p><br /></p>
+        <p>india&#39;s maternal mortality ratio is 97 per 100,000 live births, concentrated in rural areas. about a million ASHA workers make life-critical referral decisions alone in the field. they can take BP, check fetal heart rates, and observe newborns, but have no tool to tell them when a reading warrants emergency referral vs. routine follow-up.</p>
+        <p><strong>sakhi</strong> (sakhī, hindi for &quot;female friend&quot;) is a mobile-first clinical companion built for ASHA workers. built for the <a href="https://www.kaggle.com/competitions/med-gemma-impact-challenge" target="_blank" rel="noopener noreferrer">MedGemma Impact Challenge</a>, it gives grounded decision support for antenatal and newborn visits when connectivity and senior clinicians aren&#39;t available.</p>
+        <p>three constraints shaped how i built it:</p>
+        <ul><li><strong>offline:</strong> villages often have no signal. the app shell caches locally, patient data stays on-device, and MOHFW rule-based triage runs without connectivity. when signal returns, pending visits sync and AI results replace local ones in-place.</li><li><strong>voice-first:</strong> during a home visit, speaking is faster than typing, especially for workers more comfortable talking than filling forms. checkup flows and ask sakhi support voice input.</li><li><strong>multi-lingual:</strong> impact at scale means the product can&#39;t be English-only. shipped with English and Hindi across the UI and AI responses; embeddings and clinical guidelines indexed for multilingual retrieval.</li></ul>
+        <div class="video-embed"><iframe src="https://www.youtube-nocookie.com/embed/2yPCEbAqwoI" title="YouTube video" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen loading="lazy"></iframe></div><p class="video-embed-link"><a href="https://www.youtube.com/watch?v=2yPCEbAqwoI" target="_blank" rel="noopener noreferrer">watch on youtube</a></p>
+        <h3>a day with sakhi</h3>
+        <p>you&#39;re an ASHA worker. fifteen households in your village. three visits due today. one mother already overdue.</p>
+        <p>you open sakhi.</p>
+        <p><img class="md-image" src="/images/sakhi-home.png" alt="sakhi home — your patients, sorted by urgency" loading="lazy" decoding="async" /></p>
+        <p>the list is already sorted. overdue at the top. high risk in red. monitor in yellow. normal in green. kamla verma is thirty-one weeks pregnant, high risk, one day late. you don&#39;t flip through a register to find her. she&#39;s the first thing you see.</p>
+        <p>you tap in.</p>
+        <p><img class="md-image" src="/images/sakhi-profile.png" alt="sakhi profile — history, vitals, and what&amp;#39;s next" loading="lazy" decoding="async" /></p>
+        <p>one screen: who this patient is, how far along they are, weight or vitals over time, when the next visit falls. ABHA linked if they&#39;re on the national health ID. everything you need before you knock on the door.</p>
+        <p>you walk to the house. no signal. doesn&#39;t matter.</p>
+        <p>you run the checkup on your phone: vitals, symptoms, what you&#39;re observing. speak instead of type if that&#39;s faster. hindi if that&#39;s how you think. the form is two steps, not a notebook.</p>
+        <p>then sakhi answers.</p>
+        <p><img class="md-image" src="/images/sakhi-assessment.png" alt="sakhi assessment — risk level, what to say, what to do next" loading="lazy" decoding="async" /></p>
+        <p>not a wall of medical text. a risk level: green, yellow, or red. what sakhi noticed in what you entered. what to tell the mother, in plain language. the next action. a follow-up date. the same screen whether the answer came from the AI model or the offline rule engine on your phone. offline is not a worse version of the product.</p>
+        <p>walking to the next house, a question hits you. what BP is normal at this stage? when do i refer to the PHC?</p>
+        <p><img class="md-image" src="/images/sakhi-ask.png" alt="sakhi ask — questions in the field, even offline" loading="lazy" decoding="async" /></p>
+        <p>you ask sakhi. pull in the patient you&#39;re about to see if you want context. tap a common question or just speak it. the schedule keeps the rest of the week honest: overdue, today, coming up. so when you&#39;re juggling dozens of families, nothing buried in the back of a notebook slips through.</p>
+        <p>that&#39;s the loop. open → patient → checkup → answer → next household.</p>
+        <p>sakhi isn&#39;t here to replace ASHA workers. it&#39;s here to assist her in doing what she does best.</p>
+        <p>millions of decisions like kamla&#39;s happen every year with no clinician on call. sakhi is my attempt to put backup in every ASHA worker&#39;s pocket: the same workflow online or off, the same language she thinks in, a clear answer at the end of every visit. if you want the engineering behind it, the fine-tuned model, guideline retrieval, and offline architecture are in technical details below.</p>
+        <p><a href="https://sakhi-asha.vercel.app" target="<em>blank" rel="noopener noreferrer">try the demo</a> · <a href="https://www.kaggle.com/competitions/med-gemma-impact-challenge/writeups/new-writeup-1771944147349" target="</em>blank" rel="noopener noreferrer">kaggle writeup</a> · <a href="https://huggingface.co/docvm/sakhi-medgemma-1.5-4b-maternal-GGUF" target="_blank" rel="noopener noreferrer">fine-tuned model</a></p>
         <h2>tech stack</h2>
-        <div class="md-table-wrap"><table class="md-table"><thead><tr><th>Layer</th><th>Technology</th></tr></thead><tbody><tr><td><em>Frontend</em></td><td>React + Vite + Tailwind CSS</td></tr><tr><td><em>Mobile</em></td><td>Capacitor (Android APK / Play Store)</td></tr><tr><td><em>Backend</em></td><td>FastAPI (Python)</td></tr><tr><td><em>AI Inference</em></td><td>Ollama (GGUF / llama.cpp) on Hugging Face Spaces</td></tr><tr><td><em>Vector DB</em></td><td>ChromaDB</td></tr><tr><td><em>Embeddings</em></td><td>sentence-transformers (paraphrase-multilingual-MiniLM-L12-v2)</td></tr><tr><td><em>i18n</em></td><td>i18next (English + Hindi)</td></tr><tr><td><em>State Mgmt</em></td><td>React Context + localStorage</td></tr><tr><td><em>Deployment</em></td><td>Vercel (Frontend) + Hugging Face Spaces (Backend + Model)</td></tr></tbody></table></div>
-        <p><br /></p>
-        <h2>hacks</h2>
-        <p>i had a strict zero budget so had to get real creative with a lot of things.</p>
-        <p>the model hosting for example, i set it up on a huggingface space but the free one goes offline if it stays inactive for 10 minutes so i set up a bot that pings the space every 5 minutes, that way the space is always active and hence model always responds.</p>
-        <p>also maxed out on three kaggle accounts&#39; gpus.</p>
-        <hr class="md-hr" />
-        <h2>what next</h2>
-        <p>they three key features i wanted to keep were: <br /></p>
-        <ol><li>offline (since villages won&#39;t have good internet connectivity) <br /></li><li>voice first (since ASHA&#39;s will find speaking easier than typing) <br /></li><li>multi-lingual (to have real large scale impact, it&#39;ll have to be able to speak a lot of languages)</li></ol>
-        <p>i&#39;ve achieved all of them to a reasonable extent but i can still make a lot more improvements, which is what i&#39;m doing right now.</p>
-        <p>also, major update: google released the new Gemma 4 models which has a 2B variant that is natively multi-modal (text, image and audio), can think, runs locally on edge devices and multi-lingual (over 140 languages according to them) which seems like a perfect fit for sakhi. i&#39;m currently running medical benchmarks specific to maternal and newborns to check its capabilities, after which i&#39;ll fine tune and do some RL optmization (DPO) followed by quantization. google has also revamped LiteRT-LM which is like a super fast and efficient inference engine for language models on phone. plan to incorporate this too. but for all this i&#39;ll have to first convert the codebase from react to kotlin and properly set up the database etc. working on that right now.</p>
-        <p>i&#39;ve also reached out to a bunch of NGO&#39;s and govt orgs who deal with ASHA workers to get a first hand account of what problems they face. enough building in isolation from those whose problems i&#39;m trying to solve.</p>
-        <p>exciting times ahead.</p>
+        <div class="md-table-wrap"><table class="md-table"><thead><tr><th>Layer</th><th>Technology</th></tr></thead><tbody><tr><td><em>Frontend</em></td><td>React + Vite + Tailwind CSS</td></tr><tr><td><em>Mobile</em></td><td>Capacitor (Android APK)</td></tr><tr><td><em>Backend</em></td><td>FastAPI (Python)</td></tr><tr><td><em>AI model</em></td><td>Custom QLoRA fine-tuned MedGemma 1.5 4B IT → GGUF `Q4<em>K</em>M` (~2.5 GB), served via Ollama on Hugging Face Spaces</td></tr><tr><td><em>RAG</em></td><td>ChromaDB + paraphrase-multilingual-MiniLM-L12-v2 over 10 WHO/MOHFW guideline PDFs</td></tr><tr><td><em>Offline</em></td><td>Workbox PWA shell + MOHFW rule-based triage in `localAssessment.js`</td></tr><tr><td><em>i18n</em></td><td>i18next (English + Hindi)</td></tr><tr><td><em>Deployment</em></td><td>Vercel (frontend) + Hugging Face Spaces (backend + model)</td></tr></tbody></table></div>
+        <h2>ai stack</h2>
+        <p>primary model: QLoRA fine-tuned MedGemma 1.5 4B IT on ~6,800 maternal/neonatal examples, targeting Indian clinical risk factors (severe anaemia, eclampsia patterns) and JSON schema compliance for production reliability.</p>
+        <p>fine-tuning pipeline (3 Kaggle notebooks, zero budget):</p>
+        <ol><li>QLoRA fine-tune → <a href="https://huggingface.co/docvm/sakhi-medgemma-1.5-4b-maternal" target="_blank" rel="noopener noreferrer">LoRA adapter on HF Hub</a></li><li>merge LoRA → convert to GGUF → `Q4<em>K</em>M` quantization → <a href="https://huggingface.co/docvm/sakhi-medgemma-1.5-4b-maternal-GGUF" target="_blank" rel="noopener noreferrer">GGUF on HF Hub</a></li><li>serve via Ollama on a Hugging Face Space</li></ol>
+        <p>training: LoRA rank 16, 2×T4 on Kaggle, ~4.2 hrs, 0.89% trainable params, final loss 2.13.</p>
+        <p>evaluation: 75 labelled MOHFW/WHO-aligned maternal triage cases. primary safety metric is false negative rate for high risk.</p>
+        <p>model cascade (auto-fallback): fine-tuned MedGemma → Gemma 3n E4B IT → Gemini 2.5 Flash Lite → Llama 3.1 8B. missing API keys are skipped automatically.</p>
+        <h2>offline architecture</h2>
+        <ul><li>app shell cached by Workbox service worker, opens with no connectivity</li><li>patient data persists to localStorage, namespaced by ASHA ID</li><li>offline triage implements MOHFW rules locally (BP ≥ 140/90 → red, Hb &lt; 7 → red, weight &lt; 1.5kg → red, etc.) and returns the identical response shape as the AI endpoint</li><li>sync queue replays pending submissions on reconnect; AI result replaces the local one in-place</li></ul>
+        <h2>engineering notes</h2>
+        <ul><li>`backend/model.py` is the only file that calls any AI model</li><li>offline fallback returns the exact same JSON shape as the AI endpoint, no special-casing in the UI</li><li>ABHA (Ayushman Bharat Health Account) OTP verification proxied server-side</li><li>HF Space kept warm with a `/health` ping every 5 minutes (free tier sleeps after 10 min idle)</li><li>temperature 0.2 across all providers for clinical consistency</li></ul>
         </article>
       </section>
 
@@ -438,5 +482,57 @@
       });
     </script>
   
+<script>
+      (function () {
+        var lb = null;
+        var lbImg = null;
+        var lbClose = null;
+
+        function ensureLightbox() {
+          if (lb) return;
+          lb = document.createElement("div");
+          lb.className = "lightbox";
+          lb.setAttribute("role", "dialog");
+          lb.setAttribute("aria-modal", "true");
+          lb.setAttribute("aria-label", "Expanded image");
+          lb.innerHTML = '<button type="button" class="lightbox-close" aria-label="Close">&times;</button><img alt="">';
+          lbImg = lb.querySelector("img");
+          lbClose = lb.querySelector(".lightbox-close");
+          lbClose.addEventListener("click", close);
+          lb.addEventListener("click", function (e) {
+            if (e.target === lb) close();
+          });
+          document.body.appendChild(lb);
+        }
+
+        function open(src, alt) {
+          ensureLightbox();
+          lbImg.src = src;
+          lbImg.alt = alt || "";
+          lb.classList.add("is-open");
+          document.body.classList.add("lightbox-open");
+          document.addEventListener("keydown", onKey);
+          lbClose.focus();
+        }
+
+        function close() {
+          if (!lb) return;
+          lb.classList.remove("is-open");
+          document.body.classList.remove("lightbox-open");
+          document.removeEventListener("keydown", onKey);
+          lbImg.removeAttribute("src");
+        }
+
+        function onKey(e) {
+          if (e.key === "Escape") close();
+        }
+
+        document.addEventListener("click", function (e) {
+          var img = e.target.closest(".md-image");
+          if (!img || !img.src) return;
+          e.preventDefault();
+          open(img.currentSrc || img.src, img.alt);
+        });
+      })();</script>
   </body>
 </html>

@@ -30,7 +30,7 @@ This is a zero-dependency static site generator. The entire build pipeline lives
 
 ### Frontmatter schemas
 
-**Projects:** `title`, `slug`, `summary`, `date`, `status`, `stack` (array), `repo`, `demo`
+**Projects:** `title`, `slug`, `summary`, `date`, `stack` (array), `repo`, `demo`
 
 **Blog posts:** `title`, `slug`, `date`, `read_time`, `summary`
 

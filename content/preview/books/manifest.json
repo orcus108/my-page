@@ -1,0 +1,23 @@
+[
+  { "title": "High Output Management", "slug": "high-output-management", "pages": 272, "cover": true, "spine": true },
+  { "title": "The Age of AI", "slug": "the-age-of-ai", "pages": 272, "cover": true, "spine": true },
+  { "title": "Life 3.0", "slug": "life-3-0", "pages": 384, "cover": true, "spine": true },
+  { "title": "The Coming Wave", "slug": "the-coming-wave", "pages": 320, "cover": true, "spine": true },
+  { "title": "Power and Progress", "slug": "power-and-progress", "pages": 560, "cover": true, "spine": true },
+  { "title": "Steve Jobs", "slug": "steve-jobs", "pages": 656, "cover": true, "spine": true },
+  { "title": "Elon Musk", "slug": "elon-musk", "pages": 688, "cover": true, "spine": true },
+  { "title": "The Innovators", "slug": "the-innovators", "pages": 608, "cover": true, "spine": true },
+  { "title": "The Code Breaker", "slug": "the-code-breaker", "pages": 576, "cover": true, "spine": true },
+  { "title": "Creativity, Inc.", "slug": "creativity-inc", "pages": 400, "cover": true, "spine": true },
+  { "title": "The Hard Thing About Hard Things", "slug": "the-hard-thing-about-hard-things", "pages": 304, "cover": true, "spine": true },
+  { "title": "Chip War", "slug": "chip-war", "pages": 544, "cover": true, "spine": true },
+  { "title": "Apple in China", "slug": "apple-in-china", "pages": 352, "cover": true, "spine": true },
+  { "title": "The Undercover Economist", "slug": "the-undercover-economist", "pages": 288, "cover": true, "spine": true },
+  { "title": "The India Way", "slug": "the-india-way", "pages": 240, "cover": true, "spine": true },
+  { "title": "Breaking the Mould", "slug": "breaking-the-mould", "pages": 336, "cover": true, "spine": true },
+  { "title": "Predictably Irrational", "slug": "predictably-irrational", "pages": 304, "cover": true, "spine": true },
+  { "title": "Never Split the Difference", "slug": "never-split-the-difference", "pages": 352, "cover": true, "spine": true },
+  { "title": "The Splendid and the Vile", "slug": "the-splendid-and-the-vile", "pages": 608, "cover": true, "spine": true },
+  { "title": "The Spy and the Traitor", "slug": "the-spy-and-the-traitor", "pages": 416, "cover": true, "spine": true },
+  { "title": "The Denial of Death", "slug": "the-denial-of-death", "pages": 374, "cover": true, "spine": true }
+]

@@ -1,5 +1,6 @@
 import { promises as fs } from "node:fs";
 import path from "node:path";
+import { lightboxStyles, lightboxScript } from "./lightbox.mjs";
 
 const PREVIEW_EMAIL = "misravedantsocials@gmail.com";
 
@@ -261,6 +262,28 @@ function previewStyles(gradientPath) {
 
       p:has(> .md-image + .md-image) .md-image { flex: 1; min-width: 0; margin-top: 0; }
 
+      .video-embed {
+        position: relative;
+        width: 100%;
+        aspect-ratio: 16 / 9;
+        margin-top: 0.9rem;
+        border-radius: 4px;
+        overflow: hidden;
+        background: #000;
+      }
+      .video-embed iframe {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        border: 0;
+      }
+      .video-embed-link {
+        margin: 0.55rem 0 0;
+        font-size: 0.82rem;
+        color: var(--muted);
+      }
+
       .md-hr { border: 0; border-top: 1px solid var(--line); margin: 1.25rem 0; }
 
       .md-table-wrap { overflow-x: auto; margin-top: 0.9rem; }
@@ -351,6 +374,7 @@ function previewStyles(gradientPath) {
       @media (max-width: 520px) {
         .nav-pill { gap: 0.55rem; padding: 0.36rem 0.7rem; }
       }
+${lightboxStyles}
   `;
 }
 
@@ -453,6 +477,7 @@ ${previewFooter()}
 ${vercelAnalyticsScript()}
 ${previewNavScrollScript()}
 ${previewDepthScript()}
+${lightboxScript()}
   </body>
 </html>`;
 }

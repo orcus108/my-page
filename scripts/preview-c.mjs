@@ -1,10 +1,66 @@
 import { promises as fs } from "node:fs";
 import path from "node:path";
+import { lightboxStyles, lightboxScriptBody } from "./lightbox.mjs";
+import { copyFonts, fontFaceCss, fontPreloads } from "./lib/fonts.mjs";
+import { contentHash, minifyCss, minifyJs } from "./lib/minify.mjs";
+import { collectMarkdownImages, ImagePipeline } from "./lib/optimize-image.mjs";
 
 const EMAIL = "misravedantsocials@gmail.com";
 const X_URL = "https://x.com/orcus108";
 const GH_URL = "https://github.com/orcus108";
+const SUBSTACK_URL = "https://vedantmisra.substack.com";
 const SITE_TITLE = "Vedant Misra";
+const SITE_DESCRIPTION =
+  "Vedant Misra is an IIT Madras student building AI products for underserved users, including Friday, Sakhi, Clippy, and other product experiments from India.";
+const TWITTER_HANDLE = "@orcus108";
+const DEFAULT_SITE_URL = "https://vedantmisra.vercel.app";
+
+function normalizeSiteUrl(value) {
+  const raw = String(value || "").trim();
+  if (!raw) return DEFAULT_SITE_URL;
+  const withProtocol = /^https?:\/\//i.test(raw) ? raw : `https://${raw}`;
+  return withProtocol.replace(/\/+$/, "");
+}
+
+const SITE_URL = normalizeSiteUrl(
+  process.env.SITE_URL ||
+    process.env.VERCEL_PROJECT_PRODUCTION_URL ||
+    process.env.URL ||
+    process.env.VERCEL_URL ||
+    DEFAULT_SITE_URL
+);
+const PERSON_ID = `${SITE_URL}/#person`;
+const WEBSITE_ID = `${SITE_URL}/#website`;
+const DEFAULT_SOCIAL_IMAGE = "assets/portrait.webp";
+
+// on-brand subscribe block; the form hands off to substack with the email prefilled,
+// so the address still lands in the substack list without an off-brand embed iframe
+function subscribeBlock() {
+  return `
+      <section class="subscribe" aria-label="newsletter signup">
+        <p class="sub-eyebrow">newsletter</p>
+        <h2 class="sub-title">new essays by email</h2>
+        <p class="sub-desc">occasional writing on AI, product, and building from india. no spam, unsubscribe anytime.</p>
+        <form class="sub-form" action="${SUBSTACK_URL}/welcome" method="get" target="_blank" rel="noopener" novalidate>
+          <input
+            class="sub-input"
+            type="email"
+            name="email"
+            placeholder="you@email.com"
+            aria-label="email address"
+            autocomplete="email"
+            inputmode="email"
+            autocapitalize="off"
+            autocorrect="off"
+            spellcheck="false"
+            enterkeyhint="go"
+            required
+          />
+          <button class="sub-btn" type="submit">subscribe</button>
+        </form>
+        <p class="sub-status" role="status" aria-live="polite"></p>
+      </section>`;
+}
 
 function slugify(s) {
   return s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
@@ -32,21 +88,309 @@ function excerptOf(body, max = 165) {
   return cut.slice(0, cut.lastIndexOf(" ")).trim() + "…";
 }
 
+function stripMarkdown(body) {
+  return (body || "")
+    .replace(/```[\s\S]*?```/g, "")
+    .replace(/^#{1,6}\s*/gm, "")
+    .replace(/^\s*>\s?/gm, "")
+    .replace(/!\[([^\]]*)\]\([^)]*\)/g, "$1")
+    .replace(/\[([^\]]+)\]\([^)]*\)/g, "$1")
+    .replace(/[*_`#>|]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function metaDescription(value, fallback = SITE_DESCRIPTION) {
+  const text = stripMarkdown(value || fallback);
+  if (text.length <= 158) return text;
+  const cut = text.slice(0, 155);
+  const lastSpace = cut.lastIndexOf(" ");
+  return `${cut.slice(0, lastSpace > 90 ? lastSpace : cut.length).trim()}...`;
+}
+
+function absoluteUrl(input = "/") {
+  const raw = String(input || "/").trim();
+  if (/^https?:\/\//i.test(raw)) return raw;
+  const cleaned = raw.replace(/^(\.\.\/)+/, "").replace(/^\.?\//, "");
+  return `${SITE_URL}/${cleaned}`.replace(/\/$/, cleaned ? "" : "/");
+}
+
+function canonicalPath(pathname = "/") {
+  const raw = String(pathname || "/").trim();
+  if (raw === "/" || raw === "") return "/";
+  return raw.startsWith("/") ? raw : `/${raw}`;
+}
+
+function isoDate(value) {
+  if (!value) return "";
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return String(value).slice(0, 10);
+  return d.toISOString().slice(0, 10);
+}
+
+function latestIsoDate(values) {
+  const dates = values
+    .map((value) => new Date(value))
+    .filter((date) => !Number.isNaN(date.getTime()))
+    .sort((a, b) => b.getTime() - a.getTime());
+  return dates[0] ? dates[0].toISOString().slice(0, 10) : isoDate(new Date());
+}
+
+function safeJson(data) {
+  return JSON.stringify(data)
+    .replaceAll("<", "\\u003c")
+    .replaceAll(">", "\\u003e")
+    .replaceAll("&", "\\u0026");
+}
+
+function jsonLdScript(data) {
+  const items = Array.isArray(data) ? data.filter(Boolean) : [data].filter(Boolean);
+  if (!items.length) return "";
+  return `    <script type="application/ld+json">${safeJson(
+    items.length === 1 ? items[0] : { "@context": "https://schema.org", "@graph": items }
+  )}</script>`;
+}
+
+function personSchema() {
+  return {
+    "@type": "Person",
+    "@id": PERSON_ID,
+    name: SITE_TITLE,
+    url: absoluteUrl("/"),
+    email: EMAIL,
+    sameAs: [X_URL, GH_URL, SUBSTACK_URL],
+    affiliation: {
+      "@type": "CollegeOrUniversity",
+      name: "IIT Madras",
+    },
+    knowsAbout: [
+      "AI products",
+      "local-first software",
+      "product design",
+      "healthcare technology",
+      "India-first markets",
+    ],
+    description: SITE_DESCRIPTION,
+  };
+}
+
+function websiteSchema() {
+  return {
+    "@type": "WebSite",
+    "@id": WEBSITE_ID,
+    url: absoluteUrl("/"),
+    name: SITE_TITLE,
+    alternateName: ["Vedant Misra portfolio", "Vedant Misra personal site"],
+    description: SITE_DESCRIPTION,
+    publisher: { "@id": PERSON_ID },
+    inLanguage: "en",
+  };
+}
+
+function webpageSchema({ type = "WebPage", path = "/", title, description, image }) {
+  const url = absoluteUrl(path);
+  return {
+    "@type": type,
+    "@id": `${url}#webpage`,
+    url,
+    name: title,
+    description,
+    isPartOf: { "@id": WEBSITE_ID },
+    about: { "@id": PERSON_ID },
+    primaryImageOfPage: image
+      ? {
+          "@type": "ImageObject",
+          url: absoluteUrl(image),
+        }
+      : undefined,
+    inLanguage: "en",
+  };
+}
+
+function breadcrumbSchema(items) {
+  return {
+    "@type": "BreadcrumbList",
+    itemListElement: items.map((item, index) => ({
+      "@type": "ListItem",
+      position: index + 1,
+      name: item.name,
+      item: absoluteUrl(item.path),
+    })),
+  };
+}
+
+function itemListSchema(items) {
+  return {
+    "@type": "ItemList",
+    itemListElement: items.map((item, index) => ({
+      "@type": "ListItem",
+      position: index + 1,
+      url: absoluteUrl(item.path),
+      name: item.name,
+    })),
+  };
+}
+
+function seoHead({
+  root,
+  title,
+  description,
+  path = "/",
+  image = DEFAULT_SOCIAL_IMAGE,
+  imageAlt = SITE_TITLE,
+  ogType = "website",
+  publishedTime = "",
+  modifiedTime = "",
+  articleSection = "",
+  structuredData = [],
+}) {
+  const canonical = absoluteUrl(path);
+  const img = absoluteUrl(image || DEFAULT_SOCIAL_IMAGE);
+  const desc = metaDescription(description);
+  const jsonLd = jsonLdScript(structuredData);
+  return `
+    <meta name="description" content="${escapeHtml(desc)}" />
+    <meta name="author" content="${escapeHtml(SITE_TITLE)}" />
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+    <link rel="canonical" href="${escapeHtml(canonical)}" />
+    <link rel="icon" href="${root}favicon.svg" type="image/svg+xml" />
+    <meta property="og:site_name" content="${escapeHtml(SITE_TITLE)}" />
+    <meta property="og:title" content="${escapeHtml(title)}" />
+    <meta property="og:description" content="${escapeHtml(desc)}" />
+    <meta property="og:type" content="${escapeHtml(ogType)}" />
+    <meta property="og:url" content="${escapeHtml(canonical)}" />
+    <meta property="og:image" content="${escapeHtml(img)}" />
+    <meta property="og:image:alt" content="${escapeHtml(imageAlt)}" />
+    <meta property="og:locale" content="en_US" />
+    ${publishedTime ? `<meta property="article:published_time" content="${escapeHtml(publishedTime)}" />` : ""}
+    ${modifiedTime ? `<meta property="article:modified_time" content="${escapeHtml(modifiedTime)}" />` : ""}
+    ${articleSection ? `<meta property="article:section" content="${escapeHtml(articleSection)}" />` : ""}
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:creator" content="${escapeHtml(TWITTER_HANDLE)}" />
+    <meta name="twitter:title" content="${escapeHtml(title)}" />
+    <meta name="twitter:description" content="${escapeHtml(desc)}" />
+    <meta name="twitter:image" content="${escapeHtml(img)}" />
+    <meta name="twitter:image:alt" content="${escapeHtml(imageAlt)}" />
+${jsonLd}`;
+}
+
+function xmlEscape(value) {
+  return String(value || "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&apos;");
+}
+
+async function writeFavicon(root) {
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="#0c0c0c"/><text x="50%" y="54%" text-anchor="middle" dominant-baseline="middle" font-family="Arial, Helvetica, sans-serif" font-size="25" font-weight="700" fill="#ffffff">vm</text></svg>`;
+  await fs.writeFile(path.join(root, "favicon.svg"), svg, "utf8");
+}
+
+async function writeRobots(root) {
+  const robots = `User-agent: *
+Allow: /
+
+Sitemap: ${absoluteUrl("/sitemap.xml")}
+`;
+  await fs.writeFile(path.join(root, "robots.txt"), robots, "utf8");
+}
+
+async function writeSitemap(root, entries) {
+  const unique = new Map();
+  for (const entry of entries) {
+    if (!entry || !entry.path) continue;
+    unique.set(absoluteUrl(entry.path), entry);
+  }
+  const urls = [...unique.entries()]
+    .map(([loc, entry]) => {
+      const images = [...new Set(entry.images || [])]
+        .filter(Boolean)
+        .map((image) => `<image:image><image:loc>${xmlEscape(absoluteUrl(image))}</image:loc></image:image>`)
+        .join("");
+      const lastmod = entry.lastmod ? `<lastmod>${xmlEscape(isoDate(entry.lastmod))}</lastmod>` : "";
+      return `  <url><loc>${xmlEscape(loc)}</loc>${lastmod}${images}</url>`;
+    })
+    .join("\n");
+  const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
+${urls}
+</urlset>
+`;
+  await fs.writeFile(path.join(root, "sitemap.xml"), xml, "utf8");
+}
+
 function shelfScript() {
   return `
     <script>
       (function () {
-        var books = Array.prototype.slice.call(document.querySelectorAll('.book'));
-        var touch = window.matchMedia('(hover: none)').matches;
+        var DWELL = 450;
+        var books = Array.prototype.slice.call(document.querySelectorAll(".book"));
+        var shelves = document.querySelector(".shelves");
+        if (!shelves) return;
+        var current = null, timer = null, presentedAt = 0, usingPointer = false;
+
+        function clearTimer() { if (timer) { clearTimeout(timer); timer = null; } }
+        function clearLean() {
+          books.forEach(function (o) { o.classList.remove("lean-l", "lean-r"); });
+        }
+        function setLean(b) {
+          clearLean();
+          if (!b || !b.parentElement) return;
+          var sibs = Array.prototype.slice.call(b.parentElement.children)
+            .filter(function (n) { return n.classList && n.classList.contains("book"); });
+          var i = sibs.indexOf(b);
+          // the book to the left leans right into the gap; the one to the right leans left
+          if (i > 0) sibs[i - 1].classList.add("lean-r");
+          if (i < sibs.length - 1) sibs[i + 1].classList.add("lean-l");
+        }
+        function present(b) {
+          if (current === b) return;
+          if (current) {
+            current.classList.remove("is-presenting");
+          }
+          current = b;
+          if (b) {
+            b.classList.add("is-presenting");
+            presentedAt = Date.now();
+            setLean(b);
+          } else {
+            clearLean();
+          }
+        }
+        function close() { clearTimer(); present(null); }
+
+        document.addEventListener("pointerdown", function () {
+          usingPointer = true;
+          setTimeout(function () { usingPointer = false; }, 450);
+        }, true);
+
         books.forEach(function (b) {
-          b.addEventListener('click', function () {
-            var open = b.classList.contains('is-out');
-            books.forEach(function (o) { o.classList.remove('is-out'); });
-            if (!open) b.classList.add('is-out');
+          // the pull-out fires only on a deliberate dwell, never on a casual pass
+          b.addEventListener("mouseenter", function () {
+            clearTimer();
+            timer = setTimeout(function () { present(b); }, DWELL);
           });
+          b.addEventListener("mouseleave", clearTimer);
+          b.addEventListener("click", function (e) {
+            e.stopPropagation();
+            clearTimer();
+            if (current === b) {
+              if (Date.now() - presentedAt > 350) close();
+            } else {
+              present(b);
+            }
+          });
+          b.addEventListener("focus", function () { if (!usingPointer) present(b); });
         });
-        document.addEventListener('click', function (e) {
-          if (!e.target.closest('.book')) books.forEach(function (o) { o.classList.remove('is-out'); });
+
+        shelves.addEventListener("mouseleave", close);
+        document.addEventListener("click", function (e) {
+          if (!e.target.closest(".book")) close();
+        });
+        document.addEventListener("keydown", function (e) {
+          if (e.key === "Escape") close();
         });
       })();
     </script>`;
@@ -61,9 +405,8 @@ export function splitProjectBody(body) {
   };
 }
 
-function styles(depth) {
-  const asset = (name) => (depth === 1 ? `assets/${name}` : `../assets/${name}`);
-  return `
+function styles() {
+  return `${fontFaceCss()}
       :root {
         --bg: #ffffff;
         --fg: #0c0c0c;
@@ -73,14 +416,18 @@ function styles(depth) {
         --topbar-bg: rgba(255, 255, 255, 0.82);
         --dot: rgba(12, 12, 12, 0.18);
         --dot-hover: rgba(12, 12, 12, 0.4);
-        --shelf-line: #dcdcdc;
-        --shelf-shadow: rgba(0, 0, 0, 0.55);
+        --shelf-line: #c4b8a8;
+        --shelf-shadow: rgba(0, 0, 0, 0.35);
+        --shelf-wood: #e6ddd2;
+        --shelf-wood-deep: #cfc3b4;
+        --shelf-wood-grain: rgba(92, 72, 52, 0.07);
+        --shelf-back: #f0ebe4;
         --portrait-filter: none;
         --portrait-blend: multiply;
         --font: "Plus Jakarta Sans", ui-sans-serif, system-ui, -apple-system, sans-serif;
         --max: 1080px;
         --pad: clamp(1.5rem, 5vw, 4rem);
-        --gradient: url("${asset("hero-gradient.png")}");
+        --gradient: url("hero-gradient.webp");
       }
 
       [data-theme="dark"] {
@@ -92,8 +439,12 @@ function styles(depth) {
         --topbar-bg: rgba(12, 12, 12, 0.72);
         --dot: rgba(242, 242, 242, 0.22);
         --dot-hover: rgba(242, 242, 242, 0.5);
-        --shelf-line: #2a2a2a;
-        --shelf-shadow: rgba(0, 0, 0, 0.8);
+        --shelf-line: #3d3530;
+        --shelf-shadow: rgba(0, 0, 0, 0.65);
+        --shelf-wood: #2a2420;
+        --shelf-wood-deep: #1a1614;
+        --shelf-wood-grain: rgba(255, 255, 255, 0.04);
+        --shelf-back: #141210;
         /* the portrait is black ink on white; inverting it looks like a creepy negative,
            so in dark mode show it as-is on a light card instead (see .portrait override) */
         --portrait-filter: none;
@@ -267,122 +618,301 @@ function styles(depth) {
       }
 
       /* ---- bookshelf ---- */
-      .shelves { padding: clamp(2.5rem, 5vw, 4rem) 0 clamp(3.5rem, 7vw, 5.5rem); }
+      .shelves {
+        position: relative;
+        padding: clamp(1rem, 2vw, 1.5rem) 0 clamp(2.5rem, 5vw, 4rem);
+      }
+      /* each row is a recessed compartment: a back panel + a real plank with depth */
       .shelf-row {
+        position: relative;
         display: flex;
         align-items: flex-end;
-        gap: 0 5px;
-        margin-top: clamp(3.25rem, 6vw, 5rem);
-        padding: 0 4px 13px;
-        border-bottom: 1px solid var(--shelf-line);
-        box-shadow: 0 17px 22px -20px var(--shelf-shadow);
-        perspective: 2000px;
-        perspective-origin: 50% 28%;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 0 1px;
+        width: 100%;
+        min-height: 248px;
+        margin-top: clamp(3rem, 6vw, 4.5rem);
+        padding: 26px 16px 0;
+        border-radius: 3px 3px 0 0;
+        /* back wall of the recess, with ambient occlusion up top and in the corners */
+        background:
+          radial-gradient(140% 70% at 50% 0%, rgba(0, 0, 0, 0.16), transparent 60%),
+          linear-gradient(180deg, color-mix(in srgb, var(--shelf-back) 82%, #000) 0%, var(--shelf-back) 30%);
+        box-shadow:
+          inset 0 18px 26px -18px rgba(0, 0, 0, 0.5),
+          inset 22px 0 30px -26px rgba(0, 0, 0, 0.45),
+          inset -22px 0 30px -26px rgba(0, 0, 0, 0.45);
+        perspective: 2600px;
+        perspective-origin: 50% 36%;
       }
-      .shelf-row:first-child { margin-top: clamp(1rem, 2vw, 1.5rem); }
+      .shelf-row:first-child { margin-top: 1.25rem; }
+      /* the plank lip the books rest in */
+      .shelf-row::before {
+        content: "";
+        position: absolute;
+        left: -8px;
+        right: -8px;
+        bottom: 0;
+        height: 6px;
+        z-index: 3;
+        border-radius: 1px;
+        background: linear-gradient(180deg, color-mix(in srgb, var(--shelf-wood) 52%, #fff), var(--shelf-wood));
+      }
+      /* the visible front edge / thickness of the plank */
+      .shelf-row::after {
+        content: "";
+        position: absolute;
+        left: -8px;
+        right: -8px;
+        bottom: -16px;
+        height: 16px;
+        z-index: 2;
+        border-radius: 0 0 3px 3px;
+        background: linear-gradient(180deg, var(--shelf-wood) 0%, var(--shelf-wood-deep) 100%);
+        box-shadow:
+          0 18px 26px -12px var(--shelf-shadow),
+          inset 0 1px 0 color-mix(in srgb, var(--shelf-wood) 72%, #fff);
+      }
+
       .book {
         position: relative;
-        flex: var(--g, 2) 1 0;
-        min-width: 0;
+        flex: 0 0 var(--thick);
+        width: var(--thick);
         height: var(--h);
+        margin-bottom: 2px;
         padding: 0;
         border: 0;
         background: none;
         font-family: inherit;
         cursor: pointer;
+        -webkit-tap-highlight-color: transparent;
+        transform-style: preserve-3d;
+        transition: transform 0.6s cubic-bezier(0.34, 1.08, 0.42, 1);
       }
+      /* contact shadow where the book meets the plank */
       .book::after {
         content: "";
         position: absolute;
-        left: -3px; right: -3px; bottom: -7px;
-        height: 11px;
-        background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.3), transparent 72%);
-        opacity: 0.7;
+        left: -2px;
+        right: -2px;
+        bottom: -3px;
+        height: 9px;
+        background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.42), transparent 72%);
+        opacity: 0.6;
         z-index: -1;
-        transition: opacity 0.6s ease, transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        transition: opacity 0.5s ease, transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
       }
       .book-3d {
         position: absolute;
         inset: 0;
         transform-style: preserve-3d;
-        transform-origin: bottom center;
+        transform-origin: 50% 100%;
         transform: rotate(var(--lean, 0deg));
-        transition: transform 0.72s cubic-bezier(0.16, 1, 0.3, 1);
+        transition: transform 0.36s cubic-bezier(0.22, 1, 0.36, 1);
       }
-      .book-face {
+      .bk-face {
         position: absolute;
-        top: 0; left: 0;
-        height: 100%;
-        backface-visibility: hidden;
+        top: 0;
+        left: 0;
         overflow: hidden;
       }
-      .book-spine {
-        width: 100%;
-        background: var(--c);
-        background-image: linear-gradient(90deg, rgba(255,255,255,0.14), transparent 22%, transparent 80%, rgba(0,0,0,0.35));
+      /* spine — the face you see on the shelf */
+      .bk-spine {
+        width: var(--thick);
+        height: var(--h);
         display: flex;
-        flex-direction: column;
         align-items: center;
-        justify-content: space-between;
-        padding: 0.75rem 0;
+        justify-content: center;
+        border-radius: 1px 2px 2px 1px;
+        color: var(--sc, #f4f1ea);
+        /* cylindrical sheen across the spine reads as a rounded book back */
+        background:
+          linear-gradient(
+            90deg,
+            rgba(0, 0, 0, 0.42) 0%,
+            rgba(0, 0, 0, 0.12) 5%,
+            rgba(255, 255, 255, 0.18) 15%,
+            rgba(255, 255, 255, 0.04) 45%,
+            rgba(0, 0, 0, 0.10) 80%,
+            rgba(0, 0, 0, 0.5) 100%
+          ),
+          var(--c);
+        box-shadow:
+          inset 0 1px 0 rgba(255, 255, 255, 0.22),
+          inset 0 -2px 3px rgba(0, 0, 0, 0.34);
       }
-      .book-spine .s-title {
+      /* head + tail bands near the top/bottom of the spine */
+      .bk-spine::before,
+      .bk-spine::after {
+        content: "";
+        position: absolute;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: rgba(255, 255, 255, 0.16);
+        box-shadow: 0 1px 0 rgba(0, 0, 0, 0.28);
+      }
+      .bk-spine::before { top: 10px; }
+      .bk-spine::after { bottom: 10px; }
+      .s-text {
         writing-mode: vertical-rl;
         text-orientation: mixed;
-        max-height: 74%;
+        display: flex;
+        align-items: center;
+        gap: 0.85em;
+        max-height: 86%;
+        min-height: 0;
+        margin: 0 auto;
+        white-space: nowrap;
         overflow: hidden;
-        white-space: nowrap;
+        text-shadow: 0 1px 1px rgba(0, 0, 0, 0.4);
+      }
+      /* title wins the space fight: it shrinks last and only truncates if it alone
+         overruns the spine; the author collapses (and ellipsises) first. */
+      .s-title {
+        flex: 0 1 auto;
+        min-height: 0;
+        overflow: hidden;
         text-overflow: ellipsis;
-        font-size: 0.72rem;
-        font-weight: 600;
-        letter-spacing: 0.01em;
-        color: #f4f1ea;
+        font-size: var(--tfs, 11px);
+        font-weight: 700;
+        letter-spacing: 0.015em;
       }
-      .book-spine .s-author {
-        writing-mode: vertical-rl;
-        white-space: nowrap;
-        font-size: 0.58rem;
-        color: rgba(244, 241, 234, 0.58);
+      .s-author {
+        flex: 0 100000 auto;
+        min-height: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        font-size: var(--afs, 8px);
+        font-weight: 500;
+        color: color-mix(in srgb, var(--sc, #f4f1ea) 64%, transparent);
       }
-      .book-cover {
-        left: 100%;
+      /* front cover — the large face, hinged back along the spine's right edge */
+      .bk-cover {
         width: var(--w);
+        height: var(--h);
+        left: 0;
         transform-origin: left center;
-        transform: rotateY(90deg);
+        transform: translateX(var(--thick)) rotateY(90deg);
         background: var(--c);
         background-size: cover;
         background-position: center;
         display: flex;
         flex-direction: column;
         justify-content: space-between;
-        padding: 0.95rem 0.85rem;
-        box-shadow: inset 1px 0 0 rgba(255,255,255,0.08), inset 0 0 26px rgba(0,0,0,0.25);
+        padding: 0.85rem 0.75rem;
+        border-radius: 0 2px 2px 0;
+        box-shadow:
+          inset 3px 0 8px rgba(0, 0, 0, 0.32),
+          inset 0 0 26px rgba(0, 0, 0, 0.16);
       }
-      .book-cover .c-rule { width: 22px; height: 2px; background: rgba(246,243,236,0.55); margin-bottom: 0.55rem; }
-      .book-cover .c-title { font-size: 0.84rem; font-weight: 700; line-height: 1.16; letter-spacing: -0.01em; color: #f6f3ec; }
-      .book-cover .c-author { font-size: 0.66rem; color: rgba(246,243,236,0.72); }
-      .book-cover.has-img { padding: 0; }
-      .book-cover.has-img .c-top, .book-cover.has-img .c-author { display: none; }
+      .bk-cover .c-rule {
+        width: 20px;
+        height: 2px;
+        background: rgba(246,243,236,0.55);
+        margin-bottom: 0.5rem;
+      }
+      .bk-cover .c-title {
+        font-size: 0.8rem;
+        font-weight: 700;
+        line-height: 1.15;
+        letter-spacing: -0.01em;
+        color: #f6f3ec;
+      }
+      .bk-cover .c-author {
+        font-size: 0.62rem;
+        color: rgba(246,243,236,0.72);
+      }
+      .bk-cover.has-img { padding: 0; }
+      .bk-cover.has-img .c-top,
+      .bk-cover.has-img .c-author { display: none; }
+      /* back cover — parallel large face on the far side */
+      .bk-back {
+        width: var(--w);
+        height: var(--h);
+        left: 0;
+        transform-origin: left center;
+        transform: rotateY(90deg);
+        background: linear-gradient(90deg, color-mix(in srgb, var(--c) 62%, #000), var(--c));
+        border-radius: 2px 0 0 2px;
+      }
+      /* fore-edge — the cut pages opposite the spine, at the back of the book */
+      .bk-fore {
+        width: var(--thick);
+        height: var(--h);
+        left: 0;
+        transform: translateZ(calc(-1 * var(--w)));
+        background:
+          repeating-linear-gradient(90deg, #e9e0c9 0 1px, #d8ccae 1px 2px),
+          linear-gradient(180deg, #efe7d2, #ddd0b4);
+      }
+      /* page block — top edge of the pages */
+      .bk-top {
+        width: var(--thick);
+        height: var(--w);
+        top: 0;
+        left: 0;
+        transform-origin: top center;
+        transform: rotateX(-90deg);
+        background:
+          repeating-linear-gradient(90deg, #ece4d0 0 1px, #dacfb2 1px 2px),
+          linear-gradient(180deg, #f5efdd, #e6dcc4);
+        box-shadow: inset 0 0 10px rgba(120, 96, 54, 0.22);
+      }
+      .bk-bottom {
+        width: var(--thick);
+        height: var(--w);
+        top: 0;
+        left: 0;
+        transform-origin: top center;
+        transform: translateY(var(--h)) rotateX(-90deg);
+        background: linear-gradient(180deg, #d8cdb0, #c7bb9c);
+      }
 
-      /* rest = spine out; active = lift up, turn to cover */
-      .book:hover, .book:focus-visible, .book.is-out { z-index: 20; outline: none; }
-      .book:hover .book-3d,
-      .book:focus-visible .book-3d,
-      .book.is-out .book-3d {
-        transform: translateY(-42px) translateZ(64px) rotateY(-90deg);
+      .book:hover,
+      .book:focus-visible,
+      .book.is-presenting {
+        z-index: 6;
+        outline: none;
       }
-      .book:hover::after,
-      .book.is-out::after {
-        opacity: 0.4;
-        transform: translateY(46px) scale(1.25);
+
+      /* stage 1 — hover nudge: tip the book out at the top, like hooking a finger over it */
+      .book:hover:not(.is-presenting) .book-3d {
+        transform: rotate(var(--lean, 0deg)) translateY(-7px) translateZ(16px) rotateX(9deg);
+      }
+      .book:hover:not(.is-presenting)::after {
+        opacity: 0.45;
+        transform: translateY(6px) scaleX(1.05);
+      }
+
+      /* neighbours lean into the gap left by the pulled book */
+      .book.lean-r .book-3d { transform: rotate(calc(var(--lean, 0deg) + 5deg)); }
+      .book.lean-l .book-3d { transform: rotate(calc(var(--lean, 0deg) - 5deg)); }
+
+      /* stage 2 — present: pull straight out toward the viewer, then hold it at a 3/4 angle.
+         the lift lives on .book (slow, weighted); the turn lives on .book-3d. */
+      .book.is-presenting {
+        z-index: 60;
+        transform: translateZ(200px) translateY(-22px) translateX(var(--present-x, -40px));
+      }
+      .book.is-presenting .book-3d {
+        transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+        transform: rotateY(-58deg) rotateX(7deg);
+      }
+      .book.is-presenting::after {
+        opacity: 0.3;
+        transform: translateY(96px) scale(1.7);
       }
 
       @media (prefers-reduced-motion: reduce) {
-        .book-3d, .book::after { transition: none; }
+        .book, .book-3d, .book::after { transition: none; }
+        .book:hover:not(.is-presenting) .book-3d { transform: rotate(var(--lean, 0deg)) translateY(-5px); }
       }
 
       @media (max-width: 760px) {
-        .shelf-row { gap: 3rem 6px; }
+        .shelf-row { min-height: 208px; padding-top: 20px; }
+        .book.is-presenting { transform: translateZ(140px) translateY(-16px) translateX(var(--present-x, -34px)); }
       }
 
       .sec-title {
@@ -577,6 +1107,7 @@ function styles(depth) {
       .portrait {
         width: 100%;
         max-width: 320px;
+        height: auto;
         margin-left: auto;
         display: block;
         aspect-ratio: 3 / 4;
@@ -638,6 +1169,7 @@ function styles(depth) {
         display: block;
         width: 100%;
         height: 100%;
+        object-fit: cover;
         background-size: cover;
         background-position: center;
         transition: transform 0.55s cubic-bezier(0.16, 1, 0.3, 1);
@@ -684,6 +1216,9 @@ function styles(depth) {
       .page-work .work-cards,
       .page-writing .writing-grid {
         padding-bottom: clamp(3rem, 6vw, 4.5rem);
+      }
+      .page-writing .writing-grid:has(+ .subscribe) {
+        padding-bottom: 0;
       }
       .work-tier { margin-bottom: clamp(2rem, 4vw, 3rem); }
       .work-tier:last-child { margin-bottom: 0; }
@@ -825,6 +1360,43 @@ function styles(depth) {
         #writing .writing-detail { justify-content: flex-start; }
         #writing .writing-detail-desc { max-width: none; }
       }
+      #writing .writing-more {
+        margin-top: clamp(1.5rem, 3vw, 2.5rem);
+        padding-top: clamp(1.25rem, 2.5vw, 1.75rem);
+        border-top: 1px solid var(--line);
+      }
+      #writing .writing-more-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: clamp(1.5rem, 3vw, 2.8rem);
+      }
+      #writing .writing-more .entry { border-top: 0; padding: 0; }
+      #writing .writing-more .entry-line {
+        display: flex;
+        align-items: baseline;
+        flex-wrap: wrap;
+        gap: 0.35em;
+        font-size: 0.82rem;
+        font-weight: 400;
+        letter-spacing: -0.01em;
+        line-height: 1.35;
+        color: var(--fg);
+      }
+      #writing .writing-more .entry-line .dot {
+        color: var(--faint);
+        font-weight: 400;
+        user-select: none;
+      }
+      #writing .writing-more .entry-date {
+        color: var(--faint);
+        font-size: 0.76rem;
+        font-weight: 400;
+        white-space: nowrap;
+      }
+      #writing .writing-more .entry:hover { transform: none; }
+      @media (max-width: 760px) {
+        #writing .writing-more-grid { grid-template-columns: 1fr; gap: 0.9rem; }
+      }
       .writing-tier { margin-bottom: clamp(2rem, 4vw, 3rem); }
       .writing-tier:last-child { margin-bottom: 0; }
       .writing-tier-main .card-media-wrap { aspect-ratio: 21 / 9; }
@@ -917,6 +1489,33 @@ function styles(depth) {
       [data-theme="dark"] .theme-toggle .icon-sun { display: block; }
 
       /* article / reading column */
+      .project-banner-line {
+        display: block;
+        width: 100%;
+        height: 7.5px;
+        padding: 0;
+        min-height: 0;
+        flex-shrink: 0;
+      }
+      .project-banner {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #2563eb;
+        padding: 0.85rem var(--pad);
+      }
+      .project-banner img {
+        display: block;
+        width: auto;
+        height: auto;
+        max-height: 4.5rem;
+        max-width: min(100%, 18rem);
+      }
+      .project-banner-line + .wrap .article-head,
+      .project-banner + .wrap .article-head {
+        padding-top: clamp(1.5rem, 3vw, 2.25rem);
+      }
       .article-head { padding: clamp(2.5rem, 5vw, 3.75rem) 0 clamp(1.75rem, 3vw, 2.25rem); }
       .article-head h1 {
         margin: 0;
@@ -944,6 +1543,104 @@ function styles(depth) {
       .prose blockquote p { margin: 0.4rem 0 0; }
       .prose blockquote p:first-child { margin-top: 0; }
       .md-image { display: block; max-width: 100%; height: auto; margin-top: 1.25rem; border-radius: 4px; }
+
+      /* newsletter subscribe */
+      .subscribe {
+        max-width: 680px;
+        margin: clamp(2.5rem, 5vw, 4rem) 0 clamp(3rem, 6vw, 4.5rem);
+      }
+      .writing-tier .subscribe {
+        max-width: none;
+        margin: clamp(1rem, 2vw, 1.5rem) 0 clamp(2rem, 4vw, 3rem);
+        padding: clamp(1.5rem, 3vw, 2.25rem);
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        background: var(--card, transparent);
+      }
+      .subscribe .sub-eyebrow {
+        margin: 0;
+        font-size: 0.7rem;
+        font-weight: 600;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: var(--faint);
+      }
+      .subscribe .sub-title { margin: 0.5rem 0 0; font-size: 1.35rem; font-weight: 700; letter-spacing: -0.025em; }
+      .subscribe .sub-desc { margin: 0.5rem 0 0; color: var(--muted); font-size: 0.95rem; max-width: 52ch; }
+      .sub-form { display: flex; gap: 0.6rem; margin-top: 1.1rem; flex-wrap: wrap; }
+      .sub-input {
+        flex: 1 1 240px;
+        min-width: 0;
+        padding: 0.7rem 0.85rem;
+        border: 1px solid var(--line);
+        border-radius: 9px;
+        font: inherit;
+        font-size: 0.95rem;
+        background: var(--bg);
+        color: var(--fg);
+      }
+      .sub-input:focus {
+        outline: none;
+        border-color: var(--fg);
+        box-shadow: 0 0 0 3px color-mix(in srgb, var(--fg) 12%, transparent);
+      }
+      .sub-form.has-error .sub-input { border-color: #e05656; }
+      .sub-form.has-error .sub-input:focus { box-shadow: 0 0 0 3px color-mix(in srgb, #e05656 22%, transparent); }
+      .sub-status { margin: 0.65rem 0 0; min-height: 1.15em; font-size: 0.82rem; color: var(--faint); }
+      .sub-status.is-error { color: #e05656; }
+      .sub-status.is-ok { color: var(--muted); }
+      .sub-btn {
+        flex: 0 0 auto;
+        padding: 0.7rem 1.4rem;
+        border: 0;
+        border-radius: 9px;
+        background: var(--fg);
+        color: var(--bg);
+        font: inherit;
+        font-weight: 600;
+        font-size: 0.95rem;
+        cursor: pointer;
+        transition: opacity 0.18s ease;
+      }
+      .sub-btn:hover { opacity: 0.82; }
+      .sub-btn:disabled { opacity: 0.55; cursor: default; }
+      .mockup-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 1rem;
+        margin-top: 1.25rem;
+      }
+      .mockup-grid .md-image { margin-top: 0; width: 100%; }
+      @media (max-width: 560px) {
+        .mockup-grid { grid-template-columns: 1fr; }
+      }
+      .video-embed {
+        position: relative;
+        width: 100%;
+        aspect-ratio: 16 / 9;
+        margin-top: 1.25rem;
+        border-radius: 4px;
+        overflow: hidden;
+        background: #000;
+      }
+      .video-embed iframe {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        border: 0;
+      }
+      .video-embed-link {
+        margin: 0.65rem 0 0;
+        font-size: 0.85rem;
+        color: var(--muted);
+      }
+      .video-embed-link a {
+        text-decoration: underline;
+        text-underline-offset: 0.18em;
+        text-decoration-color: var(--line);
+      }
+      .video-embed-link a:hover { text-decoration-color: currentColor; }
       p:has(> .md-image + .md-image) { display: flex; gap: 0.9rem; margin-top: 1.25rem; }
       p:has(> .md-image + .md-image) .md-image { flex: 1; min-width: 0; margin-top: 0; }
       .md-hr { border: 0; border-top: 1px solid var(--line); margin: 2rem 0; }
@@ -1010,84 +1707,8 @@ function styles(depth) {
         .portrait { margin: 0 auto; }
         .topbar nav { gap: 1rem; }
       }
+${lightboxStyles}
   `;
-}
-
-function smoothScrollScript() {
-  return `
-    <script>
-      (function () {
-        if (document.querySelector('.panel')) return;
-        var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-        var fine = window.matchMedia('(pointer: fine)').matches;
-        if (reduce || !fine) return;
-
-        var target = window.scrollY;
-        var current = target;
-        var raf = null;
-        var ease = 0.075;
-        var wheelScale = 0.72;
-
-        function maxScroll() {
-          return Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
-        }
-
-        function tick() {
-          current += (target - current) * ease;
-          if (Math.abs(target - current) < 0.5) {
-            current = target;
-            window.scrollTo(0, current);
-            raf = null;
-            return;
-          }
-          window.scrollTo(0, current);
-          raf = requestAnimationFrame(tick);
-        }
-
-        function schedule() {
-          if (!raf) raf = requestAnimationFrame(tick);
-        }
-
-        window.addEventListener('wheel', function (e) {
-          if (e.ctrlKey) return;
-          var tag = (document.activeElement && document.activeElement.tagName) || '';
-          if (tag === 'INPUT' || tag === 'TEXTAREA' || document.activeElement.isContentEditable) return;
-          e.preventDefault();
-          target = Math.max(0, Math.min(maxScroll(), target + e.deltaY * wheelScale));
-          schedule();
-        }, { passive: false });
-
-        window.addEventListener('scroll', function () {
-          if (!raf) {
-            target = window.scrollY;
-            current = target;
-          }
-        }, { passive: true });
-
-        window.addEventListener('keydown', function (e) {
-          var tag = (document.activeElement && document.activeElement.tagName) || '';
-          if (tag === 'INPUT' || tag === 'TEXTAREA') return;
-          var step = window.innerHeight * 0.72;
-          if (e.key === 'PageDown' || (e.key === ' ' && !e.shiftKey)) {
-            e.preventDefault();
-            target = Math.min(maxScroll(), target + step);
-            schedule();
-          } else if (e.key === 'PageUp' || (e.key === ' ' && e.shiftKey)) {
-            e.preventDefault();
-            target = Math.max(0, target - step);
-            schedule();
-          } else if (e.key === 'Home') {
-            e.preventDefault();
-            target = 0;
-            schedule();
-          } else if (e.key === 'End') {
-            e.preventDefault();
-            target = maxScroll();
-            schedule();
-          }
-        });
-      })();
-    </script>`;
 }
 
 function timelineScript() {
@@ -1140,15 +1761,20 @@ function relRoot(depth) {
   return depth === 1 ? "" : "../";
 }
 
-function renderHighlights(items, escapeHtml, { imgPrefix = "", expanded = false } = {}) {
+function renderHighlights(items, escapeHtml, { imgPrefix = "", expanded = false, imgResolver = (s) => s } = {}) {
   const rows = items
     .map((item, i) => {
       const note = item.note
         ? `<div class="tl-note${expanded ? " is-open" : ""}">${escapeHtml(item.note)}</div>`
         : "";
+      const imgSrc = item.image
+        ? imgResolver
+          ? imgResolver(item.image.replace(/^\.?\//, ""))
+          : `${imgPrefix}${item.image.replace(/^\.?\//, "")}`
+        : "";
       return `
         <div class="tl-entry" style="--i:${i}">
-          <div class="tl-img"><img src="${imgPrefix}${item.image}" alt="" loading="lazy" /></div>
+          <div class="tl-img"><img src="${imgSrc}" alt="" loading="lazy" decoding="async" width="64" height="64" /></div>
           <div class="tl-connector"><div class="tl-dot"></div></div>
           <div class="tl-body">
             <div class="tl-date">${escapeHtml(item.date)}</div>
@@ -1330,15 +1956,20 @@ function themeInitScript() {
   return `<script>(function(){try{var t=localStorage.getItem('theme')||(window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>`;
 }
 
-function themeScript() {
-  return `
-    <script>
-      function toggleTheme() {
-        var next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
-        document.documentElement.setAttribute('data-theme', next);
-        try { localStorage.setItem('theme', next); } catch (e) {}
-      }
-    </script>`;
+function projectBannerEl(project, escapeHtmlFn, pipeline, depth = 2) {
+  if (!project.banner) return "";
+  const banner = project.banner.trim().replace(/^['"]|['"]$/g, "");
+  if (/^#[0-9a-f]{3,8}$/i.test(banner)) {
+    return `<div class="project-banner-line" style="background:${escapeHtmlFn(banner)}" aria-hidden="true"></div>`;
+  }
+  const src =
+    banner.startsWith("http://") ||
+    banner.startsWith("https://") ||
+    banner.startsWith("/")
+      ? banner
+      : `/${banner.replace(/^\.\//, "")}`;
+  const resolved = pipeline ? pipeline.rewriteSrc(src.replace(/^\//, ""), depth) : src.replace(/^\//, "");
+  return `<div class="project-banner"><img src="${escapeHtmlFn(resolved)}" alt="${escapeHtmlFn(project.title)} logo" width="658" height="344" decoding="async" loading="lazy" /></div>`;
 }
 
 function topbar(base, active) {
@@ -1373,25 +2004,202 @@ function footer() {
       </footer>`;
 }
 
-function shell({ title, body, depth, analytics, deck = false, extraScript = "" }) {
+function subscribeScriptBody() {
+  return `(function(){
+  function init(){
+    var forms = document.querySelectorAll('.sub-form');
+    if(!forms.length) return;
+    var re = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;
+    forms.forEach(function(form){
+      var input = form.querySelector('.sub-input');
+      var btn = form.querySelector('.sub-btn');
+      var status = form.parentElement.querySelector('.sub-status');
+      function setStatus(msg, kind){
+        if(!status) return;
+        status.textContent = msg || '';
+        status.className = 'sub-status' + (kind ? ' is-' + kind : '');
+      }
+      input.addEventListener('input', function(){
+        if(form.classList.contains('has-error') && re.test(input.value.trim())){
+          form.classList.remove('has-error');
+          setStatus('');
+        }
+      });
+      form.addEventListener('submit', function(e){
+        var val = input.value.trim();
+        if(!re.test(val)){
+          e.preventDefault();
+          form.classList.add('has-error');
+          setStatus('that does not look like a valid email', 'error');
+          input.focus();
+          return;
+        }
+        form.classList.remove('has-error');
+        btn.disabled = true;
+        btn.textContent = 'opening…';
+        setStatus('opening substack to confirm, then check your inbox.', 'ok');
+        setTimeout(function(){ btn.disabled = false; btn.textContent = 'subscribe'; }, 4000);
+      });
+    });
+  }
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+  else init();
+})();`;
+}
+
+function themeScriptBody() {
+  return `
+      function toggleTheme() {
+        var next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', next);
+        try { localStorage.setItem('theme', next); } catch (e) {}
+      }`;
+}
+
+function smoothScrollBody() {
+  return `
+      (function () {
+        if (document.querySelector('.panel')) return;
+        var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        var fine = window.matchMedia('(pointer: fine)').matches;
+        if (reduce || !fine) return;
+
+        var target = window.scrollY;
+        var current = target;
+        var raf = null;
+        var ease = 0.075;
+        var wheelScale = 0.72;
+
+        function maxScroll() {
+          return Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
+        }
+
+        function tick() {
+          current += (target - current) * ease;
+          if (Math.abs(target - current) < 0.5) {
+            current = target;
+            window.scrollTo(0, current);
+            raf = null;
+            return;
+          }
+          window.scrollTo(0, current);
+          raf = requestAnimationFrame(tick);
+        }
+
+        function schedule() {
+          if (!raf) raf = requestAnimationFrame(tick);
+        }
+
+        window.addEventListener('wheel', function (e) {
+          if (e.ctrlKey) return;
+          var tag = (document.activeElement && document.activeElement.tagName) || '';
+          if (tag === 'INPUT' || tag === 'TEXTAREA' || document.activeElement.isContentEditable) return;
+          e.preventDefault();
+          target = Math.max(0, Math.min(maxScroll(), target + e.deltaY * wheelScale));
+          schedule();
+        }, { passive: false });
+
+        window.addEventListener('scroll', function () {
+          if (!raf) {
+            target = window.scrollY;
+            current = target;
+          }
+        }, { passive: true });
+
+        window.addEventListener('keydown', function (e) {
+          var tag = (document.activeElement && document.activeElement.tagName) || '';
+          if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+          var step = window.innerHeight * 0.72;
+          if (e.key === 'PageDown' || (e.key === ' ' && !e.shiftKey)) {
+            e.preventDefault();
+            target = Math.min(maxScroll(), target + step);
+            schedule();
+          } else if (e.key === 'PageUp' || (e.key === ' ' && e.shiftKey)) {
+            e.preventDefault();
+            target = Math.max(0, target - step);
+            schedule();
+          } else if (e.key === 'Home') {
+            e.preventDefault();
+            target = 0;
+            schedule();
+          } else if (e.key === 'End') {
+            e.preventDefault();
+            target = maxScroll();
+            schedule();
+          }
+        });
+      })();`;
+}
+
+function siteScriptBundle() {
+  return [themeScriptBody(), lightboxScriptBody, smoothScrollBody(), subscribeScriptBody()].join("\n");
+}
+
+async function writeSiteBundles(root) {
+  const assetsDir = path.join(root, "assets");
+  await fs.mkdir(assetsDir, { recursive: true });
+  await copyFonts(assetsDir);
+
+  const css = minifyCss(styles());
+  const js = minifyJs(siteScriptBundle());
+  const cssName = `site.${contentHash(css)}.css`;
+  const jsName = `site.${contentHash(js)}.js`;
+
+  await fs.writeFile(path.join(assetsDir, cssName), css);
+  await fs.writeFile(path.join(assetsDir, jsName), js);
+
+  return { css: cssName, js: jsName };
+}
+
+function shell({
+  title,
+  body,
+  depth,
+  analytics,
+  deck = false,
+  extraScript = "",
+  bundles,
+  headExtras = "",
+  description = SITE_DESCRIPTION,
+  canonicalPath: pagePath = "/",
+  image = DEFAULT_SOCIAL_IMAGE,
+  imageAlt = SITE_TITLE,
+  ogType = "website",
+  publishedTime = "",
+  modifiedTime = "",
+  articleSection = "",
+  structuredData = [],
+}) {
+  const root = depth === 1 ? "" : "../";
   return `<!doctype html>
-<html lang="en">
+<html lang="en" prefix="og: https://ogp.me/ns#">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>${title}</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <title>${escapeHtml(title)}</title>
+${seoHead({
+  root,
+  title,
+  description,
+  path: pagePath,
+  image,
+  imageAlt,
+  ogType,
+  publishedTime,
+  modifiedTime,
+  articleSection,
+  structuredData,
+})}
+    ${fontPreloads(root)}
+    <link rel="stylesheet" href="${root}assets/${bundles.css}" />
+    ${headExtras}
     ${themeInitScript()}
-    <style>${styles(depth)}</style>
   </head>
   <body>
 ${body}
 ${footer()}
 ${analytics()}
-${themeScript()}
-${deck ? "" : smoothScrollScript()}
+<script defer src="${root}assets/${bundles.js}"></script>
 ${extraScript}
   </body>
 </html>`;
@@ -1412,6 +2220,7 @@ export async function buildPreviewC({
   vercelAnalyticsScript,
 }) {
   const root = path.join(rootDir, "preview-c");
+  await fs.rm(root, { recursive: true, force: true }).catch(() => {});
   const projects = await loadCollection(projectsDir, "project");
   const posts = await loadCollection(blogDir, "blog");
   const logs = await loadLogs();
@@ -1428,21 +2237,31 @@ export async function buildPreviewC({
   await ensureDir(path.join(root, "about"));
   await ensureDir(path.join(root, "work"));
   await ensureDir(path.join(root, "writing"));
+  await writeFavicon(root);
 
-  await fs.copyFile(
-    path.join(contentDir, "preview", "hero-gradient.png"),
-    path.join(root, "assets", "hero-gradient.png")
-  );
-  await fs.copyFile(
-    path.join(contentDir, "preview", "portrait.png"),
-    path.join(root, "assets", "portrait.png")
-  );
+  const bundles = await writeSiteBundles(root);
+  const pipeline = new ImagePipeline(rootDir, root);
+  const sitemapEntries = [];
 
-  // markdown body images use root-absolute paths (/images/...). the deployed site root is
-  // preview-c/, so mirror the repo images dir into the output or those images 404 in prod.
-  try {
-    await fs.cp(path.join(rootDir, "images"), path.join(root, "images"), { recursive: true });
-  } catch {}
+  const heroGradient = (
+    await pipeline.ingest("content/preview/hero-gradient.png", "assets/hero-gradient.webp", {
+      quality: 88,
+    })
+  ).replace(/^\//, "");
+  const portraitSrc = (
+    await pipeline.ingest("content/preview/portrait.png", "assets/portrait.webp", {
+      maxWidth: 640,
+      quality: 80,
+    })
+  ).replace(/^\//, "");
+
+  const imageRefs = new Set();
+  for (const text of [aboutRaw, aboutPageRaw, aboutMiscRaw]) {
+    for (const ref of collectMarkdownImages(text)) imageRefs.add(ref);
+  }
+  for (const item of highlights) {
+    if (item.image) imageRefs.add(item.image.replace(/^\.?\//, ""));
+  }
 
   const homeProjectSlugs = ["friday", "sakhi"];
   const homeProjects = homeProjectSlugs
@@ -1452,6 +2271,10 @@ export async function buildPreviewC({
   const homeWritingHighlight =
     posts.find((p) => p.slug === homeWritingHighlightSlug) ?? posts[0];
   const homeWritingMore = posts.filter((p) => p.slug !== homeWritingHighlight?.slug);
+  const siteLastmod = latestIsoDate([
+    ...posts.map((post) => post.date),
+    ...projects.map((project) => project.date),
+  ]);
 
   // resolve a card image for an item, in priority order:
   //   1. frontmatter `image:` field
@@ -1462,17 +2285,20 @@ export async function buildPreviewC({
     await ensureDir(path.join(root, "assets", subdir));
     const candidates = [];
     if (item.image) candidates.push(item.image.replace(/^\.?\//, ""));
-    for (const ext of ["png", "jpg", "jpeg", "webp"]) candidates.push(`images/cards/${item.slug}.${ext}`);
+    for (const ext of ["webp", "png", "jpg", "jpeg"]) candidates.push(`images/cards/${item.slug}.${ext}`);
     const bodyImg = item.body.match(/!\[[^\]]*\]\(([^)]+)\)/);
     if (bodyImg) candidates.push(bodyImg[1].trim().replace(/^\.?\//, ""));
 
     item.cardImg = null;
     for (const src of candidates) {
-      const ext = path.extname(src) || ".png";
       try {
         await fs.access(path.join(rootDir, src));
-        await fs.copyFile(path.join(rootDir, src), path.join(root, "assets", subdir, `${item.slug}${ext}`));
-        item.cardImg = `assets/${subdir}/${item.slug}${ext}`;
+        imageRefs.add(src);
+        const optimized = await pipeline.ingest(src, `assets/${subdir}/${item.slug}${path.extname(src) || ".png"}`, {
+          maxWidth: 900,
+          quality: 82,
+        });
+        item.cardImg = optimized.replace(/^\//, "");
         break;
       } catch {}
     }
@@ -1481,38 +2307,61 @@ export async function buildPreviewC({
       item.cardPh = `linear-gradient(135deg, hsl(${hue} 42% 84%), hsl(${(hue + 45) % 360} 46% 70%))`;
     }
   };
+  for (const p of projects) {
+    for (const ref of collectMarkdownImages(p.body)) imageRefs.add(ref);
+    if (p.banner && !/^#/.test(p.banner.trim()) && !/^https?:\/\//i.test(p.banner.trim())) {
+      imageRefs.add(p.banner.trim().replace(/^\.?\//, ""));
+    }
+  }
+  for (const post of posts) {
+    for (const ref of collectMarkdownImages(post.body)) imageRefs.add(ref);
+    if (post.image) imageRefs.add(post.image.replace(/^\.?\//, ""));
+  }
   for (const p of homeProjects) await prepMedia(p, "work");
   if (homeWritingHighlight) await prepMedia(homeWritingHighlight, "writing");
   for (const p of projects) await prepMedia(p, "work");
   for (const post of posts) await prepMedia(post, "writing");
 
-  const cardEl = (item, href, i, { status = false, root = "" } = {}) => {
-    const media = item.cardImg
-      ? `style="background-image:url('${root}${item.cardImg}')"`
-      : `style="background:${item.cardPh}"`;
-    const statusEl =
-      status && item.status
-        ? `<span class="card-meta">${escapeHtml(item.status.toLowerCase())}</span>`
-        : "";
+  for (const ref of imageRefs) {
+    if (!ref || ref.startsWith("http")) continue;
+    try {
+      await pipeline.ingest(ref, ref, { maxWidth: 1400, quality: 82 });
+    } catch {}
+  }
+
+  const renderMarkdown = (body, depth = 2) => pipeline.rewriteHtml(markdownToHtml(body), depth);
+
+  const mediaEl = (item, root = "", alt = item.title) => {
+    if (item.cardImg) {
+      return `<img class="card-media" src="${escapeHtml(root)}${escapeHtml(item.cardImg)}" alt="${escapeHtml(alt)}" loading="lazy" decoding="async" width="900" height="675" />`;
+    }
+    return `<span class="card-media" style="background:${item.cardPh}"></span>`;
+  };
+
+  const pageImage = (item) => item?.cardImg || DEFAULT_SOCIAL_IMAGE;
+  const sitemapImage = (src) => String(src || "").replace(/^(\.\.\/)+/, "").replace(/^\.?\//, "");
+  const markdownSitemapImages = (body) =>
+    [...collectMarkdownImages(body || "")]
+      .map((ref) => pipeline.rewriteSrc(ref, 1))
+      .map(sitemapImage)
+      .filter(Boolean);
+
+  const cardEl = (item, href, i, { root = "" } = {}) => {
     const reveal = i == null ? "" : ` data-reveal style="--i:${i}"`;
     return `
             <a class="card"${reveal} href="${href}">
-              <span class="card-media-wrap"><span class="card-media" ${media}></span></span>
+              <span class="card-media-wrap">${mediaEl(item, root, item.title)}</span>
               <span class="card-title">${escapeHtml(item.title.toLowerCase())}</span>
               <span class="card-desc">${escapeHtml(item.summary.toLowerCase())}</span>
-              ${statusEl}
             </a>`;
   };
 
-  const writingHome = (lead, more, i = 1) => {
+  const writingHome = (lead, more = [], i = 1) => {
     if (!lead) return "";
-    const leadMedia = lead.cardImg
-      ? `style="background-image:url('${lead.cardImg}')"`
-      : `style="background:${lead.cardPh}"`;
     const meta = [formatDate(lead.date), lead.readTime].filter(Boolean).join(" · ");
     const leadEl = `
       <a class="card writing-hero" data-reveal style="--i:${i}" href="writing/${lead.slug}.html">
-        <span class="card-media-wrap"><span class="card-media" ${leadMedia}></span></span>
+        <span class="card-media-wrap">${mediaEl(lead, "", lead.title)}</span>
       </a>`;
     const detailEl = `
       <div class="writing-detail" data-reveal style="--i:${i + 1}">
@@ -1523,17 +2372,34 @@ export async function buildPreviewC({
         ${meta ? `<p class="writing-detail-meta">${escapeHtml(meta.toLowerCase())}</p>` : ""}
         <p class="writing-detail-desc">${escapeHtml(lead.summary.toLowerCase())}</p>
       </div>`;
-    return `<div class="writing-layout">${leadEl}${detailEl}</div>`;
+    const moreItems = (more || []).slice(0, 2);
+    const moreEl = moreItems.length
+      ? `
+      <div class="writing-more" data-reveal style="--i:${i + 2}">
+        <div class="writing-more-grid">
+          ${moreItems
+            .map(
+              (p) => `
+          <a class="entry" href="writing/${p.slug}.html">
+            <p class="entry-line">
+              <span class="entry-title">${escapeHtml(p.title.toLowerCase())}</span>
+              <span class="dot" aria-hidden="true">·</span>
+              <span class="entry-date">${escapeHtml(formatDate(p.date).toLowerCase())}</span>
+            </p>
+          </a>`
+            )
+            .join("")}
+        </div>
+      </div>`
+      : "";
+    return `<div class="writing-layout">${leadEl}${detailEl}</div>${moreEl}`;
   };
 
   const writingCard = (item, href, root = "") => {
-    const media = item.cardImg
-      ? `style="background-image:url('${root}${item.cardImg}')"`
-      : `style="background:${item.cardPh}"`;
     const meta = [formatDate(item.date), item.readTime].filter(Boolean).join(" · ");
     return `
             <a class="card" href="${href}">
-              <span class="card-media-wrap"><span class="card-media" ${media}></span></span>
+              <span class="card-media-wrap">${mediaEl(item, root, item.title)}</span>
               <span class="card-title">${escapeHtml(item.title.toLowerCase())}</span>
               <span class="card-desc">${escapeHtml(item.summary.toLowerCase())}</span>
               ${meta ? `<span class="card-meta">${escapeHtml(meta.toLowerCase())}</span>` : ""}
@@ -1585,14 +2451,14 @@ export async function buildPreviewC({
           <h2 class="sec-title" data-reveal style="--i:0">about</h2>
           <div class="about-grid">
             <div>
-              <div class="about-body" data-reveal style="--i:1">${markdownToHtml(aboutRaw)}</div>
+              <div class="about-body" data-reveal style="--i:1">${renderMarkdown(aboutRaw)}</div>
               <div class="contact" data-reveal style="--i:2">
                 <a href="mailto:${EMAIL}">email</a><span class="dot">·</span>
                 <a href="${X_URL}" target="_blank" rel="noopener noreferrer">x (twitter)</a><span class="dot">·</span>
                 <a href="${GH_URL}" target="_blank" rel="noopener noreferrer">github</a>
               </div>
             </div>
-            <img class="portrait" data-reveal style="--i:1" src="assets/portrait.png" alt="Vedant Misra" />
+            <img class="portrait" data-reveal style="--i:1" src="${portraitSrc}" alt="Vedant Misra" width="320" height="427" loading="lazy" decoding="async" />
           </div>
         </div>
       </section>
@@ -1637,17 +2503,40 @@ export async function buildPreviewC({
 
     <div class="dots" aria-hidden="true"></div>`;
 
+  const homeTitle = `${SITE_TITLE} | AI Builder and Product Engineer`;
+  const homeDescription = SITE_DESCRIPTION;
   await writeFile(
     path.join(root, "index.html"),
     shell({
-      title: SITE_TITLE,
+      title: homeTitle,
       body: homeBody,
       depth: 1,
       analytics: vercelAnalyticsScript,
       deck: true,
+      bundles,
+      canonicalPath: "/",
+      description: homeDescription,
+      image: portraitSrc,
+      imageAlt: SITE_TITLE,
+      structuredData: [
+        personSchema(),
+        websiteSchema(),
+        {
+          ...webpageSchema({
+            type: "ProfilePage",
+            path: "/",
+            title: homeTitle,
+            description: homeDescription,
+            image: portraitSrc,
+          }),
+          mainEntity: { "@id": PERSON_ID },
+        },
+      ],
+      headExtras: `<link rel="preload" as="image" href="${heroGradient}" type="image/webp" fetchpriority="high" />`,
       extraScript: deckScript(),
     })
   );
+  sitemapEntries.push({ path: "/", lastmod: siteLastmod, images: [portraitSrc] });
 
   // ---- writing list ----
   const writingHighlight =
@@ -1667,20 +2556,68 @@ export async function buildPreviewC({
           ? `<div class="writing-tier writing-tier-more">
         <p class="work-tier-label">more</p>
         <div class="writing-grid">
-          ${writingOthers.map((p) => writingCard(p, `${p.slug}.html`, relRoot(2))).join("")}
+          ${writingOthers.slice(0, 2).map((p) => writingCard(p, `${p.slug}.html`, relRoot(2))).join("")}
         </div>
+        ${subscribeBlock()}
+        ${
+          writingOthers.length > 2
+            ? `<div class="writing-grid">
+          ${writingOthers.slice(2).map((p) => writingCard(p, `${p.slug}.html`, relRoot(2))).join("")}
+        </div>`
+            : ""
+        }
       </div>`
-          : ""
+          : subscribeBlock()
       }
     </main>`;
+  const writingTitle = `Writing | ${SITE_TITLE}`;
+  const writingDescription = "Essays by Vedant Misra on AI, India, product, healthcare, and building technology for real-world constraints.";
   await writeFile(
     path.join(root, "writing", "index.html"),
-    shell({ title: `Writing — ${SITE_TITLE}`, body: writingList, depth: 2, analytics: vercelAnalyticsScript })
+    shell({
+      title: writingTitle,
+      body: writingList,
+      depth: 2,
+      analytics: vercelAnalyticsScript,
+      bundles,
+      canonicalPath: "/writing/",
+      description: writingDescription,
+      image: pageImage(writingHighlight),
+      imageAlt: writingHighlight?.title || "Writing by Vedant Misra",
+      structuredData: [
+        webpageSchema({
+          type: "CollectionPage",
+          path: "/writing/",
+          title: writingTitle,
+          description: writingDescription,
+          image: pageImage(writingHighlight),
+        }),
+        breadcrumbSchema([
+          { name: "Home", path: "/" },
+          { name: "Writing", path: "/writing/" },
+        ]),
+        itemListSchema(
+          posts.map((post) => ({
+            name: post.title,
+            path: `/writing/${post.slug}.html`,
+          }))
+        ),
+      ],
+    })
   );
+  sitemapEntries.push({
+    path: "/writing/",
+    lastmod: latestIsoDate(posts.map((post) => post.date)),
+    images: [pageImage(writingHighlight)],
+  });
 
   // ---- individual posts ----
   for (const post of posts) {
     const meta = [formatDate(post.date), post.readTime].filter(Boolean).join(" · ");
+    const postTitle = `${post.title} | ${SITE_TITLE}`;
+    const postDescription = metaDescription(post.summary || excerptOf(post.body));
+    const postPath = `/writing/${post.slug}.html`;
+    const postImage = pageImage(post);
     const body = `
     ${topbar("../", "writing")}
     <main class="wrap">
@@ -1689,12 +2626,59 @@ export async function buildPreviewC({
         ${post.summary ? `<p class="lead">${escapeHtml(post.summary)}</p>` : ""}
         ${meta ? `<p class="meta">${escapeHtml(meta)}</p>` : ""}
       </div>
-      <article class="prose">${post.htmlBody}</article>
+      <article class="prose">${renderMarkdown(post.body)}</article>
+      ${subscribeBlock()}
     </main>`;
     await writeFile(
       path.join(root, "writing", `${post.slug}.html`),
-      shell({ title: `${post.title} — ${SITE_TITLE}`, body, depth: 2, analytics: vercelAnalyticsScript })
+      shell({
+        title: postTitle,
+        body,
+        depth: 2,
+        analytics: vercelAnalyticsScript,
+        bundles,
+        canonicalPath: postPath,
+        description: postDescription,
+        image: postImage,
+        imageAlt: post.title,
+        ogType: "article",
+        publishedTime: post.date,
+        modifiedTime: post.date,
+        articleSection: "Writing",
+        structuredData: [
+          webpageSchema({
+            type: "WebPage",
+            path: postPath,
+            title: postTitle,
+            description: postDescription,
+            image: postImage,
+          }),
+          {
+            "@type": "BlogPosting",
+            "@id": `${absoluteUrl(postPath)}#article`,
+            headline: post.title,
+            description: postDescription,
+            image: [absoluteUrl(postImage)],
+            datePublished: isoDate(post.date),
+            dateModified: isoDate(post.date),
+            author: { "@id": PERSON_ID },
+            publisher: { "@id": PERSON_ID },
+            mainEntityOfPage: { "@id": `${absoluteUrl(postPath)}#webpage` },
+            inLanguage: "en",
+          },
+          breadcrumbSchema([
+            { name: "Home", path: "/" },
+            { name: "Writing", path: "/writing/" },
+            { name: post.title, path: postPath },
+          ]),
+        ],
+      })
     );
+    sitemapEntries.push({
+      path: postPath,
+      lastmod: post.date || siteLastmod,
+      images: [postImage, ...markdownSitemapImages(post.body)],
+    });
   }
 
   // ---- work list ----
@@ -1724,16 +2708,17 @@ export async function buildPreviewC({
     </main>`;
   await writeFile(
     path.join(root, "work", "index.html"),
-    shell({ title: `Work — ${SITE_TITLE}`, body: workList, depth: 2, analytics: vercelAnalyticsScript })
+    shell({ title: `Work — ${SITE_TITLE}`, body: workList, depth: 2, analytics: vercelAnalyticsScript, bundles })
   );
 
   // ---- individual projects ----
   for (const project of projects) {
     const { story, technical } = splitProjectBody(project.body);
     const panelId = `depth-${project.slug}`;
-    const metaBits = [project.status, project.date ? formatDate(project.date) : ""].filter(Boolean).join(" · ");
+    const metaBits = project.date ? formatDate(project.date) : "";
     const body = `
     ${topbar("../", "work")}
+    ${projectBannerEl(project, escapeHtml, pipeline, 2)}
     <main class="wrap">
       <div class="article-head">
         <h1>${escapeHtml(project.title.toLowerCase())}</h1>
@@ -1749,7 +2734,7 @@ export async function buildPreviewC({
         }
       </div>
       <article class="prose">
-        ${markdownToHtml(story)}
+        ${renderMarkdown(story)}
         ${
           project.stack
             ? `<div class="chips">${project.stack
@@ -1764,7 +2749,7 @@ export async function buildPreviewC({
           <button type="button" class="depth-toggle" aria-expanded="false" aria-controls="${panelId}">
             <span class="caret">›</span><span class="label">technical details</span>
           </button>
-          <div class="depth-panel" id="${panelId}" hidden>${markdownToHtml(technical)}</div>
+          <div class="depth-panel" id="${panelId}" hidden>${renderMarkdown(technical)}</div>
         </div>`
             : ""
         }
@@ -1777,6 +2762,7 @@ export async function buildPreviewC({
         body,
         depth: 2,
         analytics: vercelAnalyticsScript,
+        bundles,
         extraScript: technical ? depthScript() : "",
       })
     );
@@ -1805,7 +2791,7 @@ export async function buildPreviewC({
             .map(
               (e) => `<div class="log-entry">
             ${e.time ? `<div class="log-time">${escapeHtml(e.time)}</div>` : ""}
-            <div>${markdownToHtml(e.body)}</div>
+            <div>${renderMarkdown(e.body)}</div>
           </div>`
             )
             .join("")}
@@ -1814,18 +2800,68 @@ export async function buildPreviewC({
         .join("")
     : `<p class="badge">no entries yet.</p>`;
 
-  const coverExts = ["jpg", "jpeg", "png", "webp"];
+  const coverExts = ["webp", "jpg", "jpeg", "png"];
   for (const b of books) {
-    b.slug = slugify(b.title);
+    const jsonCover = b.coverFile;
+    const jsonSpine = b.spineFile;
+    b.slug = b.slug || slugify(b.title);
     b.coverFile = null;
-    for (const ext of coverExts) {
-      const src = path.join(contentDir, "preview", "books", `${b.slug}.${ext}`);
+    b.spineFile = null;
+
+    const ingestBookFile = async (srcRel, destName, maxWidth) => {
+      const srcFromRoot = path.join("content/preview", srcRel).split(path.sep).join("/");
+      const out = await pipeline.ingest(
+        srcFromRoot,
+        `assets/books/${b.slug}-${destName}${path.extname(srcRel)}`,
+        { maxWidth, quality: 80 }
+      );
+      return out.replace(/^\//, "");
+    };
+
+    if (jsonCover?.startsWith("books/")) {
       try {
-        await fs.access(src);
-        await fs.copyFile(src, path.join(root, "assets", "books", `${b.slug}.${ext}`));
-        b.coverFile = `assets/books/${b.slug}.${ext}`;
-        break;
-      } catch {}
+        b.coverFile = await ingestBookFile(jsonCover, "cover", 440);
+      } catch {
+        b.coverFile = null;
+      }
+    }
+    if (!b.coverFile) {
+      for (const ext of coverExts) {
+        const flat = path.join(contentDir, "preview", "books", `${b.slug}.${ext}`);
+        try {
+          await fs.access(flat);
+          b.coverFile = await ingestBookFile(path.join("books", `${b.slug}.${ext}`), "cover", 440);
+          break;
+        } catch {}
+      }
+    }
+    if (!b.coverFile) {
+      for (const ext of coverExts) {
+        const nested = path.join(contentDir, "preview", "books", b.slug, `cover.${ext}`);
+        try {
+          await fs.access(nested);
+          b.coverFile = await ingestBookFile(path.join("books", b.slug, `cover.${ext}`), "cover", 440);
+          break;
+        } catch {}
+      }
+    }
+
+    if (jsonSpine?.startsWith("books/")) {
+      try {
+        b.spineFile = await ingestBookFile(jsonSpine, "spine", 280);
+      } catch {
+        b.spineFile = null;
+      }
+    }
+    if (!b.spineFile) {
+      for (const ext of coverExts) {
+        const nested = path.join(contentDir, "preview", "books", b.slug, `spine.${ext}`);
+        try {
+          await fs.access(nested);
+          b.spineFile = await ingestBookFile(path.join("books", b.slug, `spine.${ext}`), "spine", 280);
+          break;
+        } catch {}
+      }
     }
   }
 
@@ -1834,24 +2870,53 @@ export async function buildPreviewC({
   const bookRows = [];
   for (let i = 0; i < books.length; i += per) bookRows.push(books.slice(i, i + per));
 
+  // spine thickness (px) scales with page count — fatter book = more pages
+  const spineThick = (pages) => {
+    const p = pages || 300;
+    return Math.round(Math.max(28, Math.min(66, 22 + p * 0.066)));
+  };
+
   const bookEl = (b) => {
-    const h = 198 + (strHash(b.title) % 6) * 13;
+    const p = b.pages || 300;
+    // subtle per-title variation so the shelf doesn't look mechanical
+    const h = Math.round(198 + Math.min(p, 720) * 0.03 + (strHash(b.title) % 7) * 5);
+    const thick = spineThick(p);
     const w = Math.round(h * 0.66);
-    const g = (1 + (strHash(b.title + "g") % 5) * 0.6).toFixed(2);
-    const lh = strHash(b.title + "lean");
-    const lean = lh % 3 === 0 ? (lh % 2 ? 1 : -1) * (3 + (lh % 5)) : 0;
-    const hasImg = Boolean(b.coverFile);
-    const coverStyle = hasImg ? `;background-image:url('${relRoot(2)}${b.coverFile}')` : "";
+    const lean = (((strHash(b.title + "lean") % 13) - 6) * 0.3).toFixed(2);
+    // title font: thickness sets the base size, but shrink it to fit the spine's
+    // length when the title is long (~0.6 = avg glyph advance for the bold face),
+    // so long titles like "The Hard Thing About Hard Things" stay on one line.
+    const titleLen = (b.title || "x").length;
+    const fitFs = (h * 0.72) / (titleLen * 0.6);
+    const titleFs = Math.max(8, Math.min(13, Math.round(Math.min(thick * 0.3, fitFs))));
+    const authorFs = Math.max(7, Math.min(9, Math.round(thick * 0.21)));
+    const hasCover = Boolean(b.coverFile);
+    const coverStyle = hasCover ? `background-image:url('${relRoot(2)}${b.coverFile}')` : "";
+    // recenter the cover over its slot as it turns face-on
+    const presentX = -Math.round(w * 0.34);
+    // adapt spine text to the spine's brightness so light covers stay legible
+    const c = (b.color || "#33384a").replace("#", "");
+    const cr = parseInt(c.slice(0, 2), 16) || 0;
+    const cg = parseInt(c.slice(2, 4), 16) || 0;
+    const cb = parseInt(c.slice(4, 6), 16) || 0;
+    const lum = (0.2126 * cr + 0.7152 * cg + 0.0722 * cb) / 255;
+    const sc = lum > 0.58 ? "#23211c" : "#f4f1ea";
     return `
-            <button class="book" style="--h:${h}px;--w:${w}px;--g:${g};--lean:${lean}deg;--c:${escapeHtml(b.color || "#33384a")}${coverStyle}" aria-label="${escapeHtml(b.title)} by ${escapeHtml(b.author)}">
+            <button type="button" class="book" style="--h:${h}px;--thick:${thick}px;--w:${w}px;--lean:${lean}deg;--c:${escapeHtml(b.color || "#33384a")};--sc:${sc};--tfs:${titleFs}px;--afs:${authorFs}px;--present-x:${presentX}px" aria-label="${escapeHtml(b.title)} by ${escapeHtml(b.author)}">
               <span class="book-3d">
-                <span class="book-face book-spine">
-                  <span class="s-title">${escapeHtml(b.title)}</span>
-                  <span class="s-author">${escapeHtml(b.author)}</span>
-                </span>
-                <span class="book-face book-cover${hasImg ? " has-img" : ""}">
+                <span class="bk-face bk-back"></span>
+                <span class="bk-face bk-cover${hasCover ? " has-img" : ""}"${coverStyle ? ` style="${coverStyle}"` : ""}>
                   <span class="c-top"><span class="c-rule"></span><span class="c-title">${escapeHtml(b.title)}</span></span>
                   <span class="c-author">${escapeHtml(b.author)}</span>
+                </span>
+                <span class="bk-face bk-fore"></span>
+                <span class="bk-face bk-top"></span>
+                <span class="bk-face bk-bottom"></span>
+                <span class="bk-face bk-spine">
+                  <span class="s-text">
+                    <span class="s-title">${escapeHtml(b.title)}</span>
+                    <span class="s-author">${escapeHtml(b.author)}</span>
+                  </span>
                 </span>
               </span>
             </button>`;
@@ -1864,16 +2929,18 @@ export async function buildPreviewC({
     <main class="wrap page-about">
       <div class="article-head">
         <h1>about</h1>
-        <div class="prose">${markdownToHtml(aboutPageRaw)}</div>
+        <div class="prose">${renderMarkdown(aboutPageRaw)}</div>
       </div>
 
       <section class="about-section" id="highlights">
-        ${renderHighlights(highlights, escapeHtml, { imgPrefix: relRoot(2) })}
+        ${renderHighlights(highlights, escapeHtml, {
+          imgResolver: (src) => pipeline.rewriteSrc(src, 2),
+        })}
       </section>
 
       <section class="about-section" id="misc">
         <h2 class="section-label">misc</h2>
-        <article class="prose">${markdownToHtml(aboutMiscRaw)}</article>
+        <article class="prose">${renderMarkdown(aboutMiscRaw)}</article>
       </section>
 
       <section class="about-section" id="bookshelf">
@@ -1901,6 +2968,7 @@ export async function buildPreviewC({
       body: aboutBody,
       depth: 2,
       analytics: vercelAnalyticsScript,
+      bundles,
       extraScript: timelineScript() + shelfScript() + aboutToggleScript(),
     })
   );
