@@ -39,9 +39,12 @@ npm run build
 ```
 
 This regenerates:
+- `site/`
 - `index.html`
 - `projects/*.html`
 - `blog/*.html`
+
+Vercel serves `site/`. `legacy-site/` preserves a static snapshot of the older deployed site for rollback.
 
 ## Notes
 - Social links are placeholders (`#`) in the header on all pages.

@@ -2,7 +2,7 @@ import { promises as fs } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { buildPreviewB as runPreviewB } from "./preview-b.mjs";
-import { buildPreviewC as runPreviewC } from "./preview-c.mjs";
+import { buildSite as runSite } from "./site.mjs";
 import { lightboxStyles, lightboxScript } from "./lightbox.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -96,20 +96,30 @@ function externalLinkAttrs(href) {
 }
 
 function inlineMarkdown(text) {
-  const escaped = escapeHtml(text);
-  return escaped
-    .replace(/&lt;br\s*\/?&gt;/gi, "<br />")
+  const tokens = [];
+  const stash = (html) => {
+    const id = tokens.length;
+    tokens.push(html);
+    return `\u0000${id}\u0000`;
+  };
+
+  const tokenized = String(text)
+    .replace(/`([^`]+)`/g, (_m, code) => stash(`<code>${escapeHtml(code)}</code>`))
     .replace(/!\[([^\]]*)\]\(([^)]+)\)/g, (_m, alt, src) => {
       const normalizedSrc = normalizeImageSrc(src);
-      return `<img class="md-image" src="${escapeHtml(normalizedSrc)}" alt="${escapeHtml(alt)}" loading="lazy" decoding="async" />`;
+      return stash(`<img class="md-image" src="${escapeHtml(normalizedSrc)}" alt="${escapeHtml(alt)}" loading="lazy" decoding="async" />`);
     })
     .replace(/\[([^\]]+)\]\(([^)]+)\)/g, (_m, label, href) => {
-      return `<a href="${escapeHtml(href)}"${externalLinkAttrs(href)}>${escapeHtml(label)}</a>`;
-    })
+      return stash(`<a href="${escapeHtml(href)}"${externalLinkAttrs(href)}>${inlineMarkdown(label)}</a>`);
+    });
+
+  return escapeHtml(tokenized)
+    .replace(/&lt;br\s*\/?&gt;/gi, "<br />")
     .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
     .replace(/__([^_]+)__/g, "<strong>$1</strong>")
     .replace(/\*([^*]+)\*/g, "<em>$1</em>")
-    .replace(/_([^_]+)_/g, "<em>$1</em>");
+    .replace(/_([^_]+)_/g, "<em>$1</em>")
+    .replace(/\u0000(\d+)\u0000/g, (_m, id) => tokens[Number(id)] ?? "");
 }
 
 function markdownToHtml(markdown) {
@@ -1368,8 +1378,8 @@ async function buildPreviewB() {
   });
 }
 
-async function buildPreviewC() {
-  await runPreviewC({
+async function buildSite() {
+  await runSite({
     rootDir,
     contentDir,
     projectsDir,
@@ -1391,8 +1401,8 @@ if (mode === "preview-b") {
     console.error(err);
     process.exitCode = 1;
   });
-} else if (mode === "preview-c") {
-  buildPreviewC().catch((err) => {
+} else if (mode === "site") {
+  buildSite().catch((err) => {
     console.error(err);
     process.exitCode = 1;
   });

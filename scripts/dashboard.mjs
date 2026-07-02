@@ -270,8 +270,8 @@ function buildFrontmatter(type, f) {
 
 function runBuild() {
   return new Promise((resolve) => {
-    // preview-c is the deployed site (see vercel.json), so that's all we need to rebuild here
-    exec("node scripts/build.mjs preview-c", { cwd: rootDir }, (err, stdout, stderr) => {
+    // site/ is the deployed build output (see vercel.json), so that's all we need to rebuild here
+    exec("node scripts/build.mjs site", { cwd: rootDir }, (err, stdout, stderr) => {
       resolve({ ok: !err, log: (stdout || "") + (stderr || "") });
     });
   });
@@ -479,7 +479,7 @@ const server = http.createServer(async (req, res) => {
       return send(res, 200, { ok: true, build });
     }
 
-    // static file fallback (serves the generated site, e.g. /preview-c/index.html)
+    // static file fallback (serves the generated site, e.g. /site/index.html)
     if (req.method === "GET") {
       const rel = decodeURIComponent(url.pathname).replace(/^\/+/, "");
       const target = path.join(rootDir, rel);
@@ -640,11 +640,11 @@ const PAGE = `<!doctype html>
     <div class="top-l">
       <span class="dot"></span>
       <h1>content studio</h1>
-      <span class="sub">edits rebuild preview-c · commit &amp; push to deploy</span>
+      <span class="sub">edits rebuild site · commit &amp; push to deploy</span>
     </div>
     <div class="top-r">
       <button type="button" class="ghost" id="prevToggle" onclick="togglePreview()">hide preview</button>
-      <a class="ghost" href="/preview-c/index.html" target="_blank">open site ↗</a>
+      <a class="ghost" href="/site/index.html" target="_blank">open site ↗</a>
     </div>
   </header>
 
@@ -921,8 +921,8 @@ write here — the preview updates as you type"></textarea>
 
   function setLiveLink() {
     const el = $("pvLive");
-    if (type === "book") { el.href = "/preview-c/about/index.html#bookshelf"; el.hidden = false; return; }
-    if (editingSlug) { el.href = "/preview-c/" + (type === "blog" ? "writing" : "work") + "/" + editingSlug + ".html"; el.hidden = false; }
+    if (type === "book") { el.href = "/site/about/index.html#bookshelf"; el.hidden = false; return; }
+    if (editingSlug) { el.href = "/site/" + (type === "blog" ? "writing" : "work") + "/" + editingSlug + ".html"; el.hidden = false; }
     else el.hidden = true;
   }
 

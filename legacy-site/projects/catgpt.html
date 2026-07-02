@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Friday - Vedant Misra</title>
+    <title>CatGPT - Vedant Misra</title>
 
     <style>
 
@@ -342,25 +342,22 @@
 
       <section>
         <div class="page-title-row">
-          <h1 class="page-title">friday</h1>
-          
+          <h1 class="page-title">catgpt</h1>
+          <nav class="page-links-inline" aria-label="Project links">
+            <a href="https://github.com/orcus108/catgpt" target="_blank" rel="noopener noreferrer">repo</a>
+            <a href="https://thecatgpt.vercel.app" target="_blank" rel="noopener noreferrer">demo</a>
+          </nav>
         </div>
-        <p class="muted">a fully local voice assistant for your mac</p>
-        <div style="margin-top:0.6rem;"><span class="muted" style="font-size:0.72rem;">Jun 2026</span></div>
+        <p class="muted">chatgpt but with whiskers</p>
+        <div style="margin-top:0.6rem;"><span class="muted" style="font-size:0.72rem;">Apr 2024</span></div>
       </section>
 
       <section>
         <h2>overview</h2>
         <article>
-        <p>models keep getting smarter in labs. for most people, daily life barely changes. friday is my attempt to close that gap: an assistant that actually lives on your machine, sees what you see, and talks back.</p>
-        <p>press a hotkey (or say &quot;hey friday&quot;) and ask about what&#39;s on your screen. friday captures the display, reads it through a local vision model, thinks with a local language model, and answers out loud. no cloud. no api keys. no subscription.</p>
-        <p>the core loop works today: speech-to-text → screen context → local inference → text-to-speech, in under a couple of seconds. it remembers you across sessions, manages its own model servers, and can take action through connectors (github, calendar, email, browser) when you ask it to.</p>
-        <p>i&#39;m building friday because i want the thing on my desk to feel as capable as the models in the data center, without sending my screen or my life to someone else&#39;s server. consumer product, not research demo.</p>
-        <hr class="md-hr" />
-        <p><em>v1–v3 shipped (jun 2026):</em> voice loop, memory, self-managed runtime, agent tools, wake word, browser agency (early). mac control and proactive briefings are next.</p>
-        <p><br /></p>
-        <h2>tech stack</h2>
-        <div class="md-table-wrap"><table class="md-table"><thead><tr><th>Layer</th><th>Technology</th></tr></thead><tbody><tr><td><em>App</em></td><td>Swift / SwiftUI (macOS menu bar)</td></tr><tr><td><em>Brain</em></td><td>Qwen3-8B Q4 via mlx-lm (<code>:8080</code>)</td></tr><tr><td><em>Screen</em></td><td>FastVLM-0.5B via mlx-vlm (<code>:8082</code>) + Vision OCR + accessibility tree</td></tr><tr><td><em>Voice in</em></td><td>Apple Speech (on-device) + Parakeet optional</td></tr><tr><td><em>Voice out</em></td><td>Kokoro TTS (<code>:8081</code>)</td></tr><tr><td><em>Agents</em></td><td>Tool-calling loop — GitHub, Notion, Gmail, Calendar, Playwright browser</td></tr><tr><td><em>Privacy</em></td><td>Runtime-local inference; connector auth optional via OAuth or Composio</td></tr></tbody></table></div>
+        <p>tldr; meoW</p>
+        <p>i was bored and randomly thought of this. my first site that i pushed on vercel so that was a fun learn.</p>
+        <p><img class="md-image" src="/images/catgpt.png" alt="catgpt" loading="lazy" decoding="async" /></p>
         </article>
       </section>
 

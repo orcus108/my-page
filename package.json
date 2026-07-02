@@ -2,10 +2,11 @@
   "name": "pers-site",
   "private": true,
   "scripts": {
-    "build": "node scripts/build.mjs && node scripts/build.mjs preview-c",
+    "build": "node scripts/build.mjs && node scripts/build.mjs site",
     "build:og": "node scripts/build.mjs",
     "build:preview": "node scripts/build.mjs preview-b",
-    "build:preview-c": "node scripts/build.mjs preview-c",
+    "build:site": "node scripts/build.mjs site",
+    "build:legacy": "node scripts/build.mjs",
     "dashboard": "node scripts/dashboard.mjs",
     "log": "node scripts/log.mjs",
     "books:fetch": "node scripts/fetch-book-assets.mjs",

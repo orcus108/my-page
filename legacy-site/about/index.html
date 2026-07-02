@@ -3,8 +3,166 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Friday - Vedant Misra</title>
+    <title>About - Vedant Misra</title>
 
+    <style>
+      .tl-wrap {
+        position: relative;
+        margin-top: 2rem;
+        padding-bottom: 1rem;
+      }
+
+      .tl-wrap::before {
+        content: '';
+        position: absolute;
+        left: 78px;
+        top: 0;
+        bottom: 0;
+        width: 1px;
+        background: linear-gradient(to bottom, transparent, var(--line) 6%, var(--line) 94%, transparent);
+        pointer-events: none;
+        transform-origin: top center;
+        transform: scaleY(0);
+        transition: transform 1s cubic-bezier(0.16, 1, 0.3, 1) 0.1s;
+      }
+
+      .tl-wrap.tl-active::before {
+        transform: scaleY(1);
+      }
+
+      .tl-entry {
+        display: flex;
+        align-items: center;
+        margin-bottom: 2rem;
+        opacity: 0;
+        transform: translateX(-10px);
+        transition: opacity 0.48s cubic-bezier(0.16, 1, 0.3, 1) calc(var(--i) * 0.13s),
+                    transform 0.48s cubic-bezier(0.16, 1, 0.3, 1) calc(var(--i) * 0.13s);
+      }
+
+      .tl-entry:last-child { margin-bottom: 0; }
+
+      .tl-entry.tl-visible {
+        opacity: 1;
+        transform: none;
+      }
+
+      .tl-img {
+        width: 64px;
+        height: 64px;
+        flex: 0 0 64px;
+        border-radius: 4px;
+        overflow: hidden;
+        border: 1px solid var(--line);
+      }
+
+      .tl-img img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+        transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+      }
+
+      .tl-img:hover img { transform: scale(1.07); }
+
+      .tl-img-placeholder {
+        width: 100%;
+        height: 100%;
+        background: var(--line);
+      }
+
+      .tl-connector {
+        width: 28px;
+        flex: 0 0 28px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        position: relative;
+        z-index: 1;
+        align-self: stretch;
+      }
+
+      .tl-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--fg);
+        flex-shrink: 0;
+        transition: transform 0.2s ease;
+      }
+
+      .tl-entry:hover .tl-dot { transform: scale(1.55); }
+
+      .tl-body {
+        flex: 1;
+        padding-left: 0.85rem;
+      }
+
+      .tl-date {
+        font-size: 0.72rem;
+        color: var(--muted);
+        margin-bottom: 0.18rem;
+        line-height: 1.4;
+      }
+
+      .tl-text {
+        font-size: 0.875rem;
+        line-height: 1.5;
+      }
+
+      .tl-note {
+        font-size: 0.72rem;
+        color: var(--muted);
+        line-height: 1.6;
+        max-height: 0;
+        overflow: hidden;
+        opacity: 0;
+        margin-top: 0;
+        transform: translateY(-5px);
+        transition: max-height 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+                    margin-top 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+                    opacity 0.35s ease 0.1s,
+                    transform 0.4s ease 0.1s;
+      }
+
+      .tl-body:hover .tl-note {
+        max-height: 50vh;
+        opacity: 1;
+        margin-top: 0.45rem;
+        transform: translateY(0);
+      }
+
+      @keyframes tl-hint {
+        0%, 55%, 100% { opacity: 0; }
+        20%, 38% { opacity: 1; }
+      }
+
+      .tl-hint {
+        font-size: 0.65rem;
+        color: var(--muted);
+        opacity: 0;
+        pointer-events: none;
+        animation: tl-hint 9s ease-in-out infinite;
+        animation-delay: 2.5s;
+        line-height: 1;
+      }
+
+      @media (max-width: 480px) {
+        .tl-wrap::before { left: 58px; }
+        .tl-img { width: 48px; height: 48px; flex: 0 0 48px; }
+        .tl-connector { width: 20px; flex: 0 0 20px; }
+        .tl-text { font-size: 0.82rem; }
+      }
+
+      .tl-entry.tl-tapped .tl-note {
+        max-height: 50vh;
+        opacity: 1;
+        margin-top: 0.45rem;
+        transform: translateY(0);
+      }
+    </style>
+  
     <style>
 
       :root {
@@ -329,7 +487,7 @@
 
 
       <header>
-        <div class="header-left"><a class="left-link" href="../index.html">home</a><span class="left-sep">/</span><a class="left-link second-link" href="index.html">projects</a></div>
+        <div class="header-left"><a class="left-link" href="../index.html">home</a></div>
         <div class="header-right">
           
           <label class="theme-toggle" aria-label="Toggle theme">
@@ -341,32 +499,111 @@
   
 
       <section>
-        <div class="page-title-row">
-          <h1 class="page-title">friday</h1>
-          
-        </div>
-        <p class="muted">a fully local voice assistant for your mac</p>
-        <div style="margin-top:0.6rem;"><span class="muted" style="font-size:0.72rem;">Jun 2026</span></div>
-      </section>
-
-      <section>
-        <h2>overview</h2>
         <article>
-        <p>models keep getting smarter in labs. for most people, daily life barely changes. friday is my attempt to close that gap: an assistant that actually lives on your machine, sees what you see, and talks back.</p>
-        <p>press a hotkey (or say &quot;hey friday&quot;) and ask about what&#39;s on your screen. friday captures the display, reads it through a local vision model, thinks with a local language model, and answers out loud. no cloud. no api keys. no subscription.</p>
-        <p>the core loop works today: speech-to-text → screen context → local inference → text-to-speech, in under a couple of seconds. it remembers you across sessions, manages its own model servers, and can take action through connectors (github, calendar, email, browser) when you ask it to.</p>
-        <p>i&#39;m building friday because i want the thing on my desk to feel as capable as the models in the data center, without sending my screen or my life to someone else&#39;s server. consumer product, not research demo.</p>
-        <hr class="md-hr" />
-        <p><em>v1–v3 shipped (jun 2026):</em> voice loop, memory, self-managed runtime, agent tools, wake word, browser agency (early). mac control and proactive briefings are next.</p>
-        <p><br /></p>
-        <h2>tech stack</h2>
-        <div class="md-table-wrap"><table class="md-table"><thead><tr><th>Layer</th><th>Technology</th></tr></thead><tbody><tr><td><em>App</em></td><td>Swift / SwiftUI (macOS menu bar)</td></tr><tr><td><em>Brain</em></td><td>Qwen3-8B Q4 via mlx-lm (<code>:8080</code>)</td></tr><tr><td><em>Screen</em></td><td>FastVLM-0.5B via mlx-vlm (<code>:8082</code>) + Vision OCR + accessibility tree</td></tr><tr><td><em>Voice in</em></td><td>Apple Speech (on-device) + Parakeet optional</td></tr><tr><td><em>Voice out</em></td><td>Kokoro TTS (<code>:8081</code>)</td></tr><tr><td><em>Agents</em></td><td>Tool-calling loop — GitHub, Notion, Gmail, Calendar, Playwright browser</td></tr><tr><td><em>Privacy</em></td><td>Runtime-local inference; connector auth optional via OAuth or Composio</td></tr></tbody></table></div>
+          <blockquote><p>&quot;The people who are crazy enough to think they can change the world are the ones who do.&quot; - steve jobs</p></blockquote>
+        <p><br /> hi</p>
+        <p>i&#39;m Vedant, a sophomore at IIT Madras. <br /> serial builder. probably delusional. product fanatic. shipping constantly.</p>
+        <p>my exams are going on so right now i don&#39;t have the mental faculties to put a nice about me. for now, this is all i got. will finish this by end of may 2026.</p>
+        <p>until then, you can reach me via <a href="mailto:misravedantsocials@gmail.com">email</a> or on <a href="https://x.com/orcus108" target="_blank" rel="noopener noreferrer">twitter/X</a>.</p>
+        <p>thank you for your time</p>
         </article>
       </section>
 
+      <section>
+        <div class="section-header">
+          <h2>highlights</h2>
+          <span class="tl-hint">hover events for notes</span>
+        </div>
+        <div class="tl-wrap">
+          
+        <div class="tl-entry" style="--i:0">
+          <div class="tl-img"><img src="/images/highlights/iitm-logo.png" alt="" loading="lazy" /></div>
+          <div class="tl-connector"><div class="tl-dot"></div></div>
+          <div class="tl-body">
+            <div class="tl-date">Jul 17, 2024</div>
+            <div class="tl-text">accepted into IIT Madras for undergrad</div>
+            <div class="tl-note">two years of JEE grind and finally, got into the college that (my parents and) I always wanted to get into. gonna be a fun four years.</div>
+          </div>
+        </div>
+        <div class="tl-entry" style="--i:1">
+          <div class="tl-img"><img src="/images/highlights/yc-logo.png" alt="" loading="lazy" /></div>
+          <div class="tl-connector"><div class="tl-dot"></div></div>
+          <div class="tl-body">
+            <div class="tl-date">Apr 18, 2026</div>
+            <div class="tl-text">went to YC startup school in Bangalore</div>
+            <div class="tl-note">applied last minute with no hopes but somehow i got in. honestly, the night before i was getting crazy imposter syndrome thinking &quot;what the hell am i doing here, i havent done enough to be here&quot;. i was quite nervous, afraid i&#39;d look like a moron. but it was a lot of fun. &quot;inspiring and humbling&quot; were the two words i could think of to summarise the day. i got to meet a lot of crack builders, got a crazy amount of AI credits from YC and most importantly, got a hugee amount of motivation to actually build more. and i&#39;ve been building a lot more (token-maxxing) ever since. probably the most significant moment for me in a very very long time.</div>
+          </div>
+        </div>
+        <div class="tl-entry" style="--i:2">
+          <div class="tl-img"><img src="/images/highlights/iima-ventures-logo.png" alt="" loading="lazy" /></div>
+          <div class="tl-connector"><div class="tl-dot"></div></div>
+          <div class="tl-body">
+            <div class="tl-date">May 25 - Jun 30, 2026</div>
+            <div class="tl-text">part of IIM Ahmedabad&#39;s AI summer residency program</div>
+            
+          </div>
+        </div>
+        </div>
+      </section>
       
+    <script>
+      (function() {
+        var wrap = document.querySelector('.tl-wrap');
+        var entries = document.querySelectorAll('.tl-entry');
 
-    
+        var lineObserver = new IntersectionObserver(function(observed) {
+          observed.forEach(function(entry) {
+            if (entry.isIntersecting) {
+              entry.target.classList.add('tl-active');
+              lineObserver.unobserve(entry.target);
+            }
+          });
+        }, { threshold: 0.05 });
+        if (wrap) lineObserver.observe(wrap);
+
+        var entryObserver = new IntersectionObserver(function(observed) {
+          observed.forEach(function(entry) {
+            if (entry.isIntersecting) {
+              entry.target.classList.add('tl-visible');
+              entryObserver.unobserve(entry.target);
+            }
+          });
+        }, { threshold: 0.15 });
+        entries.forEach(function(el) { entryObserver.observe(el); });
+
+        var isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+        var hint = document.querySelector('.tl-hint');
+        if (hint && isTouch) hint.textContent = 'tap image to reveal notes';
+
+        if (isTouch) {
+          document.querySelectorAll('.tl-img').forEach(function(img) {
+            var entry = img.closest('.tl-entry');
+            img.style.cursor = 'pointer';
+            img.style.touchAction = 'manipulation';
+            var fired = false;
+            img.addEventListener('touchend', function(e) {
+              e.preventDefault();
+              fired = true;
+              var isOpen = entry.classList.contains('tl-tapped');
+              document.querySelectorAll('.tl-entry.tl-tapped').forEach(function(el) {
+                el.classList.remove('tl-tapped');
+              });
+              if (!isOpen) entry.classList.add('tl-tapped');
+            });
+            img.addEventListener('click', function() {
+              if (fired) { fired = false; return; }
+              var isOpen = entry.classList.contains('tl-tapped');
+              document.querySelectorAll('.tl-entry.tl-tapped').forEach(function(el) {
+                el.classList.remove('tl-tapped');
+              });
+              if (!isOpen) entry.classList.add('tl-tapped');
+            });
+          });
+        }
+      })();
+    </script>
+  
+  
       <footer>
         <a href="https://x.com/orcus108" target="_blank" rel="noopener noreferrer">X (Twitter)</a>
         <a href="https://github.com/orcus108" target="_blank" rel="noopener noreferrer">GitHub</a>

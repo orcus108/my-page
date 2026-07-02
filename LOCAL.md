@@ -15,9 +15,9 @@ then open:
 | what | url |
 |---|---|
 | content studio (edit posts, save, rebuild) | http://localhost:4321 |
-| preview site (same as production layout) | http://localhost:4321/preview-c/index.html |
+| site (same as production layout) | http://localhost:4321/site/index.html |
 
-the dashboard writes to `content/` and `images/cards/`, rebuilds `preview-c/` on save, and serves those files locally. no separate dev server.
+the dashboard writes to `content/` and `images/cards/`, rebuilds `site/` on save, and serves those files locally. no separate dev server.
 
 ## if the port is already in use
 
@@ -30,13 +30,13 @@ npm run dashboard
 
 ## rebuild without the dashboard
 
-if you only edited markdown or `scripts/preview-c.mjs` by hand:
+if you only edited markdown or `scripts/site.mjs` by hand:
 
 ```bash
 npm run build
 ```
 
-then open `preview-c/index.html` in a browser, or start the dashboard and use the preview url above.
+then open `site/index.html` in a browser, or start the dashboard and use the preview url above.
 
 ## stop
 
@@ -44,4 +44,4 @@ in the terminal where `npm run dashboard` is running, press `Ctrl+C`.
 
 ## deploy
 
-production is `preview-c/` on Vercel (`vercel.json`). commit, push, and Vercel runs `npm run build` on deploy.
+production is `site/` on Vercel (`vercel.json`). commit, push, and Vercel runs `npm run build` on deploy. `legacy-site/` is a static snapshot of the older deployed site if you need to roll back.
