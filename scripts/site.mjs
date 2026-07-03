@@ -1180,16 +1180,77 @@ function styles() {
       }
       .work-tier { margin-bottom: clamp(2rem, 4vw, 3rem); }
       .work-tier:last-child { margin-bottom: 0; }
+      .work-tier-more {
+        padding-top: clamp(1.75rem, 3.5vw, 2.5rem);
+        border-top: 1px solid var(--line);
+      }
       .work-tier-label {
-        margin: 0 0 1.25rem;
-        font-size: 0.72rem;
-        font-weight: 600;
-        letter-spacing: 0.16em;
+        margin: 0 0 0.65rem;
+        font-size: 0.78rem;
+        font-weight: 700;
+        letter-spacing: 0.14em;
         text-transform: uppercase;
-        color: var(--faint);
+        color: var(--fg);
+      }
+      .work-tier-note {
+        margin: 0 0 clamp(1.4rem, 3vw, 2rem);
+        color: var(--muted);
+        font-size: 0.82rem;
+        line-height: 1.65;
       }
       .work-tier-main .card-media-wrap { aspect-ratio: 21 / 9; }
       .work-tier-more .work-cards { margin-top: 0; }
+      .work-text-list {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        column-gap: clamp(1.25rem, 3vw, 2.75rem);
+      }
+      .work-text-item {
+        position: relative;
+        display: block;
+        padding: 1rem 0 1.05rem;
+        border-bottom: 1px solid var(--line);
+        transition: padding-left 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+      .work-text-item::after {
+        content: "→";
+        position: absolute;
+        top: 1.04rem;
+        right: 0;
+        color: var(--faint);
+        opacity: 0;
+        transform: translateX(-0.35rem);
+        transition:
+          opacity 0.22s ease,
+          transform 0.22s cubic-bezier(0.4, 0, 0.2, 1),
+          color 0.18s ease;
+      }
+      .work-text-title {
+        display: block;
+        padding-right: 1.6rem;
+        font-size: clamp(1.05rem, 1.8vw, 1.22rem);
+        font-weight: 500;
+      }
+      .work-text-desc {
+        display: block;
+        padding-right: 1.6rem;
+        margin-top: 0.28rem;
+        color: var(--muted);
+        font-size: 0.92rem;
+        line-height: 1.45;
+      }
+      .work-text-item:hover {
+        padding-left: 0.35rem;
+      }
+      .work-text-item:hover .work-text-title {
+        text-decoration: underline;
+        text-underline-offset: 0.18em;
+      }
+      .work-text-item:hover::after {
+        opacity: 1;
+        transform: translateX(0);
+        color: var(--fg);
+      }
 
       /* about page sections */
       .about-section {
@@ -1247,6 +1308,7 @@ function styles() {
       }
       @media (max-width: 760px) {
         .work-cards { grid-template-columns: 1fr; gap: 1.75rem; }
+        .work-text-list { grid-template-columns: 1fr; }
         .card-media-wrap { max-width: 420px; }
         .writing-grid { grid-template-columns: 1fr; }
       }
@@ -2593,16 +2655,24 @@ export async function buildSite({
     <main class="wrap page-work">
       <div class="article-head">
         <h1>work</h1>
-        <p class="lead">things i've built. product first — not demos for demo's sake.</p>
+        <p class="lead">things i've built. product first, not demos for demo's sake.</p>
       </div>
       ${friday ? `<div class="work-tier work-tier-main">${cardEl(friday, `${friday.slug}.html`, null, { root: relRoot(2) })}</div>` : ""}
       ${sakhi ? `<div class="work-tier work-tier-main">${cardEl(sakhi, `${sakhi.slug}.html`, null, { root: relRoot(2) })}</div>` : ""}
       ${
         otherProjects.length
           ? `<div class="work-tier work-tier-more">
-        <p class="work-tier-label">more</p>
-        <div class="work-cards">
-          ${otherProjects.map((p) => cardEl(p, `${p.slug}.html`, null, { root: relRoot(2) })).join("")}
+        <p class="work-tier-label">firsts</p>
+        <p class="work-tier-note">from the early days of my building journey. clippy was my first macOS app. odds was my first app with real users. image cartoonification was my first time implementing a research paper. catgpt was the first website i deployed on the internet. might seem small but had some important learnings from them :)</p>
+        <div class="work-text-list">
+          ${otherProjects
+            .map(
+              (p) => `<a class="work-text-item" href="${p.slug}.html">
+            <span class="work-text-title">${escapeHtml(p.title.toLowerCase())}</span>
+            <span class="work-text-desc">${escapeHtml(p.summary.toLowerCase())}</span>
+          </a>`
+            )
+            .join("")}
         </div>
       </div>`
           : ""
