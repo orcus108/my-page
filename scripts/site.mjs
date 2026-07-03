@@ -1313,6 +1313,12 @@ function styles() {
       }
 
       /* writing (home): single hero with detail column */
+      #writing {
+        padding: clamp(2rem, 5vh, 3.5rem) 0;
+      }
+      #writing .sec-head {
+        margin-bottom: clamp(1.15rem, 2.4vw, 1.75rem);
+      }
       #writing .writing-layout {
         display: grid;
         grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr);
@@ -1326,7 +1332,7 @@ function styles() {
         aspect-ratio: 16 / 11;
         width: 100%;
         border-radius: 14px;
-        max-height: clamp(17rem, 47vh, 32rem);
+        max-height: clamp(14rem, 42vh, 28rem);
       }
       #writing .writing-hero .card-title,
       #writing .writing-hero .card-desc {
@@ -1380,41 +1386,92 @@ function styles() {
         #writing .writing-detail-desc { max-width: none; }
       }
       #writing .writing-more {
-        margin-top: clamp(1.5rem, 3vw, 2.5rem);
-        padding-top: clamp(1.25rem, 2.5vw, 1.75rem);
+        margin-top: clamp(0.85rem, 2vw, 1.35rem);
+        padding-top: 0;
         border-top: 1px solid var(--line);
       }
       #writing .writing-more-grid {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: clamp(1.5rem, 3vw, 2.8rem);
-      }
-      #writing .writing-more .entry { border-top: 0; padding: 0; }
-      #writing .writing-more .entry-line {
         display: flex;
-        align-items: baseline;
-        flex-wrap: wrap;
-        gap: 0.35em;
-        font-size: 0.82rem;
-        font-weight: 400;
-        letter-spacing: -0.01em;
-        line-height: 1.35;
+        flex-direction: column;
+      }
+      #writing .writing-more .entry {
+        display: grid;
+        grid-template-columns: 2.75rem minmax(0, 1fr) auto;
+        gap: clamp(0.75rem, 2vw, 1.5rem);
+        align-items: center;
+        min-height: 5.4rem;
+        padding: clamp(0.85rem, 1.8vw, 1.15rem) 0;
+        border-top: 0;
+        border-bottom: 1px solid var(--line);
+        transition: transform 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+      #writing .writing-more .entry:hover {
+        transform: translateX(6px);
+      }
+      #writing .writing-more .entry-index {
+        color: var(--faint);
+        font-size: 0.72rem;
+        font-variant-numeric: tabular-nums;
+        letter-spacing: 0.12em;
+      }
+      #writing .writing-more .entry-copy {
+        min-width: 0;
+      }
+      #writing .writing-more .entry-title {
+        display: block;
+        margin: 0;
+        font-size: clamp(0.95rem, 1.35vw, 1.12rem);
+        font-weight: 600;
+        letter-spacing: -0.02em;
+        line-height: 1.2;
         color: var(--fg);
       }
-      #writing .writing-more .entry-line .dot {
-        color: var(--faint);
+      #writing .writing-more .entry-desc {
+        display: -webkit-box;
+        margin: 0.25rem 0 0;
+        color: var(--muted);
+        font-size: clamp(0.76rem, 0.9vw, 0.84rem);
         font-weight: 400;
-        user-select: none;
+        line-height: 1.35;
+        max-width: 42ch;
+        -webkit-line-clamp: 1;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
       }
-      #writing .writing-more .entry-date {
+      #writing .writing-more .entry-meta {
+        display: flex;
+        align-items: center;
+        gap: 0.65rem;
         color: var(--faint);
-        font-size: 0.76rem;
+        font-size: 0.72rem;
         font-weight: 400;
         white-space: nowrap;
       }
-      #writing .writing-more .entry:hover { transform: none; }
+      #writing .writing-more .entry-arrow {
+        color: var(--muted);
+        font-size: 1rem;
+        line-height: 1;
+        transition: color 0.18s ease, transform 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+      #writing .writing-more .entry:hover .entry-arrow {
+        color: var(--fg);
+        transform: translateX(4px);
+      }
       @media (max-width: 760px) {
-        #writing .writing-more-grid { grid-template-columns: 1fr; gap: 0.9rem; }
+        #writing .writing-more .entry {
+          grid-template-columns: 2.5rem minmax(0, 1fr);
+          min-height: 0;
+          padding: 1rem 0;
+          align-items: start;
+        }
+        #writing .writing-more .entry-desc {
+          -webkit-line-clamp: 2;
+        }
+        #writing .writing-more .entry-meta {
+          grid-column: 2;
+          margin-top: 0.2rem;
+          justify-content: space-between;
+        }
       }
       .writing-tier { margin-bottom: clamp(2rem, 4vw, 3rem); }
       .writing-tier:last-child { margin-bottom: 0; }
@@ -1970,9 +2027,9 @@ function themeToggle() {
           </button>`;
 }
 
-// runs in <head> before paint so the saved/system theme applies with no flash of light mode
+// runs in <head> before paint so the saved theme applies with no flash
 function themeInitScript() {
-  return `<script>(function(){try{var t=localStorage.getItem('theme')||(window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>`;
+  return `<script>(function(){try{var t=localStorage.getItem('theme')||'light';document.documentElement.setAttribute('data-theme',t);}catch(e){document.documentElement.setAttribute('data-theme','light');}})();</script>`;
 }
 
 function projectBannerEl(project, escapeHtmlFn, pipeline, depth = 2) {
@@ -2397,16 +2454,21 @@ export async function buildSite({
       <div class="writing-more" data-reveal style="--i:${i + 2}">
         <div class="writing-more-grid">
           ${moreItems
-            .map(
-              (p) => `
+            .map((p, idx) => {
+              const itemMeta = [formatDate(p.date), p.readTime].filter(Boolean).join(" · ");
+              return `
           <a class="entry" href="writing/${p.slug}.html">
-            <p class="entry-line">
+            <span class="entry-index">${String(idx + 2).padStart(2, "0")}</span>
+            <span class="entry-copy">
               <span class="entry-title">${escapeHtml(p.title.toLowerCase())}</span>
-              <span class="dot" aria-hidden="true">·</span>
-              <span class="entry-date">${escapeHtml(formatDate(p.date).toLowerCase())}</span>
-            </p>
-          </a>`
-            )
+              <span class="entry-desc">${escapeHtml(p.summary.toLowerCase())}</span>
+            </span>
+            <span class="entry-meta">
+              ${itemMeta ? `<span>${escapeHtml(itemMeta.toLowerCase())}</span>` : ""}
+              <span class="entry-arrow" aria-hidden="true">&rarr;</span>
+            </span>
+          </a>`;
+            })
             .join("")}
         </div>
       </div>`
