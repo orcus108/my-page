@@ -1,8 +1,21 @@
 [
   {
+    "title": "The Facebook Effect",
+    "author": "David Kirkpatrick",
+    "shelf": "currently",
+    "color": "#2f5f9b",
+    "slug": "the-facebook-effect",
+    "isbn": "9781439102114",
+    "pages": 384,
+    "coverFile": "books/the-facebook-effect/cover.jpg",
+    "spineFile": "books/the-facebook-effect/spine.webp",
+    "coverSource": "https://upload.wikimedia.org/wikipedia/en/2/2f/The_Facebook_Effect_cover.jpg",
+    "spineSource": "generated-from-cover"
+  },
+  {
     "title": "High Output Management",
     "author": "Andy Grove",
-    "shelf": "currently",
+    "shelf": "business & economics",
     "color": "#2c3a85",
     "slug": "high-output-management",
     "isbn": "9780679762881",

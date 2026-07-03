@@ -612,8 +612,7 @@ function themeScript() {
       const root = document.documentElement;
       const btn = document.getElementById("theme-toggle");
       const stored = localStorage.getItem("theme");
-      const systemDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-      const initialTheme = stored || (systemDark ? "dark" : "light");
+      const initialTheme = stored || "light";
 
       function applyTheme(theme) {
         root.setAttribute("data-theme", theme);
@@ -1242,7 +1241,7 @@ ${header("", "Vedant Misra", null, null, [{ href: "about/index.html", text: "abo
       <section>
         <h2>currently reading</h2>
         <ul>
-          <li class="list-item"><span class="list-title">high output management</span><span class="list-meta" style="display:inline;margin-left:0.4rem;">· andy grove</span></li>
+          <li class="list-item"><span class="list-title">the facebook effect</span><span class="list-meta" style="display:inline;margin-left:0.4rem;">· david kirkpatrick</span></li>
         </ul>
       </section>
 

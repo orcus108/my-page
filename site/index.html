@@ -30,9 +30,9 @@
     <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Person","@id":"https://vedantmisra.vercel.app/#person","name":"Vedant Misra","url":"https://vedantmisra.vercel.app/","email":"misravedantsocials@gmail.com","sameAs":["https://x.com/orcus108","https://github.com/orcus108","https://vedantmisra.substack.com"],"affiliation":{"@type":"CollegeOrUniversity","name":"IIT Madras"},"knowsAbout":["AI products","local-first software","product design","healthcare technology","India-first markets"],"description":"Vedant Misra is an IIT Madras student building AI products for underserved users, including Friday, Sakhi, Clippy, and other product experiments from India."},{"@type":"WebSite","@id":"https://vedantmisra.vercel.app/#website","url":"https://vedantmisra.vercel.app/","name":"Vedant Misra","alternateName":["Vedant Misra portfolio","Vedant Misra personal site"],"description":"Vedant Misra is an IIT Madras student building AI products for underserved users, including Friday, Sakhi, Clippy, and other product experiments from India.","publisher":{"@id":"https://vedantmisra.vercel.app/#person"},"inLanguage":"en"},{"@type":"ProfilePage","@id":"https://vedantmisra.vercel.app/#webpage","url":"https://vedantmisra.vercel.app/","name":"Vedant Misra | AI Builder and Product Engineer","description":"Vedant Misra is an IIT Madras student building AI products for underserved users, including Friday, Sakhi, Clippy, and other product experiments from India.","isPartOf":{"@id":"https://vedantmisra.vercel.app/#website"},"about":{"@id":"https://vedantmisra.vercel.app/#person"},"primaryImageOfPage":{"@type":"ImageObject","url":"https://vedantmisra.vercel.app/assets/portrait.webp"},"inLanguage":"en","mainEntity":{"@id":"https://vedantmisra.vercel.app/#person"}}]}</script>
     <link rel="preload" href="assets/fonts/plus-jakarta-sans-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin />
     <link rel="preload" href="assets/fonts/plus-jakarta-sans-latin-600-normal.woff2" as="font" type="font/woff2" crossorigin />
-    <link rel="stylesheet" href="assets/site.03d99a224e.css" />
+    <link rel="stylesheet" href="assets/site.3fb4ec6e3c.css" />
     <link rel="preload" as="image" href="assets/hero-gradient.webp" type="image/webp" fetchpriority="high" />
-    <script>(function(){try{var t=localStorage.getItem('theme')||(window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+    <script>(function(){try{var t=localStorage.getItem('theme')||'light';document.documentElement.setAttribute('data-theme',t);}catch(e){document.documentElement.setAttribute('data-theme','light');}})();</script>
   </head>
   <body>
 
@@ -107,18 +107,26 @@
         <div class="writing-more-grid">
           
           <a class="entry" href="writing/ai-and-human-identity.html">
-            <p class="entry-line">
+            <span class="entry-index">02</span>
+            <span class="entry-copy">
               <span class="entry-title">ai and human identity</span>
-              <span class="dot" aria-hidden="true">·</span>
-              <span class="entry-date">feb 9, 2026</span>
-            </p>
+              <span class="entry-desc">what remains when intelligence is no longer uniquely ours</span>
+            </span>
+            <span class="entry-meta">
+              <span>feb 9, 2026 · 5 min read</span>
+              <span class="entry-arrow" aria-hidden="true">&rarr;</span>
+            </span>
           </a>
           <a class="entry" href="writing/ai-in-healthcare.html">
-            <p class="entry-line">
+            <span class="entry-index">03</span>
+            <span class="entry-copy">
               <span class="entry-title">ai in healthcare - the indian way</span>
-              <span class="dot" aria-hidden="true">·</span>
-              <span class="entry-date">jan 15, 2026</span>
-            </p>
+              <span class="entry-desc">rethinking healthcare for a billion people</span>
+            </span>
+            <span class="entry-meta">
+              <span>jan 15, 2026 · 8 min read</span>
+              <span class="entry-arrow" aria-hidden="true">&rarr;</span>
+            </span>
           </a>
         </div>
       </div>
@@ -147,6 +155,7 @@
         </div>
       </section>
 
+      <!--
       <section class="section panel" id="reading">
         <div class="wrap">
           <div class="sec-head">
@@ -155,15 +164,16 @@
           </div>
           <div class="reading-block">
             <p class="eyebrow" data-reveal style="--i:1">currently</p>
-            <p class="reading-title" data-reveal style="--i:2">High Output Management</p>
-            <p class="reading-author" data-reveal style="--i:3">by Andy Grove</p>
-            <p class="reading-note" data-reveal style="--i:4">grove&#39;s case for management as leverage: a manager&#39;s output is the output of every team under them. reading it for how it thinks in systems, not just people.</p>
+            <p class="reading-title" data-reveal style="--i:2">The Facebook Effect</p>
+            <p class="reading-author" data-reveal style="--i:3">by David Kirkpatrick</p>
+            <p class="reading-note" data-reveal style="--i:4">kirkpatrick&#39;s inside account of facebook&#39;s early years: the product instincts, power shifts, and messy social consequences behind a network that changed how people relate online.</p>
           </div>
         </div>
       </section>
+      -->
     </main>
 
-    <div class="dots" aria-hidden="true"></div>
+    
 
       <footer class="footer">
         <div class="footer-inner">
@@ -178,7 +188,7 @@
 
     <script defer src="/_vercel/insights/script.js"></script>
   
-<script defer src="assets/site.b3813f8a6e.js"></script>
+<script defer src="assets/site.af25614754.js"></script>
 
     <script>
       (function () {
@@ -188,27 +198,12 @@
         if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
         var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
         var fine = window.matchMedia('(pointer: fine)').matches;
-        var dotsWrap = document.querySelector('.dots');
         var topbar = document.querySelector('.topbar-home');
-        var labels = ['top', 'about', 'writing', 'work', 'reading'];
         var current = 0, animating = false, cooldownUntil = 0;
-
-        var dots = [];
-        if (dotsWrap) {
-          panels.forEach(function (p, i) {
-            var b = document.createElement('button');
-            b.type = 'button';
-            b.setAttribute('aria-label', labels[i] || ('section ' + (i + 1)));
-            b.addEventListener('click', function () { go(i); });
-            dotsWrap.appendChild(b);
-            dots.push(b);
-          });
-        }
 
         function setActive(i) {
           current = i;
           panels.forEach(function (p, j) { p.classList.toggle('is-active', j === i); });
-          dots.forEach(function (d, j) { d.classList.toggle('active', j === i); });
           if (topbar) topbar.classList.toggle('show', i > 0);
         }
 

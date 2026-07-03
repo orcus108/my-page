@@ -42,35 +42,6 @@ function escapeHtml(text) {
     .replaceAll("'", "&#39;");
 }
 
-// on-brand subscribe block; the form hands off to substack with the email prefilled,
-// so the address still lands in the substack list without an off-brand embed iframe
-function subscribeBlock() {
-  return `
-      <section class="subscribe" aria-label="newsletter signup">
-        <p class="sub-eyebrow">newsletter</p>
-        <h2 class="sub-title">new essays by email</h2>
-        <p class="sub-desc">occasional writing on AI, product, and building from india. no spam, unsubscribe anytime.</p>
-        <form class="sub-form" action="${SUBSTACK_URL}/welcome" method="get" target="_blank" rel="noopener" novalidate>
-          <input
-            class="sub-input"
-            type="email"
-            name="email"
-            placeholder="you@email.com"
-            aria-label="email address"
-            autocomplete="email"
-            inputmode="email"
-            autocapitalize="off"
-            autocorrect="off"
-            spellcheck="false"
-            enterkeyhint="go"
-            required
-          />
-          <button class="sub-btn" type="submit">subscribe</button>
-        </form>
-        <p class="sub-status" role="status" aria-live="polite"></p>
-      </section>`;
-}
-
 function slugify(s) {
   return s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
 }
@@ -433,8 +404,6 @@ function styles() {
         --faint: #9a9a9a;
         --line: #ececec;
         --topbar-bg: rgba(255, 255, 255, 0.82);
-        --dot: rgba(12, 12, 12, 0.18);
-        --dot-hover: rgba(12, 12, 12, 0.4);
         --shelf-line: #c4b8a8;
         --shelf-shadow: rgba(0, 0, 0, 0.35);
         --shelf-wood: #e6ddd2;
@@ -456,8 +425,6 @@ function styles() {
         --faint: #6a6a6a;
         --line: #262626;
         --topbar-bg: rgba(12, 12, 12, 0.72);
-        --dot: rgba(242, 242, 242, 0.22);
-        --dot-hover: rgba(242, 242, 242, 0.5);
         --shelf-line: #3d3530;
         --shelf-shadow: rgba(0, 0, 0, 0.65);
         --shelf-wood: #2a2420;
@@ -592,30 +559,6 @@ function styles() {
         to { transform: scale(1.12); }
       }
 
-      /* right-side section dots */
-      .dots {
-        position: fixed;
-        top: 50%;
-        right: clamp(1rem, 2.5vw, 1.75rem);
-        transform: translateY(-50%);
-        z-index: 60;
-        display: flex;
-        flex-direction: column;
-        gap: 0.85rem;
-      }
-      .dots button {
-        width: 9px;
-        height: 9px;
-        padding: 0;
-        border: 0;
-        border-radius: 999px;
-        background: var(--dot);
-        cursor: pointer;
-        transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), background 0.25s ease;
-      }
-      .dots button:hover { transform: scale(1.4); background: var(--dot-hover); }
-      .dots button.active { background: var(--fg); transform: scale(1.25); }
-
       /* nav fades in once the user moves off the hero
          (.topbar.topbar-home keeps it more specific than the later sticky .topbar rule
          so it stays fixed and out of flow instead of reserving space above the hero) */
@@ -633,7 +576,6 @@ function styles() {
       @media (hover: none) {
         html { scroll-snap-type: y proximity; }
         .hero, .section { scroll-snap-align: start; }
-        .dots { display: none; }
       }
 
       /* ---- bookshelf ---- */
@@ -1236,9 +1178,6 @@ function styles() {
       .page-writing .writing-grid {
         padding-bottom: clamp(3rem, 6vw, 4.5rem);
       }
-      .page-writing .writing-grid:has(+ .subscribe) {
-        padding-bottom: 0;
-      }
       .work-tier { margin-bottom: clamp(2rem, 4vw, 3rem); }
       .work-tier:last-child { margin-bottom: 0; }
       .work-tier-label {
@@ -1620,66 +1559,6 @@ function styles() {
       .prose blockquote p:first-child { margin-top: 0; }
       .md-image { display: block; max-width: 100%; height: auto; margin-top: 1.25rem; border-radius: 4px; }
 
-      /* newsletter subscribe */
-      .subscribe {
-        max-width: 680px;
-        margin: clamp(2.5rem, 5vw, 4rem) 0 clamp(3rem, 6vw, 4.5rem);
-      }
-      .writing-tier .subscribe {
-        max-width: none;
-        margin: clamp(1rem, 2vw, 1.5rem) 0 clamp(2rem, 4vw, 3rem);
-        padding: clamp(1.5rem, 3vw, 2.25rem);
-        border: 1px solid var(--line);
-        border-radius: 14px;
-        background: var(--card, transparent);
-      }
-      .subscribe .sub-eyebrow {
-        margin: 0;
-        font-size: 0.7rem;
-        font-weight: 600;
-        letter-spacing: 0.16em;
-        text-transform: uppercase;
-        color: var(--faint);
-      }
-      .subscribe .sub-title { margin: 0.5rem 0 0; font-size: 1.35rem; font-weight: 700; letter-spacing: -0.025em; }
-      .subscribe .sub-desc { margin: 0.5rem 0 0; color: var(--muted); font-size: 0.95rem; max-width: 52ch; }
-      .sub-form { display: flex; gap: 0.6rem; margin-top: 1.1rem; flex-wrap: wrap; }
-      .sub-input {
-        flex: 1 1 240px;
-        min-width: 0;
-        padding: 0.7rem 0.85rem;
-        border: 1px solid var(--line);
-        border-radius: 9px;
-        font: inherit;
-        font-size: 0.95rem;
-        background: var(--bg);
-        color: var(--fg);
-      }
-      .sub-input:focus {
-        outline: none;
-        border-color: var(--fg);
-        box-shadow: 0 0 0 3px color-mix(in srgb, var(--fg) 12%, transparent);
-      }
-      .sub-form.has-error .sub-input { border-color: #e05656; }
-      .sub-form.has-error .sub-input:focus { box-shadow: 0 0 0 3px color-mix(in srgb, #e05656 22%, transparent); }
-      .sub-status { margin: 0.65rem 0 0; min-height: 1.15em; font-size: 0.82rem; color: var(--faint); }
-      .sub-status.is-error { color: #e05656; }
-      .sub-status.is-ok { color: var(--muted); }
-      .sub-btn {
-        flex: 0 0 auto;
-        padding: 0.7rem 1.4rem;
-        border: 0;
-        border-radius: 9px;
-        background: var(--fg);
-        color: var(--bg);
-        font: inherit;
-        font-weight: 600;
-        font-size: 0.95rem;
-        cursor: pointer;
-        transition: opacity 0.18s ease;
-      }
-      .sub-btn:hover { opacity: 0.82; }
-      .sub-btn:disabled { opacity: 0.55; cursor: default; }
       .mockup-grid {
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1912,27 +1791,12 @@ function deckScript() {
         if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
         var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
         var fine = window.matchMedia('(pointer: fine)').matches;
-        var dotsWrap = document.querySelector('.dots');
         var topbar = document.querySelector('.topbar-home');
-        var labels = ['top', 'about', 'writing', 'work', 'reading'];
         var current = 0, animating = false, cooldownUntil = 0;
-
-        var dots = [];
-        if (dotsWrap) {
-          panels.forEach(function (p, i) {
-            var b = document.createElement('button');
-            b.type = 'button';
-            b.setAttribute('aria-label', labels[i] || ('section ' + (i + 1)));
-            b.addEventListener('click', function () { go(i); });
-            dotsWrap.appendChild(b);
-            dots.push(b);
-          });
-        }
 
         function setActive(i) {
           current = i;
           panels.forEach(function (p, j) { p.classList.toggle('is-active', j === i); });
-          dots.forEach(function (d, j) { d.classList.toggle('active', j === i); });
           if (topbar) topbar.classList.toggle('show', i > 0);
         }
 
@@ -2080,49 +1944,6 @@ function footer() {
       </footer>`;
 }
 
-function subscribeScriptBody() {
-  return `(function(){
-  function init(){
-    var forms = document.querySelectorAll('.sub-form');
-    if(!forms.length) return;
-    var re = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;
-    forms.forEach(function(form){
-      var input = form.querySelector('.sub-input');
-      var btn = form.querySelector('.sub-btn');
-      var status = form.parentElement.querySelector('.sub-status');
-      function setStatus(msg, kind){
-        if(!status) return;
-        status.textContent = msg || '';
-        status.className = 'sub-status' + (kind ? ' is-' + kind : '');
-      }
-      input.addEventListener('input', function(){
-        if(form.classList.contains('has-error') && re.test(input.value.trim())){
-          form.classList.remove('has-error');
-          setStatus('');
-        }
-      });
-      form.addEventListener('submit', function(e){
-        var val = input.value.trim();
-        if(!re.test(val)){
-          e.preventDefault();
-          form.classList.add('has-error');
-          setStatus('that does not look like a valid email', 'error');
-          input.focus();
-          return;
-        }
-        form.classList.remove('has-error');
-        btn.disabled = true;
-        btn.textContent = 'opening…';
-        setStatus('opening substack to confirm, then check your inbox.', 'ok');
-        setTimeout(function(){ btn.disabled = false; btn.textContent = 'subscribe'; }, 4000);
-      });
-    });
-  }
-  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
-  else init();
-})();`;
-}
-
 function themeScriptBody() {
   return `
       function toggleTheme() {
@@ -2208,7 +2029,7 @@ function smoothScrollBody() {
 }
 
 function siteScriptBundle() {
-  return [themeScriptBody(), lightboxScriptBody, smoothScrollBody(), subscribeScriptBody()].join("\n");
+  return [themeScriptBody(), lightboxScriptBody, smoothScrollBody()].join("\n");
 }
 
 async function writeSiteBundles(root) {
@@ -2566,6 +2387,7 @@ export async function buildSite({
         </div>
       </section>
 
+      <!--
       <section class="section panel" id="reading">
         <div class="wrap">
           <div class="sec-head">
@@ -2580,9 +2402,10 @@ export async function buildSite({
           </div>
         </div>
       </section>
+      -->
     </main>
 
-    <div class="dots" aria-hidden="true"></div>`;
+    `;
 
   const homeTitle = `${SITE_TITLE} | AI Builder and Product Engineer`;
   const homeDescription = SITE_DESCRIPTION;
@@ -2639,7 +2462,6 @@ export async function buildSite({
         <div class="writing-grid">
           ${writingOthers.slice(0, 2).map((p) => writingCard(p, `${p.slug}.html`, relRoot(2))).join("")}
         </div>
-        ${subscribeBlock()}
         ${
           writingOthers.length > 2
             ? `<div class="writing-grid">
@@ -2648,7 +2470,7 @@ export async function buildSite({
             : ""
         }
       </div>`
-          : subscribeBlock()
+          : ""
       }
     </main>`;
   const writingTitle = `Writing | ${SITE_TITLE}`;
@@ -2708,7 +2530,6 @@ export async function buildSite({
         ${meta ? `<p class="meta">${escapeHtml(meta)}</p>` : ""}
       </div>
       <article class="prose">${renderMarkdown(post.body)}</article>
-      ${subscribeBlock()}
     </main>`;
     await writeFile(
       path.join(root, "writing", `${post.slug}.html`),
