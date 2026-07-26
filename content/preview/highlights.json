@@ -14,7 +14,13 @@
   {
     "date": "May 25 - Jun 30, 2026",
     "title": "part of IIM Ahmedabad's AI summer residency program",
-    "note": "",
+    "note": "selected as one of 40 residents from more than 33,000 applicants. spent five weeks living on the IIM Ahmedabad campus in a high-intensity program built around deep-work sprints, hands-on technical guidance, and exposure to real users.",
     "image": "images/highlights/iima-ventures-logo.png"
+  },
+  {
+    "date": "Jul 18, 2026",
+    "title": "placed third at the OpenAI Codex Community Hackathon",
+    "note": "the only solo builder to make it into the top five. built Workprint.",
+    "image": "images/highlights/codex-logo.webp"
   }
 ]

@@ -4,6 +4,7 @@ import { lightboxStyles, lightboxScriptBody } from "./lightbox.mjs";
 import { copyFonts, fontFaceCss, fontPreloads } from "./lib/fonts.mjs";
 import { contentHash, minifyCss, minifyJs } from "./lib/minify.mjs";
 import { collectMarkdownImages, ImagePipeline } from "./lib/optimize-image.mjs";
+import { buildPersSite } from "./pers.mjs";
 
 const EMAIL = "misravedantsocials@gmail.com";
 const X_URL = "https://x.com/orcus108";
@@ -13,7 +14,7 @@ const SITE_TITLE = "Vedant Misra";
 const SITE_DESCRIPTION =
   "Vedant Misra is an IIT Madras student building AI products for underserved users, including Friday, Sakhi, Clippy, and other product experiments from India.";
 const TWITTER_HANDLE = "@orcus108";
-const DEFAULT_SITE_URL = "https://vedantmisra.vercel.app";
+const DEFAULT_SITE_URL = "https://vedantmisra.dev";
 
 function normalizeSiteUrl(value) {
   const raw = String(value || "").trim();
@@ -40,6 +41,41 @@ function escapeHtml(text) {
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#39;");
+}
+
+function normalCapitalization(value) {
+  let text = String(value ?? "");
+  text = text.replace(/(^\s*|[.!?]["'”’)]*\s+)([a-z])/g, (_match, prefix, letter) => `${prefix}${letter.toUpperCase()}`);
+  const terms = [
+    [/\bai\b/gi, "AI"],
+    [/\bllms\b/gi, "LLMs"],
+    [/\bllm\b/gi, "LLM"],
+    [/\bindia\b/gi, "India"],
+    [/\biit madras\b/gi, "IIT Madras"],
+    [/\bmacos\b/gi, "macOS"],
+    [/\bopenai\b/gi, "OpenAI"],
+    [/\bgithub\b/gi, "GitHub"],
+    [/\bvercel\b/gi, "Vercel"],
+    [/\bnotion\b/gi, "Notion"],
+    [/\bgmail\b/gi, "Gmail"],
+    [/\bpytorch\b/gi, "PyTorch"],
+    [/\bkaggle\b/gi, "Kaggle"],
+    [/\bfastapi\b/gi, "FastAPI"],
+    [/\bhugging face\b/gi, "Hugging Face"],
+    [/\byoutube\b/gi, "YouTube"],
+    [/\bsakhi\b/gi, "Sakhi"],
+    [/\bi\b/g, "I"],
+  ];
+  for (const [pattern, replacement] of terms) text = text.replace(pattern, replacement);
+  text = text.replace(/\b(vs|e\.g|i\.e|etc)\. ([A-Z])/g, (_match, abbreviation, letter) => `${abbreviation}. ${letter.toLowerCase()}`);
+  return text;
+}
+
+function normalCapitalizationHtml(html) {
+  return String(html ?? "")
+    .split(/(<[^>]+>)/g)
+    .map((part) => (part.startsWith("<") ? part : normalCapitalization(part)))
+    .join("");
 }
 
 function slugify(s) {
@@ -282,6 +318,12 @@ async function writeRobots(root) {
   const robots = `User-agent: *
 Allow: /
 
+User-agent: OAI-SearchBot
+Allow: /
+
+User-agent: GPTBot
+Allow: /
+
 Sitemap: ${absoluteUrl("/sitemap.xml")}
 `;
   await fs.writeFile(path.join(root, "robots.txt"), robots, "utf8");
@@ -415,7 +457,6 @@ function styles() {
         --font: "Plus Jakarta Sans", ui-sans-serif, system-ui, -apple-system, sans-serif;
         --max: 1080px;
         --pad: clamp(1.5rem, 5vw, 4rem);
-        --gradient: url("hero-gradient.webp");
       }
 
       [data-theme="dark"] {
@@ -461,30 +502,99 @@ function styles() {
         padding: 0 var(--pad);
       }
 
-      /* full-height gradient hero */
+      /* thesis-led home hero */
       .hero {
-        height: 100vh;
-        height: 100svh;
+        min-height: 100vh;
+        min-height: 100svh;
         display: flex;
         flex-direction: column;
+        background: var(--bg);
       }
-      .hero-gradient {
+      .hero-inner {
+        width: min(100%, 1440px);
         flex: 1 1 auto;
-        min-height: 0;
-        width: 100%;
-        background-image: var(--gradient);
-        background-size: cover;
-        background-position: center;
+        display: grid;
+        grid-template-rows: auto 1fr auto;
+        gap: 2rem;
+        padding: 1.75rem var(--pad) 2.25rem;
+        margin: 0 auto;
       }
 
-      /* name + bio split */
+      .hero-identity {
+        color: var(--muted);
+        font-size: 0.82rem;
+        line-height: 1.3;
+      }
+
+      .hero-identity-name {
+        margin: 0;
+        color: var(--fg);
+        font-weight: 700;
+        letter-spacing: -0.02em;
+      }
+
+      .hero-thesis {
+        align-self: center;
+        width: 100%;
+        max-width: 42rem;
+        padding: 2rem 0 2rem;
+      }
+
+      .hero-thesis h1 {
+        width: 100%;
+        margin: 0;
+        font-size: 1.2rem;
+        font-weight: 500;
+        line-height: 1.65;
+        letter-spacing: 0;
+        text-align: left;
+        hyphens: none;
+      }
+
+      .hero-map {
+        padding-top: 0;
+      }
+
+      .hero-map-label {
+        margin: 0 0 1.1rem;
+        color: var(--muted);
+        font-size: 0.78rem;
+        line-height: 1.3;
+      }
+
+      .hero-map-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1.25rem;
+      }
+
+      .hero-map-link {
+        display: block;
+        color: var(--fg);
+        transition: color 0.2s ease;
+      }
+
+      .hero-map-link:hover { color: var(--muted); }
+
+      .hero-map-link strong {
+        font-size: 1.15rem;
+        font-weight: 650;
+        line-height: 1.2;
+        letter-spacing: -0.02em;
+      }
+
+      @media (min-width: 1440px) {
+        .hero-thesis h1 { font-size: 1.3rem; }
+      }
+
+      /* retained as a compact mobile fallback for the older masthead class */
       .masthead {
         flex: 0 0 auto;
         display: grid;
         grid-template-columns: 1.25fr 1fr;
         gap: clamp(2rem, 6vw, 5rem);
         align-items: center;
-        padding: clamp(1.75rem, 3.5vw, 2.75rem) 0 clamp(2.25rem, 4.5vw, 3.5rem);
+        padding: clamp(1.75rem, 3.5vw, 2.75rem) var(--pad) clamp(2.25rem, 4.5vw, 3.5rem);
       }
 
       .masthead h1 {
@@ -544,21 +654,6 @@ function styles() {
         .panel.is-active [data-reveal] { opacity: 1; transform: none; }
       }
 
-      /* subtle gradient drift while the hero is on screen (progressive enhancement) */
-      @supports (animation-timeline: scroll()) {
-        @media (prefers-reduced-motion: no-preference) {
-          .hero-gradient {
-            animation: hero-drift linear both;
-            animation-timeline: scroll(root block);
-            animation-range: 0 100vh;
-          }
-        }
-      }
-      @keyframes hero-drift {
-        from { transform: scale(1); }
-        to { transform: scale(1.12); }
-      }
-
       /* nav fades in once the user moves off the hero
          (.topbar.topbar-home keeps it more specific than the later sticky .topbar rule
          so it stays fixed and out of flow instead of reserving space above the hero) */
@@ -576,6 +671,79 @@ function styles() {
       @media (hover: none) {
         html { scroll-snap-type: y proximity; }
         .hero, .section { scroll-snap-align: start; }
+      }
+
+      @media (max-width: 760px) {
+        html { scroll-snap-type: none; }
+
+        .hero {
+          height: auto;
+          min-height: 100vh;
+          min-height: 100svh;
+          display: flex;
+          overflow: visible;
+        }
+        .hero-inner {
+          gap: 2.5rem;
+          padding: 1.35rem var(--pad) 1.75rem;
+        }
+        .hero-identity {
+          font-size: 0.8rem;
+        }
+        .hero-thesis {
+          align-self: start;
+          padding: 1.5rem 0 1.25rem;
+        }
+        .hero-thesis h1 {
+          font-size: 1.1rem;
+          line-height: 1.65;
+        }
+        .hero-map-grid {
+          grid-template-columns: 1fr;
+          gap: 1rem;
+        }
+        .hero-map-link {
+          padding: 0;
+        }
+        .masthead {
+          grid-template-columns: 1fr;
+          gap: 1.15rem;
+          align-items: start;
+          padding: 1.6rem var(--pad) 2.7rem;
+        }
+        .masthead h1 {
+          font-size: clamp(2.35rem, 11vw, 3.25rem);
+        }
+        .masthead-bio {
+          justify-self: start;
+          max-width: none;
+        }
+        .section {
+          min-height: 0;
+          display: block;
+          padding: 2.85rem 0;
+        }
+        .section + .section {
+          padding-top: 3rem;
+        }
+        #about {
+          min-height: 100vh;
+          min-height: 100svh;
+          padding-top: 2.65rem;
+        }
+        #writing {
+          padding-top: 3rem;
+          padding-bottom: 2.7rem;
+        }
+        #work {
+          padding-top: 3.15rem;
+          padding-bottom: 3.25rem;
+        }
+        .panel [data-reveal] {
+          opacity: 1;
+          transform: none;
+          transition: none;
+        }
       }
 
       /* ---- bookshelf ---- */
@@ -678,7 +846,7 @@ function styles() {
         left: 0;
         overflow: hidden;
       }
-      /* spine — the face you see on the shelf */
+      /* spine: the face you see on the shelf */
       .bk-spine {
         width: var(--thick);
         height: var(--h);
@@ -749,7 +917,7 @@ function styles() {
         font-weight: 500;
         color: color-mix(in srgb, var(--sc, #f4f1ea) 64%, transparent);
       }
-      /* front cover — the large face, hinged back along the spine's right edge */
+      /* front cover: the large face, hinged back along the spine's right edge */
       .bk-cover {
         width: var(--w);
         height: var(--h);
@@ -788,7 +956,7 @@ function styles() {
       .bk-cover.has-img { padding: 0; }
       .bk-cover.has-img .c-top,
       .bk-cover.has-img .c-author { display: none; }
-      /* back cover — parallel large face on the far side */
+      /* back cover: parallel large face on the far side */
       .bk-back {
         width: var(--w);
         height: var(--h);
@@ -798,7 +966,7 @@ function styles() {
         background: linear-gradient(90deg, color-mix(in srgb, var(--c) 62%, #000), var(--c));
         border-radius: 2px 0 0 2px;
       }
-      /* fore-edge — the cut pages opposite the spine, at the back of the book */
+      /* fore-edge: the cut pages opposite the spine, at the back of the book */
       .bk-fore {
         width: var(--thick);
         height: var(--h);
@@ -808,7 +976,7 @@ function styles() {
           repeating-linear-gradient(90deg, #e9e0c9 0 1px, #d8ccae 1px 2px),
           linear-gradient(180deg, #efe7d2, #ddd0b4);
       }
-      /* page block — top edge of the pages */
+      /* page block: top edge of the pages */
       .bk-top {
         width: var(--thick);
         height: var(--w);
@@ -838,7 +1006,7 @@ function styles() {
         outline: none;
       }
 
-      /* stage 1 — hover nudge: tip the book out at the top, like hooking a finger over it */
+      /* stage 1: hover nudge, tip the book out at the top like hooking a finger over it */
       .book:hover:not(.is-presenting) .book-3d {
         transform: rotate(var(--lean, 0deg)) translateY(-7px) translateZ(16px) rotateX(9deg);
       }
@@ -851,7 +1019,7 @@ function styles() {
       .book.lean-r .book-3d { transform: rotate(calc(var(--lean, 0deg) + 5deg)); }
       .book.lean-l .book-3d { transform: rotate(calc(var(--lean, 0deg) - 5deg)); }
 
-      /* stage 2 — present: pull straight out toward the viewer, then hold it at a 3/4 angle.
+      /* stage 2: present, pull straight out toward the viewer, then hold it at a 3/4 angle.
          the lift lives on .book (slow, weighted); the turn lives on .book-3d. */
       .book.is-presenting {
         z-index: 60;
@@ -1309,8 +1477,22 @@ function styles() {
       @media (max-width: 760px) {
         .work-cards { grid-template-columns: 1fr; gap: 1.75rem; }
         .work-text-list { grid-template-columns: 1fr; }
-        .card-media-wrap { max-width: 420px; }
-        .writing-grid { grid-template-columns: 1fr; }
+        .card-media-wrap { max-width: none; }
+        .page-writing .writing-grid {
+          grid-template-columns: 1fr;
+          gap: 2.25rem;
+        }
+        .page-writing .writing-tier-main {
+          margin-bottom: 2.25rem;
+        }
+        #work .work-cards {
+          grid-template-columns: 1fr;
+          gap: 2.25rem;
+        }
+        #work .card-media-wrap {
+          aspect-ratio: 1 / 1;
+          border-radius: 12px;
+        }
       }
 
       /* writing (home): single hero with detail column */
@@ -1382,9 +1564,51 @@ function styles() {
         overflow: hidden;
       }
       @media (max-width: 760px) {
-        #writing .writing-layout { grid-template-columns: 1fr; }
-        #writing .writing-detail { justify-content: flex-start; }
-        #writing .writing-detail-desc { max-width: none; }
+        #writing {
+          padding: 3rem 0 2.7rem;
+        }
+        #writing .sec-head {
+          align-items: end;
+          margin-bottom: 1.45rem;
+        }
+        #writing .sec-title {
+          font-size: clamp(2.45rem, 12vw, 3.55rem);
+        }
+        #writing .see-all {
+          padding-bottom: 0.3rem;
+          color: var(--muted);
+        }
+        #writing .writing-layout {
+          grid-template-columns: 1fr;
+          gap: 1.55rem;
+        }
+        #writing .writing-hero .card-media-wrap {
+          aspect-ratio: 16 / 10.6;
+          border-radius: 13px;
+        }
+        #writing .writing-detail {
+          justify-content: flex-start;
+          gap: 0.78rem;
+          padding-bottom: 0.35rem;
+        }
+        #writing .writing-kicker {
+          color: var(--faint);
+          font-size: 0.68rem;
+          letter-spacing: 0.2em;
+        }
+        #writing .writing-detail-title {
+          font-size: clamp(1.55rem, 7vw, 2.05rem);
+          line-height: 1.08;
+          max-width: 12ch;
+        }
+        #writing .writing-detail-meta {
+          display: none;
+        }
+        #writing .writing-detail-desc {
+          max-width: 30ch;
+          font-size: 0.94rem;
+          line-height: 1.65;
+        }
       }
       #writing .writing-more {
         margin-top: clamp(0.85rem, 2vw, 1.35rem);
@@ -1459,24 +1683,45 @@ function styles() {
         transform: translateX(4px);
       }
       @media (max-width: 760px) {
+        #writing .writing-more {
+          margin-top: 0.75rem;
+          border-top-color: color-mix(in srgb, var(--line) 72%, transparent);
+        }
         #writing .writing-more .entry {
-          grid-template-columns: 2.5rem minmax(0, 1fr);
+          grid-template-columns: 2.75rem minmax(0, 1fr);
           min-height: 0;
-          padding: 1rem 0;
-          align-items: start;
+          padding: 1.02rem 0;
+          align-items: center;
+          gap: 0.9rem;
+          border-bottom-color: color-mix(in srgb, var(--line) 72%, transparent);
+        }
+        #writing .writing-more .entry-index {
+          font-size: 0.76rem;
+          align-self: start;
+          padding-top: 0.18rem;
+        }
+        #writing .writing-more .entry-title {
+          font-size: clamp(1.02rem, 4.5vw, 1.22rem);
+          line-height: 1.18;
         }
         #writing .writing-more .entry-desc {
+          margin-top: 0.42rem;
+          font-size: 0.86rem;
+          line-height: 1.48;
           -webkit-line-clamp: 2;
         }
         #writing .writing-more .entry-meta {
-          grid-column: 2;
-          margin-top: 0.2rem;
-          justify-content: space-between;
+          display: none;
         }
       }
       .writing-tier { margin-bottom: clamp(2rem, 4vw, 3rem); }
       .writing-tier:last-child { margin-bottom: 0; }
       .writing-tier-main .card-media-wrap { aspect-ratio: 21 / 9; }
+      @media (max-width: 760px) {
+        .page-writing .writing-tier-main .card-media-wrap {
+          aspect-ratio: 1 / 1;
+        }
+      }
 
       /* featured (latest) entry */
       .featured {
@@ -1540,10 +1785,50 @@ function styles() {
         justify-content: space-between;
         gap: 1rem;
       }
-      .topbar .mark { font-weight: 700; letter-spacing: -0.02em; }
-      .topbar nav { display: flex; align-items: center; gap: 1.25rem; font-size: 0.85rem; }
+      .topbar .mark { font-weight: 700; letter-spacing: -0.02em; order: 1; }
+      .topbar nav {
+        order: 2;
+        margin-left: auto;
+        display: flex;
+        align-items: center;
+        gap: 1.25rem;
+        font-size: 0.85rem;
+      }
       .topbar nav a { color: var(--muted); }
       .topbar nav a:hover, .topbar nav a.active { color: var(--fg); }
+
+      .topbar-actions {
+        order: 3;
+        display: flex;
+        align-items: center;
+        gap: 0.65rem;
+      }
+
+      .menu-toggle {
+        display: none;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        gap: 4px;
+        width: 40px;
+        height: 40px;
+        padding: 0;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        background: transparent;
+        color: var(--fg);
+        cursor: pointer;
+      }
+      .menu-line {
+        width: 17px;
+        height: 1.5px;
+        border-radius: 999px;
+        background: currentColor;
+        display: block;
+        transition:
+          transform 0.28s cubic-bezier(0.16, 1, 0.3, 1),
+          opacity 0.18s ease;
+      }
 
       .theme-toggle {
         display: inline-flex;
@@ -1564,6 +1849,113 @@ function styles() {
       .theme-toggle .icon-sun { display: none; }
       [data-theme="dark"] .theme-toggle .icon-moon { display: none; }
       [data-theme="dark"] .theme-toggle .icon-sun { display: block; }
+
+      @media (max-width: 760px) {
+        .topbar.topbar-home {
+          opacity: 0;
+          transform: translateY(-100%);
+          pointer-events: none;
+        }
+        .topbar.topbar-home.show {
+          opacity: 1;
+          transform: none;
+          pointer-events: auto;
+        }
+        .topbar-inner {
+          min-height: 64px;
+          padding: 0.72rem var(--pad);
+          position: relative;
+          z-index: 56;
+        }
+        .topbar.is-menu-open .topbar-inner {
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          z-index: 10000;
+          max-width: none;
+          background: var(--bg);
+          border-bottom: 1px solid var(--line);
+        }
+        .topbar-actions {
+          display: flex;
+          align-items: center;
+          gap: 0.55rem;
+        }
+        .topbar .mark {
+          white-space: nowrap;
+        }
+        .menu-toggle {
+          display: inline-flex;
+        }
+        .topbar > .topbar-inner > .topbar-actions > .theme-toggle {
+          width: 40px;
+          height: 40px;
+        }
+        .topbar nav {
+          position: fixed;
+          top: 64px;
+          right: 0;
+          bottom: auto;
+          left: 0;
+          z-index: 9000;
+          width: 100vw;
+          height: 100vh;
+          height: 100svh;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          gap: clamp(1.45rem, 4.5svh, 2.35rem);
+          padding: 3rem var(--pad) 5rem;
+          background: var(--bg);
+          opacity: 0;
+          transform: translateY(0.9rem);
+          pointer-events: none;
+          transition:
+            opacity 0.34s cubic-bezier(0.16, 1, 0.3, 1),
+            transform 0.42s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .topbar.is-menu-open nav {
+          opacity: 1;
+          transform: none;
+          pointer-events: auto;
+        }
+        .topbar nav a {
+          display: block;
+          padding: 0.2rem 0;
+          color: var(--fg);
+          font-size: clamp(2rem, 9vw, 3.25rem);
+          font-weight: 650;
+          letter-spacing: -0.045em;
+          line-height: 0.95;
+          transform: translateY(0.7rem);
+          opacity: 0;
+          transition:
+            opacity 0.34s cubic-bezier(0.16, 1, 0.3, 1),
+            transform 0.44s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .topbar.is-menu-open .menu-line:nth-child(1) {
+          transform: translateY(5.5px) rotate(45deg);
+        }
+        .topbar.is-menu-open .menu-line:nth-child(2) {
+          opacity: 0;
+        }
+        .topbar.is-menu-open .menu-line:nth-child(3) {
+          transform: translateY(-5.5px) rotate(-45deg);
+        }
+        .topbar.is-menu-open nav a {
+          opacity: 1;
+          transform: none;
+        }
+        .topbar.is-menu-open nav a:nth-child(1) { transition-delay: 0.05s; }
+        .topbar.is-menu-open nav a:nth-child(2) { transition-delay: 0.1s; }
+        .topbar.is-menu-open nav a:nth-child(3) { transition-delay: 0.15s; }
+        .topbar.is-menu-open nav a:nth-child(4) { transition-delay: 0.2s; }
+        body.menu-open {
+          overflow: hidden;
+        }
+      }
 
       /* article / reading column */
       .project-banner-line {
@@ -1720,8 +2112,12 @@ function styles() {
       @media (max-width: 760px) {
         .masthead { grid-template-columns: 1fr; gap: 1.5rem; align-items: start; }
         .masthead-bio { justify-self: start; max-width: none; }
-        .about-grid { grid-template-columns: 1fr; gap: 2.25rem; }
-        .portrait { margin: 0 auto; }
+        .about-grid { grid-template-columns: 1fr; gap: 1.35rem; }
+        .about-grid > .portrait {
+          display: none;
+        }
+        .about-grid > div { order: 1; }
+        .contact { margin-top: 1.35rem; }
         .topbar nav { gap: 1rem; }
       }
 ${lightboxStyles}
@@ -1782,7 +2178,7 @@ function renderHighlights(items, escapeHtml, { imgPrefix = "", expanded = false,
   const rows = items
     .map((item, i) => {
       const note = item.note
-        ? `<div class="tl-note${expanded ? " is-open" : ""}">${escapeHtml(item.note)}</div>`
+        ? `<div class="tl-note${expanded ? " is-open" : ""}">${escapeHtml(normalCapitalization(item.note))}</div>`
         : "";
       const imgSrc = item.image
         ? imgResolver
@@ -1795,17 +2191,17 @@ function renderHighlights(items, escapeHtml, { imgPrefix = "", expanded = false,
           <div class="tl-connector"><div class="tl-dot"></div></div>
           <div class="tl-body">
             <div class="tl-date">${escapeHtml(item.date)}</div>
-            <div class="tl-text">${escapeHtml(item.title)}</div>
+            <div class="tl-text">${escapeHtml(normalCapitalization(item.title))}</div>
             ${note}
           </div>
         </div>`;
     })
     .join("");
-  const hint = expanded ? "" : `<span class="tl-hint">hover logo for notes</span>`;
+  const hint = expanded ? "" : `<span class="tl-hint">Hover Logo for Notes</span>`;
   return `
           <div class="highlights-block">
             <div class="highlights-head">
-              <h3 class="highlights-title">highlights</h3>
+              <h3 class="highlights-title">Highlights</h3>
               ${hint}
             </div>
             <div class="tl-wrap">${rows}</div>
@@ -1849,11 +2245,58 @@ function deckScript() {
       (function () {
         var panels = Array.prototype.slice.call(document.querySelectorAll('.panel'));
         if (!panels.length) return;
-        // own the scroll position so returning to the deck always opens cleanly on the hero
+        var topbar = document.querySelector('.topbar-home');
+        var returnPanelKey = 'vedant-home-return-panel';
+
+        function panelIndexFromId(id) {
+          if (!id) return -1;
+          var el = document.getElementById(id);
+          return panels.indexOf(el);
+        }
+
+        function takeReturnPanelIndex() {
+          var id = '';
+          if (window.location.hash) id = window.location.hash.slice(1);
+          if (!id) {
+            try {
+              id = sessionStorage.getItem(returnPanelKey) || '';
+              sessionStorage.removeItem(returnPanelKey);
+            } catch (e) {}
+          }
+          return panelIndexFromId(id);
+        }
+
+        document.addEventListener('click', function (e) {
+          var link = e.target.closest && e.target.closest('a[href]');
+          if (!link) return;
+          var panel = link.closest('.panel');
+          if (!panel || !panel.id || panel.id === 'hero') return;
+          var href = link.getAttribute('href') || '';
+          if (href.charAt(0) === '#') return;
+          try { sessionStorage.setItem(returnPanelKey, panel.id); } catch (err) {}
+        }, { capture: true });
+
+        if (window.matchMedia('(max-width: 760px)').matches) {
+          panels.forEach(function (p) { p.classList.add('is-active'); });
+          function syncTopbar() {
+            if (!topbar) return;
+            var hero = document.getElementById('hero');
+            var edge = hero ? hero.offsetHeight - 16 : window.innerHeight * 0.85;
+            topbar.classList.toggle('show', window.scrollY >= edge || topbar.classList.contains('is-menu-open'));
+          }
+          syncTopbar();
+          var mobileInitial = takeReturnPanelIndex();
+          if (mobileInitial >= 0) {
+            requestAnimationFrame(function () { panels[mobileInitial].scrollIntoView(); });
+          }
+          window.addEventListener('scroll', syncTopbar, { passive: true });
+          window.addEventListener('resize', syncTopbar);
+          return;
+        }
+        // own the scroll position so the panel deck lands exactly on section boundaries.
         if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
         var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
         var fine = window.matchMedia('(pointer: fine)').matches;
-        var topbar = document.querySelector('.topbar-home');
         var current = 0, animating = false, cooldownUntil = 0;
 
         function setActive(i) {
@@ -1869,12 +2312,25 @@ function deckScript() {
           });
         }, { threshold: [0.55] });
         panels.forEach(function (p) { io.observe(p); });
-        window.scrollTo(0, 0);
-        setActive(0);
+        var initial = takeReturnPanelIndex();
+        if (initial < 0) initial = 0;
+        window.scrollTo(0, panels[initial].offsetTop);
+        setActive(initial);
 
-        // reset to the hero on bfcache restore (e.g. Safari back button)
         window.addEventListener('pageshow', function (e) {
-          if (e.persisted) { window.scrollTo(0, 0); setActive(0); }
+          if (!e.persisted) return;
+          var restored = takeReturnPanelIndex();
+          if (restored >= 0) {
+            window.scrollTo(0, panels[restored].offsetTop);
+            setActive(restored);
+            return;
+          }
+          var nearest = 0, best = Infinity;
+          panels.forEach(function (p, i) {
+            var dist = Math.abs(window.scrollY - p.offsetTop);
+            if (dist < best) { best = dist; nearest = i; }
+          });
+          setActive(nearest);
         });
 
         function ease(t) { return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2; }
@@ -1911,6 +2367,8 @@ function deckScript() {
               var atBottom = window.scrollY + window.innerHeight >= p.offsetTop + p.scrollHeight - 2;
               if ((dir > 0 && !atBottom) || (dir < 0 && !atTop)) return;
             }
+            if (current === panels.length - 1 && window.scrollY > p.offsetTop + 2) return;
+            if (dir > 0 && current === panels.length - 1) return;
             e.preventDefault();
             if (animating || performance.now() < cooldownUntil || Math.abs(e.deltaY) < 6) return;
             go(current + dir);
@@ -1953,6 +2411,14 @@ function themeToggle() {
           </button>`;
 }
 
+function menuToggle() {
+  return `<button class="menu-toggle" type="button" aria-label="Open menu" aria-expanded="false">
+            <span class="menu-line"></span>
+            <span class="menu-line"></span>
+            <span class="menu-line"></span>
+          </button>`;
+}
+
 // runs in <head> before paint so the saved theme applies with no flash
 function themeInitScript() {
   return `<script>(function(){try{var t=localStorage.getItem('theme')||'light';document.documentElement.setAttribute('data-theme',t);}catch(e){document.documentElement.setAttribute('data-theme','light');}})();</script>`;
@@ -1981,12 +2447,15 @@ function topbar(base, active) {
       <header class="topbar">
         <div class="topbar-inner">
           <a class="mark" href="${base}">vedant misra</a>
+          <div class="topbar-actions">
+            ${themeToggle()}
+            ${menuToggle()}
+          </div>
           <nav>
             ${link("work", `${base}work/`, "work")}
             ${link("writing", `${base}writing/`, "writing")}
             ${link("about", `${base}about/`, "about")}
             <a href="mailto:${EMAIL}">email</a>
-            ${themeToggle()}
           </nav>
         </div>
       </header>`;
@@ -1996,11 +2465,11 @@ function footer() {
   return `
       <footer class="footer">
         <div class="footer-inner">
-          <span>vedant misra</span>
+          <span>Vedant Misra</span>
           <div class="links">
-            <a href="mailto:${EMAIL}">email</a>
-            <a href="${X_URL}" target="_blank" rel="noopener noreferrer">x</a>
-            <a href="${GH_URL}" target="_blank" rel="noopener noreferrer">github</a>
+            <a href="mailto:${EMAIL}">Email</a>
+            <a href="${X_URL}" target="_blank" rel="noopener noreferrer">X (Twitter)</a>
+            <a href="${GH_URL}" target="_blank" rel="noopener noreferrer">GitHub</a>
           </div>
         </div>
       </footer>`;
@@ -2008,11 +2477,280 @@ function footer() {
 
 function themeScriptBody() {
   return `
+      var themeAudioContext = null;
+
+      function getThemeAudioContext() {
+        if (!themeAudioContext) {
+          themeAudioContext = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        return themeAudioContext;
+      }
+
+      function shouldPlayThemeSound() {
+        return !(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+      }
+
+      function connectThemeGain(ctx, amount) {
+        var gain = ctx.createGain();
+        gain.gain.value = amount;
+        gain.connect(ctx.destination);
+        return gain;
+      }
+
+      function playUiWikiClick(ctx, output, amount) {
+        var t = ctx.currentTime;
+        var noise = ctx.createBufferSource();
+        var buf = ctx.createBuffer(1, ctx.sampleRate * 0.008, ctx.sampleRate);
+        var data = buf.getChannelData(0);
+        for (var i = 0; i < data.length; i++) {
+          data[i] = (Math.random() * 2 - 1) * Math.exp(-i / 50);
+        }
+        noise.buffer = buf;
+
+        var filter = ctx.createBiquadFilter();
+        filter.type = 'bandpass';
+        filter.frequency.value = 4000 + Math.random() * 1000;
+        filter.Q.value = 3;
+
+        var gain = ctx.createGain();
+        gain.gain.value = amount * (0.5 + Math.random() * 0.15);
+
+        noise.connect(filter);
+        filter.connect(gain);
+        gain.connect(output);
+        noise.start(t);
+        noise.onended = function () {
+          noise.disconnect();
+          filter.disconnect();
+          gain.disconnect();
+        };
+      }
+
+      function playUiWikiToggle(ctx, output, amount) {
+        var t = ctx.currentTime;
+
+        var noise = ctx.createBufferSource();
+        var buf = ctx.createBuffer(1, ctx.sampleRate * 0.012, ctx.sampleRate);
+        var data = buf.getChannelData(0);
+        for (var i = 0; i < data.length; i++) {
+          data[i] = (Math.random() * 2 - 1) * Math.exp(-i / 80);
+        }
+        noise.buffer = buf;
+
+        var filter = ctx.createBiquadFilter();
+        filter.type = 'bandpass';
+        filter.frequency.value = 2500;
+        filter.Q.value = 4;
+
+        var gain = ctx.createGain();
+        gain.gain.value = amount * 0.4;
+
+        noise.connect(filter);
+        filter.connect(gain);
+        gain.connect(output);
+        noise.start(t);
+        noise.onended = function () {
+          noise.disconnect();
+          filter.disconnect();
+          gain.disconnect();
+        };
+
+        var osc = ctx.createOscillator();
+        var oscGain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(800, t);
+        osc.frequency.exponentialRampToValueAtTime(400, t + 0.03);
+        oscGain.gain.setValueAtTime(amount * 0.15, t);
+        oscGain.gain.exponentialRampToValueAtTime(0.001, t + 0.04);
+        osc.connect(oscGain);
+        oscGain.connect(output);
+        osc.start(t);
+        osc.stop(t + 0.04);
+        osc.onended = function () {
+          osc.disconnect();
+          oscGain.disconnect();
+        };
+      }
+
+      function playUiWikiPop(ctx, output, amount) {
+        var t = ctx.currentTime;
+        var osc = ctx.createOscillator();
+        var gain = ctx.createGain();
+
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(400, t);
+        osc.frequency.exponentialRampToValueAtTime(150, t + 0.04);
+
+        gain.gain.setValueAtTime(amount * 0.35, t);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.05);
+
+        osc.connect(gain);
+        gain.connect(output);
+        osc.start(t);
+        osc.stop(t + 0.05);
+        osc.onended = function () {
+          osc.disconnect();
+          gain.disconnect();
+        };
+      }
+
+      function playUiWikiTick(ctx, output, amount) {
+        var t = ctx.currentTime;
+        var noise = ctx.createBufferSource();
+        var buf = ctx.createBuffer(1, ctx.sampleRate * 0.004, ctx.sampleRate);
+        var data = buf.getChannelData(0);
+        for (var i = 0; i < data.length; i++) {
+          data[i] = (Math.random() * 2 - 1) * Math.exp(-i / 20);
+        }
+        noise.buffer = buf;
+
+        var filter = ctx.createBiquadFilter();
+        filter.type = 'highpass';
+        filter.frequency.value = 3000;
+
+        var gain = ctx.createGain();
+        gain.gain.value = amount * 0.3;
+
+        noise.connect(filter);
+        filter.connect(gain);
+        gain.connect(output);
+        noise.start(t);
+        noise.onended = function () {
+          noise.disconnect();
+          filter.disconnect();
+          gain.disconnect();
+        };
+      }
+
+      function playBookTock(ctx, output, amount) {
+        var t = ctx.currentTime;
+        var osc = ctx.createOscillator();
+        var gain = ctx.createGain();
+        var filter = ctx.createBiquadFilter();
+
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(260, t);
+        osc.frequency.exponentialRampToValueAtTime(145, t + 0.055);
+        filter.type = 'lowpass';
+        filter.frequency.value = 1100;
+        gain.gain.setValueAtTime(amount * 0.18, t);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.07);
+
+        osc.connect(filter);
+        filter.connect(gain);
+        gain.connect(output);
+        osc.start(t);
+        osc.stop(t + 0.07);
+        osc.onended = function () {
+          osc.disconnect();
+          filter.disconnect();
+          gain.disconnect();
+        };
+      }
+
+      function playThemeSound(kind) {
+        try {
+          if (!shouldPlayThemeSound()) return;
+          var ctx = getThemeAudioContext();
+          function play() {
+            var output = connectThemeGain(ctx, 0.72);
+            if (kind === 'toggle') playUiWikiToggle(ctx, output, 0.52);
+            else if (kind === 'pop') playUiWikiPop(ctx, output, 0.48);
+            else if (kind === 'tick') playUiWikiTick(ctx, output, 0.58);
+            else if (kind === 'book') playBookTock(ctx, output, 0.8);
+            else playUiWikiClick(ctx, output, kind === 'theme' ? 0.95 : 0.42);
+            window.setTimeout(function () { output.disconnect(); }, 180);
+          }
+          if (ctx.state === 'suspended') ctx.resume().then(play).catch(function () {});
+          else play();
+        } catch (e) {}
+      }
+
+      function playThemeClick() {
+        playThemeSound('theme');
+      }
+
       function toggleTheme() {
+        playThemeClick();
         var next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
         document.documentElement.setAttribute('data-theme', next);
         try { localStorage.setItem('theme', next); } catch (e) {}
-      }`;
+      }
+
+      (function () {
+        var soundSelectors = [
+          ['.theme-toggle', 'none'],
+          ['[data-sound="none"]', 'none'],
+          ['.menu-toggle', 'none'],
+          ['.depth-toggle', 'toggle'],
+          ['.section-toggle', 'toggle'],
+          ['.book', 'book'],
+          ['.lightbox-close', 'none'],
+          ['.md-image', 'none'],
+          ['.see-all', 'click'],
+          ['.card', 'click'],
+          ['.entry', 'click'],
+          ['.work-text-item', 'click'],
+          ['a[href]', 'click'],
+          ['button', 'click'],
+          ['[role="button"]', 'click']
+        ];
+
+        function soundForTarget(target) {
+          if (!target || !target.closest) return '';
+          if (target.classList && target.classList.contains('lightbox')) return '';
+          if (target.closest('input, textarea, select, label')) return '';
+          for (var i = 0; i < soundSelectors.length; i++) {
+            var match = target.closest(soundSelectors[i][0]);
+            if (match) return soundSelectors[i][1];
+          }
+          return '';
+        }
+
+        document.addEventListener('pointerdown', function (event) {
+          if (event.button && event.button !== 0) return;
+          var kind = soundForTarget(event.target);
+          if (!kind || kind === 'none') return;
+          playThemeSound(kind);
+        }, { passive: true });
+      })();`;
+}
+
+function menuScriptBody() {
+  return `
+      (function () {
+        document.querySelectorAll('.topbar').forEach(function (bar) {
+          var btn = bar.querySelector('.menu-toggle');
+          var nav = bar.querySelector('nav');
+          if (!btn || !nav) return;
+
+          function setOpen(open) {
+            bar.classList.toggle('is-menu-open', open);
+            document.body.classList.toggle('menu-open', open);
+            btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+            btn.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
+            if (bar.classList.contains('topbar-home') && open) bar.classList.add('show');
+            if (bar.classList.contains('topbar-home') && !open) {
+              var hero = document.getElementById('hero');
+              var edge = hero ? hero.offsetHeight - 16 : window.innerHeight * 0.85;
+              bar.classList.toggle('show', window.scrollY >= edge);
+            }
+          }
+
+          btn.addEventListener('click', function () {
+            setOpen(!bar.classList.contains('is-menu-open'));
+          });
+          nav.addEventListener('click', function (e) {
+            if (e.target.closest('a')) setOpen(false);
+          });
+          document.addEventListener('click', function (e) {
+            if (!bar.contains(e.target)) setOpen(false);
+          });
+          document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') setOpen(false);
+          });
+        });
+      })();`;
 }
 
 function smoothScrollBody() {
@@ -2091,7 +2829,7 @@ function smoothScrollBody() {
 }
 
 function siteScriptBundle() {
-  return [themeScriptBody(), lightboxScriptBody, smoothScrollBody()].join("\n");
+  return [themeScriptBody(), menuScriptBody(), lightboxScriptBody, smoothScrollBody()].join("\n");
 }
 
 async function writeSiteBundles(root) {
@@ -2202,11 +2940,6 @@ export async function buildSite({
   const pipeline = new ImagePipeline(rootDir, root);
   const sitemapEntries = [];
 
-  const heroGradient = (
-    await pipeline.ingest("content/preview/hero-gradient.png", "assets/hero-gradient.webp", {
-      quality: 88,
-    })
-  ).replace(/^\//, "");
   const portraitSrc = (
     await pipeline.ingest("content/preview/portrait.png", "assets/portrait.webp", {
       maxWidth: 640,
@@ -2288,7 +3021,8 @@ export async function buildSite({
     } catch {}
   }
 
-  const renderMarkdown = (body, depth = 2) => pipeline.rewriteHtml(markdownToHtml(body), depth);
+  const renderMarkdown = (body, depth = 2) =>
+    normalCapitalizationHtml(pipeline.rewriteHtml(markdownToHtml(body), depth));
 
   const mediaEl = (item, root = "", alt = item.title) => {
     if (item.cardImg) {
@@ -2310,8 +3044,8 @@ export async function buildSite({
     return `
             <a class="card"${reveal} href="${href}">
               <span class="card-media-wrap">${mediaEl(item, root, item.title)}</span>
-              <span class="card-title">${escapeHtml(item.title.toLowerCase())}</span>
-              <span class="card-desc">${escapeHtml(item.summary.toLowerCase())}</span>
+              <span class="card-title">${escapeHtml(normalCapitalization(item.title))}</span>
+              <span class="card-desc">${escapeHtml(normalCapitalization(item.summary))}</span>
             </a>`;
   };
 
@@ -2324,12 +3058,12 @@ export async function buildSite({
       </a>`;
     const detailEl = `
       <div class="writing-detail" data-reveal style="--i:${i + 1}">
-        <p class="writing-kicker">featured essay</p>
+        <p class="writing-kicker">Featured Essay</p>
         <h3 class="writing-detail-title">
-          <a href="writing/${lead.slug}.html">${escapeHtml(lead.title.toLowerCase())}</a>
+          <a href="writing/${lead.slug}.html">${escapeHtml(normalCapitalization(lead.title))}</a>
         </h3>
-        ${meta ? `<p class="writing-detail-meta">${escapeHtml(meta.toLowerCase())}</p>` : ""}
-        <p class="writing-detail-desc">${escapeHtml(lead.summary.toLowerCase())}</p>
+        ${meta ? `<p class="writing-detail-meta">${escapeHtml(normalCapitalization(meta))}</p>` : ""}
+        <p class="writing-detail-desc">${escapeHtml(normalCapitalization(lead.summary))}</p>
       </div>`;
     const moreItems = (more || []).slice(0, 2);
     const moreEl = moreItems.length
@@ -2343,11 +3077,11 @@ export async function buildSite({
           <a class="entry" href="writing/${p.slug}.html">
             <span class="entry-index">${String(idx + 2).padStart(2, "0")}</span>
             <span class="entry-copy">
-              <span class="entry-title">${escapeHtml(p.title.toLowerCase())}</span>
-              <span class="entry-desc">${escapeHtml(p.summary.toLowerCase())}</span>
+              <span class="entry-title">${escapeHtml(normalCapitalization(p.title))}</span>
+              <span class="entry-desc">${escapeHtml(normalCapitalization(p.summary))}</span>
             </span>
             <span class="entry-meta">
-              ${itemMeta ? `<span>${escapeHtml(itemMeta.toLowerCase())}</span>` : ""}
+              ${itemMeta ? `<span>${escapeHtml(normalCapitalization(itemMeta))}</span>` : ""}
               <span class="entry-arrow" aria-hidden="true">&rarr;</span>
             </span>
           </a>`;
@@ -2364,19 +3098,19 @@ export async function buildSite({
     return `
             <a class="card" href="${href}">
               <span class="card-media-wrap">${mediaEl(item, root, item.title)}</span>
-              <span class="card-title">${escapeHtml(item.title.toLowerCase())}</span>
-              <span class="card-desc">${escapeHtml(item.summary.toLowerCase())}</span>
-              ${meta ? `<span class="card-meta">${escapeHtml(meta.toLowerCase())}</span>` : ""}
+              <span class="card-title">${escapeHtml(normalCapitalization(item.title))}</span>
+              <span class="card-desc">${escapeHtml(normalCapitalization(item.summary))}</span>
+              ${meta ? `<span class="card-meta">${escapeHtml(normalCapitalization(meta))}</span>` : ""}
             </a>`;
   };
 
   const entry = (href, title, sub, meta, i) => `
           <a class="entry"${i == null ? "" : ` data-reveal style="--i:${i}"`} href="${href}">
             <div class="entry-row">
-              <h3 class="entry-title">${escapeHtml(title.toLowerCase())}</h3>
-              ${meta ? `<span class="entry-meta">${escapeHtml(meta.toLowerCase())}</span>` : ""}
+              <h3 class="entry-title">${escapeHtml(normalCapitalization(title))}</h3>
+              ${meta ? `<span class="entry-meta">${escapeHtml(normalCapitalization(meta))}</span>` : ""}
             </div>
-            ${sub ? `<p class="entry-sub">${escapeHtml(sub.toLowerCase())}</p>` : ""}
+            ${sub ? `<p class="entry-sub">${escapeHtml(normalCapitalization(sub))}</p>` : ""}
           </a>`;
 
   // ---- home (one-pager, full-page deck) ----
@@ -2384,42 +3118,51 @@ export async function buildSite({
     <header class="topbar topbar-home">
       <div class="topbar-inner">
         <a class="mark" href="#hero">vedant misra</a>
-        <nav>
-          <a href="about/">about</a>
-          <a href="writing/">writing</a>
-          <a href="work/">work</a>
-          <a href="mailto:${EMAIL}">email</a>
+        <div class="topbar-actions">
           ${themeToggle()}
+          ${menuToggle()}
+        </div>
+        <nav>
+          <a href="work/">work</a>
+          <a href="writing/">writing</a>
+          <a href="about/">about</a>
+          <a href="mailto:${EMAIL}">email</a>
         </nav>
       </div>
     </header>
 
     <main>
       <section class="hero panel" id="hero">
-        <div class="hero-gradient" role="presentation"></div>
-        <div class="wrap masthead">
-          <h1 data-reveal style="--i:0">${escapeHtml(home.hero.name)}</h1>
-          <div class="masthead-bio">
-            <p class="bio" data-reveal style="--i:1">${escapeHtml(home.hero.bio)}</p>
-            ${
-              homeWritingHighlight
-                ? `<p class="hero-essay" data-reveal style="--i:2"><a href="writing/${homeWritingHighlight.slug}.html">${escapeHtml((home.writing?.heroLink ?? "why i think this →").toLowerCase())}</a></p>`
-                : ""
-            }
+        <div class="hero-inner">
+          <div class="hero-identity" data-reveal style="--i:0">
+            <p class="hero-identity-name">${escapeHtml(normalCapitalization(home.hero.name))}</p>
+          </div>
+          <div class="hero-thesis" data-reveal style="--i:1">
+            <h1>${escapeHtml(normalCapitalization(home.hero.thesis || "")).replace(/\s*\n\s*/g, " ")}</h1>
+          </div>
+          <div class="hero-map" data-reveal style="--i:2">
+            <p class="hero-map-label">See My</p>
+            <nav class="hero-map-grid" aria-label="Explore the site">
+              ${(home.hero.map || []).map((item) => `
+                <a class="hero-map-link" href="${escapeHtml(item.href)}">
+                  <strong>${escapeHtml(normalCapitalization(item.label))}</strong>
+                </a>
+              `).join("")}
+            </nav>
           </div>
         </div>
       </section>
 
       <section class="section panel" id="about">
         <div class="wrap">
-          <h2 class="sec-title" data-reveal style="--i:0">about</h2>
+          <h2 class="sec-title" data-reveal style="--i:0">About</h2>
           <div class="about-grid">
             <div>
               <div class="about-body" data-reveal style="--i:1">${renderMarkdown(aboutRaw)}</div>
               <div class="contact" data-reveal style="--i:2">
-                <a href="mailto:${EMAIL}">email</a><span class="dot">·</span>
-                <a href="${X_URL}" target="_blank" rel="noopener noreferrer">x (twitter)</a><span class="dot">·</span>
-                <a href="${GH_URL}" target="_blank" rel="noopener noreferrer">github</a>
+                <a href="mailto:${EMAIL}">Email</a><span class="dot">·</span>
+                <a href="${X_URL}" target="_blank" rel="noopener noreferrer">X (Twitter)</a><span class="dot">·</span>
+                <a href="${GH_URL}" target="_blank" rel="noopener noreferrer">GitHub</a>
               </div>
             </div>
             <img class="portrait" data-reveal style="--i:1" src="${portraitSrc}" alt="Vedant Misra" width="320" height="427" loading="lazy" decoding="async" />
@@ -2430,8 +3173,8 @@ export async function buildSite({
       <section class="section panel" id="writing">
         <div class="wrap">
           <div class="sec-head">
-            <a class="sec-title sec-title-link" data-reveal style="--i:0" href="writing/">writing</a>
-            <a class="see-all" data-reveal style="--i:0" href="writing/">see all <span class="arr">→</span></a>
+            <a class="sec-title sec-title-link" data-reveal style="--i:0" href="writing/">Writing</a>
+            <a class="see-all" data-reveal style="--i:0" href="writing/">See All <span class="arr">→</span></a>
           </div>
           ${writingHome(homeWritingHighlight, homeWritingMore)}
         </div>
@@ -2440,8 +3183,8 @@ export async function buildSite({
       <section class="section panel" id="work">
         <div class="wrap">
           <div class="sec-head">
-            <a class="sec-title sec-title-link" data-reveal style="--i:0" href="work/">work</a>
-            <a class="see-all" data-reveal style="--i:0" href="work/">see all <span class="arr">→</span></a>
+            <a class="sec-title sec-title-link" data-reveal style="--i:0" href="work/">Work</a>
+            <a class="see-all" data-reveal style="--i:0" href="work/">See All <span class="arr">→</span></a>
           </div>
           <div class="work-cards">
             ${homeProjects.map((p, i) => cardEl(p, `work/${p.slug}.html`, i + 1)).join("")}
@@ -2453,14 +3196,14 @@ export async function buildSite({
       <section class="section panel" id="reading">
         <div class="wrap">
           <div class="sec-head">
-            <h2 class="sec-title" data-reveal style="--i:0">reading</h2>
-            <a class="see-all" data-reveal style="--i:0" href="about/#bookshelf">bookshelf <span class="arr">→</span></a>
+            <h2 class="sec-title" data-reveal style="--i:0">Reading</h2>
+            <a class="see-all" data-reveal style="--i:0" href="about/#bookshelf">Bookshelf <span class="arr">→</span></a>
           </div>
           <div class="reading-block">
-            <p class="eyebrow" data-reveal style="--i:1">currently</p>
+            <p class="eyebrow" data-reveal style="--i:1">Currently</p>
             <p class="reading-title" data-reveal style="--i:2">${escapeHtml(home.reading.title)}</p>
             <p class="reading-author" data-reveal style="--i:3">by ${escapeHtml(home.reading.author)}</p>
-            ${home.reading.note ? `<p class="reading-note" data-reveal style="--i:4">${escapeHtml(home.reading.note)}</p>` : ""}
+            ${home.reading.note ? `<p class="reading-note" data-reveal style="--i:4">${escapeHtml(normalCapitalization(home.reading.note))}</p>` : ""}
           </div>
         </div>
       </section>
@@ -2498,7 +3241,6 @@ export async function buildSite({
           mainEntity: { "@id": PERSON_ID },
         },
       ],
-      headExtras: `<link rel="preload" as="image" href="${heroGradient}" type="image/webp" fetchpriority="high" />`,
       extraScript: deckScript(),
     })
   );
@@ -2513,8 +3255,8 @@ export async function buildSite({
     ${topbar("../", "writing")}
     <main class="wrap page-writing">
       <div class="article-head">
-        <h1>writing</h1>
-        <p class="lead">essays on AI, India, and what actually changes people's lives.</p>
+        <h1>Writing</h1>
+        <p class="lead">Essays on AI, India, and what actually changes people's lives.</p>
       </div>
       ${writingHighlight ? `<div class="writing-tier writing-tier-main">${writingCard(writingHighlight, `${writingHighlight.slug}.html`, relRoot(2))}</div>` : ""}
       ${
@@ -2587,8 +3329,8 @@ export async function buildSite({
     ${topbar("../", "writing")}
     <main class="wrap">
       <div class="article-head">
-        <h1>${escapeHtml(post.title.toLowerCase())}</h1>
-        ${post.summary ? `<p class="lead">${escapeHtml(post.summary)}</p>` : ""}
+          <h1>${escapeHtml(normalCapitalization(post.title))}</h1>
+        ${post.summary ? `<p class="lead">${escapeHtml(normalCapitalization(post.summary))}</p>` : ""}
         ${meta ? `<p class="meta">${escapeHtml(meta)}</p>` : ""}
       </div>
       <article class="prose">${renderMarkdown(post.body)}</article>
@@ -2654,22 +3396,22 @@ export async function buildSite({
     ${topbar("../", "work")}
     <main class="wrap page-work">
       <div class="article-head">
-        <h1>work</h1>
-        <p class="lead">things i've built. product first, not demos for demo's sake.</p>
+        <h1>Work</h1>
+        <p class="lead">Things I've built. Product first, not demos for demo's sake.</p>
       </div>
       ${friday ? `<div class="work-tier work-tier-main">${cardEl(friday, `${friday.slug}.html`, null, { root: relRoot(2) })}</div>` : ""}
       ${sakhi ? `<div class="work-tier work-tier-main">${cardEl(sakhi, `${sakhi.slug}.html`, null, { root: relRoot(2) })}</div>` : ""}
       ${
         otherProjects.length
           ? `<div class="work-tier work-tier-more">
-        <p class="work-tier-label">firsts</p>
-        <p class="work-tier-note">from the early days of my building journey. clippy was my first macOS app. odds was my first app with real users. image cartoonification was my first time implementing a research paper. catgpt was the first website i deployed on the internet. might seem small but had some important learnings from them :)</p>
+        <p class="work-tier-label">Firsts</p>
+        <p class="work-tier-note">From the early days of my building journey. Clippy was my first macOS app. Odds was my first app with real users. Image Cartoonification was my first time implementing a research paper. CatGPT was the first website I deployed on the internet. Might seem small, but they had some important learnings for me :)</p>
         <div class="work-text-list">
           ${otherProjects
             .map(
               (p) => `<a class="work-text-item" href="${p.slug}.html">
-            <span class="work-text-title">${escapeHtml(p.title.toLowerCase())}</span>
-            <span class="work-text-desc">${escapeHtml(p.summary.toLowerCase())}</span>
+            <span class="work-text-title">${escapeHtml(normalCapitalization(p.title))}</span>
+            <span class="work-text-desc">${escapeHtml(normalCapitalization(p.summary))}</span>
           </a>`
             )
             .join("")}
@@ -2739,14 +3481,14 @@ export async function buildSite({
     ${projectBannerEl(project, escapeHtml, pipeline, 2)}
     <main class="wrap">
       <div class="article-head">
-        <h1>${escapeHtml(project.title.toLowerCase())}</h1>
-        ${project.summary ? `<p class="lead">${escapeHtml(project.summary)}</p>` : ""}
-        ${metaBits ? `<p class="meta">${escapeHtml(metaBits.toLowerCase())}</p>` : ""}
+        <h1>${escapeHtml(normalCapitalization(project.title))}</h1>
+        ${project.summary ? `<p class="lead">${escapeHtml(normalCapitalization(project.summary))}</p>` : ""}
+        ${metaBits ? `<p class="meta">${escapeHtml(normalCapitalization(metaBits))}</p>` : ""}
         ${
           project.demo || project.repo
             ? `<div class="article-links">
-          ${project.demo ? `<a href="${escapeHtml(project.demo)}" target="_blank" rel="noopener noreferrer">demo</a>` : ""}
-          ${project.repo ? `<a href="${escapeHtml(project.repo)}" target="_blank" rel="noopener noreferrer">source</a>` : ""}
+          ${project.demo ? `<a href="${escapeHtml(project.demo)}" target="_blank" rel="noopener noreferrer">Demo</a>` : ""}
+          ${project.repo ? `<a href="${escapeHtml(project.repo)}" target="_blank" rel="noopener noreferrer">Source</a>` : ""}
         </div>`
             : ""
         }
@@ -2765,7 +3507,7 @@ export async function buildSite({
           technical
             ? `<div class="depth">
           <button type="button" class="depth-toggle" aria-expanded="false" aria-controls="${panelId}">
-            <span class="caret">›</span><span class="label">technical details</span>
+            <span class="caret">›</span><span class="label">Technical Details</span>
           </button>
           <div class="depth-panel" id="${panelId}" hidden>${renderMarkdown(technical)}</div>
         </div>`
@@ -2927,7 +3669,7 @@ export async function buildSite({
   const bookRows = [];
   for (let i = 0; i < books.length; i += per) bookRows.push(books.slice(i, i + per));
 
-  // spine thickness (px) scales with page count — fatter book = more pages
+  // spine thickness (px) scales with page count, fatter book means more pages
   const spineThick = (pages) => {
     const p = pages || 300;
     return Math.round(Math.max(28, Math.min(66, 22 + p * 0.066)));
@@ -2985,7 +3727,7 @@ export async function buildSite({
     ${topbar("../", "about")}
     <main class="wrap page-about">
       <div class="article-head">
-        <h1>about</h1>
+        <h1>About</h1>
         <div class="prose">${renderMarkdown(aboutPageRaw)}</div>
       </div>
 
@@ -2996,23 +3738,23 @@ export async function buildSite({
       </section>
 
       <section class="about-section" id="misc">
-        <h2 class="section-label">misc</h2>
+        <h2 class="section-label">Misc</h2>
         <article class="prose">${renderMarkdown(aboutMiscRaw)}</article>
       </section>
 
       <section class="about-section" id="bookshelf">
-        <h2 class="section-label">bookshelf</h2>
-        <p class="lead" style="margin:0 0 1.5rem;font-size:0.95rem;color:var(--muted)">books that shaped how i think. hover or tap a spine to pull it off the shelf.</p>
+        <h2 class="section-label">Bookshelf</h2>
+        <p class="lead" style="margin:0 0 1.5rem;font-size:0.95rem;color:var(--muted)">Books that shaped how I think. Hover or tap a spine to pull it off the shelf.</p>
         <div class="shelves">${shelvesHtml}</div>
       </section>
 
       <section class="about-section" id="log">
         <button type="button" class="section-toggle" aria-expanded="false" aria-controls="log-panel">
           <span class="caret">›</span>
-          <span class="label">log</span>
+          <span class="label">Log</span>
         </button>
         <div class="section-panel" id="log-panel" hidden>
-          <p class="lead" style="margin:0 0 1.5rem;font-size:0.95rem;color:var(--muted)">a running record of what i'm building, reading, and thinking about.</p>
+          <p class="lead" style="margin:0 0 1.5rem;font-size:0.95rem;color:var(--muted)">A running record of what I'm building, reading, and thinking about.</p>
           <div>${logHtml}</div>
         </div>
       </section>
@@ -3056,7 +3798,21 @@ export async function buildSite({
 
   await fs.rm(path.join(root, "log"), { recursive: true, force: true }).catch(() => {});
   await fs.rm(path.join(root, "reading"), { recursive: true, force: true }).catch(() => {});
-  await writeSitemap(root, sitemapEntries);
+  for (const oldPath of ["index.html", "about", "writing", "projects", "work", "pers"]) {
+    await fs.rm(path.join(root, oldPath), { recursive: true, force: true }).catch(() => {});
+  }
+  const persSitemapEntries = await buildPersSite({
+    rootDir,
+    root,
+    projects,
+    posts,
+    aboutHtml: renderMarkdown(aboutPageRaw, 3),
+    renderMarkdown,
+    siteUrl: SITE_URL,
+    basePath: "/",
+    outputDir: "",
+  });
+  await writeSitemap(root, persSitemapEntries);
   await writeRobots(root);
 
   console.log(`Built site/ (${projects.length} work, ${posts.length} writing, ${logs.length} log entries, ${books.length} books).`);

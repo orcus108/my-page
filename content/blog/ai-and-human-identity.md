@@ -50,6 +50,6 @@ a post-agi world may strip away comforting illusions about human dominance. it m
 
 if ai can do everything humans can do, then being human may become less about competing and more about choosing. choosing what to value. choosing what to build. choosing what to protect. choosing how to live alongside more capable systems without surrendering agency or dignity.
 
-we might end up discovering that the core of human identity was never about being the best mind on earth. it was about being a mind at all — one that can reflect, decide, and care.
+we might end up discovering that the core of human identity was never about being the best mind on earth. it was about being a mind at all, one that can reflect, decide, and care.
 
 that part, at least, does not disappear just because something smarter exists.

@@ -13,7 +13,7 @@ llms can make it feel like you understand something long before you actually do.
 
 this isn’t because the models are evil or misleading. it’s because they are extremely fluent. and fluency is powerful. when an explanation sounds smooth and coherent, your brain tends to assume it is correct and that you have absorbed it. the experience of reading it feels like understanding. but that feeling can be misleading.
 
-this matters a lot for builders, students, and researchers — the people who rely on real understanding to create new things.
+this matters a lot for builders, students, and researchers, the people who rely on real understanding to create new things.
 
 ---
 
@@ -51,7 +51,7 @@ that wrestling is where learning actually happens.
 
 if you are building products, writing code, or doing research, shallow understanding becomes expensive.
 
-when you are learning something new — say distributed systems, attention mechanisms, or database indexing — an llm can give you a summary that makes everything sound manageable. you feel ready to move on.
+when you are learning something new, say distributed systems, attention mechanisms, or database indexing, an llm can give you a summary that makes everything sound manageable. you feel ready to move on.
 
 but when you try to build, the cracks show. you don’t know which trade-offs matter. you don’t know the edge cases. you don’t know why a design works one way instead of another. you only know the surface explanation.
 
@@ -99,7 +99,7 @@ another effect is overconfidence.
 
 because llms respond quickly and confidently, you rarely see uncertainty. even when the model hedges, the text still feels polished. this creates an illusion that the topic itself is settled and straightforward.
 
-in reality, many topics — especially in science and engineering — involve debate, trade-offs, and incomplete knowledge. when you only see clean explanations, you may miss where the edges are.
+in reality, many topics, especially in science and engineering, involve debate, trade-offs, and incomplete knowledge. when you only see clean explanations, you may miss where the edges are.
 
 you might think, “i understand transformers,” when what you really understand is a simplified story about them.
 
@@ -147,7 +147,7 @@ when something sounds smooth, pause and ask: can i derive this myself? can i app
 
 if not, you are still at the surface.
 
-llms are remarkable tools. they can accelerate learning dramatically. but they also create a new kind of illusion — the illusion that reading equals knowing.
+llms are remarkable tools. they can accelerate learning dramatically. but they also create a new kind of illusion: the illusion that reading equals knowing.
 
 for builders, students, and researchers, the real advantage will not go to those who consume the most explanations. it will go to those who convert explanations into understanding.
 

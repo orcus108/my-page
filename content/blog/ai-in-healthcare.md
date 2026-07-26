@@ -95,7 +95,7 @@ this governance layer is essential. ai cannot function safely in healthcare with
 
 when you step back, you see a pattern.
 
-india is not simply adding ai tools to hospitals. it is building a digital backbone — health ids, interoperable records, language tools, surveillance systems, and genomic databases — and then embedding ai into that structure.
+india is not simply adding ai tools to hospitals. it is building a digital backbone of health ids, interoperable records, language tools, surveillance systems, and genomic databases, and then embedding ai into that structure.
 
 this approach is ambitious. it aims to increase national capacity, not just automate tasks.
 
@@ -109,6 +109,6 @@ if this model works at india’s scale, it could become an example for other cou
 
 the question now is not whether ai can be used in healthcare.
 
-it is whether we can build the right systems around it — systems that are fair, inclusive, and truly helpful to patients.
+it is whether we can build the right systems around it: systems that are fair, inclusive, and truly helpful to patients.
 
 if we succeed in doing that, what might healthcare look like for the next generation?

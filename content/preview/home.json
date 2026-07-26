@@ -1,7 +1,21 @@
 {
   "hero": {
     "name": "Vedant Misra",
-    "bio": "I build products for people technology forgot. AI is racing ahead in labs; most of the world hasn't felt it yet. I care about closing that gap — why something should exist, who it's for, and whether it feels obvious to use."
+    "thesis": "AI keeps getting smarter in labs, but it hasn't changed how the average person lives.\nWhat's missing isn't smarter models, it's smarter products.\nI'm building in that gap.",
+    "map": [
+      {
+        "label": "thinking",
+        "href": "writing/"
+      },
+      {
+        "label": "building",
+        "href": "work/"
+      },
+      {
+        "label": "backstory",
+        "href": "about/"
+      }
+    ]
   },
   "reading": {
     "title": "The Facebook Effect",

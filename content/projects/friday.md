@@ -30,5 +30,5 @@ i'm building friday because i want the thing on my desk to feel as capable as th
 | *Screen* | FastVLM-0.5B via mlx-vlm (`:8082`) + Vision OCR + accessibility tree |
 | *Voice in* | Apple Speech (on-device) + Parakeet optional |
 | *Voice out* | Kokoro TTS (`:8081`) |
-| *Agents* | Tool-calling loop — GitHub, Notion, Gmail, Calendar, Playwright browser |
+| *Agents* | Tool-calling loop: GitHub, Notion, Gmail, Calendar, Playwright browser |
 | *Privacy* | Runtime-local inference; connector auth optional via OAuth or Composio |

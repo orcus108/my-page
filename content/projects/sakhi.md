@@ -30,13 +30,13 @@ you're an ASHA worker. fifteen households in your village. three visits due toda
 
 you open sakhi.
 
-![sakhi home — your patients, sorted by urgency](images/sakhi-home.png)
+![sakhi home, your patients sorted by urgency](images/sakhi-home.png)
 
 the list is already sorted. overdue at the top. high risk in red. monitor in yellow. normal in green. kamla verma is thirty-one weeks pregnant, high risk, one day late. you don't flip through a register to find her. she's the first thing you see.
 
 you tap in.
 
-![sakhi profile — history, vitals, and what's next](images/sakhi-profile.png)
+![sakhi profile, history, vitals, and what's next](images/sakhi-profile.png)
 
 one screen: who this patient is, how far along they are, weight or vitals over time, when the next visit falls. ABHA linked if they're on the national health ID. everything you need before you knock on the door.
 
@@ -46,13 +46,13 @@ you run the checkup on your phone: vitals, symptoms, what you're observing. spea
 
 then sakhi answers.
 
-![sakhi assessment — risk level, what to say, what to do next](images/sakhi-assessment.png)
+![sakhi assessment, risk level, what to say, what to do next](images/sakhi-assessment.png)
 
 not a wall of medical text. a risk level: green, yellow, or red. what sakhi noticed in what you entered. what to tell the mother, in plain language. the next action. a follow-up date. the same screen whether the answer came from the AI model or the offline rule engine on your phone. offline is not a worse version of the product.
 
 walking to the next house, a question hits you. what BP is normal at this stage? when do i refer to the PHC?
 
-![sakhi ask — questions in the field, even offline](images/sakhi-ask.png)
+![sakhi ask, questions in the field, even offline](images/sakhi-ask.png)
 
 you ask sakhi. pull in the patient you're about to see if you want context. tap a common question or just speak it. the schedule keeps the rest of the week honest: overdue, today, coming up. so when you're juggling dozens of families, nothing buried in the back of a notebook slips through.
 

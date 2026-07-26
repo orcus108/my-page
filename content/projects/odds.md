@@ -26,7 +26,7 @@ couldnt publicise because prediction markets are a legal grey area in india :/ s
 | Layer              | Technology                                                                |
 |--------------------|---------------------------------------------------------------------------|
 | *Framework*      | Next.js 16.2.1 (App Router, Server Components, Server Actions)            |
-| *Backend / DB*   | Supabase — Postgres, Auth (Google OAuth), Row Level Security              |
+| *Backend / DB*   | Supabase: Postgres, Auth (Google OAuth), Row Level Security              |
 | *Styling*        | Tailwind CSS v4                                                           |
 | *Deployment*     | Vercel (with Vercel Analytics)                                            |
-| *Rendering*      | ISR — Home: revalidate every 60s; Market Detail: every 30s                |
+| *Rendering*      | ISR: Home revalidates every 60s; Market Detail every 30s                |

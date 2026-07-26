@@ -2,6 +2,33 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "buildCommand": "npm run build",
   "outputDirectory": "site",
+  "redirects": [
+    {
+      "source": "/pers",
+      "destination": "/",
+      "permanent": true
+    },
+    {
+      "source": "/pers/",
+      "destination": "/",
+      "permanent": true
+    },
+    {
+      "source": "/pers/:path*",
+      "destination": "/:path*",
+      "permanent": true
+    },
+    {
+      "source": "/work",
+      "destination": "/projects/",
+      "permanent": true
+    },
+    {
+      "source": "/work/:path*",
+      "destination": "/projects/:path*",
+      "permanent": true
+    }
+  ],
   "headers": [
     {
       "source": "/assets/(.*)",
