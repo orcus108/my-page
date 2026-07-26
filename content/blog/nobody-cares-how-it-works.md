@@ -3,7 +3,7 @@ title: Nobody Cares How It Works
 slug: nobody-cares-how-it-works
 date: 2026-07-27
 read_time: 6 min read
-summary: A simple framework for communicating products in the order users care about
+summary: A simple framework for explaining products
 ---
 
 There's a simple framework for communicating a product. Three questions:
