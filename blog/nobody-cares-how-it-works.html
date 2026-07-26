@@ -1,0 +1,535 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Nobody Cares How It Works - Vedant Misra</title>
+
+    <style>
+
+      :root {
+        --bg: #f5f5f0;
+        --fg: #1a1a1a;
+        --muted: #666;
+        --line: #d0d0cc;
+        --contrib-1: rgba(5, 150, 105, 0.22);
+        --contrib-2: rgba(5, 150, 105, 0.48);
+        --contrib-3: rgba(5, 150, 105, 0.72);
+        --contrib-4: #059669;
+      }
+
+      [data-theme="dark"] {
+        --bg: #0d0d0d;
+        --fg: #e0e0d8;
+        --muted: #888;
+        --line: #252520;
+        --contrib-1: rgba(110, 231, 183, 0.18);
+        --contrib-2: rgba(110, 231, 183, 0.42);
+        --contrib-3: rgba(110, 231, 183, 0.68);
+        --contrib-4: #6ee7b7;
+      }
+
+      * { box-sizing: border-box; }
+
+      body {
+        margin: 0;
+        font-family: ui-monospace, "SFMono-Regular", "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+        background: var(--bg);
+        color: var(--fg);
+        line-height: 1.6;
+        overflow-x: hidden;
+        font-size: 0.875rem;
+      }
+
+      main {
+        max-width: 680px;
+        margin: 0 auto;
+        padding: 2rem 1.25rem 3rem;
+        position: relative;
+        z-index: 1;
+      }
+
+      header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 1rem;
+      }
+
+      .header-right { display: flex; align-items: center; gap: 0.8rem; line-height: 1; }
+      .header-left { display: inline-flex; align-items: center; gap: 0.4rem; line-height: 1; }
+      .brand { line-height: 1; font-size: 0.875rem; }
+      .brand::before { content: "~/"; color: var(--muted); margin-right: 0.1em; }
+      .left-link { line-height: 1; display: inline-flex; align-items: center; }
+      .left-sep { color: var(--line); }
+      .theme-toggle { display: inline-flex; align-items: center; }
+      footer { margin-top: 3rem; padding-top: 1.25rem; border-top: 1px solid var(--line); display: flex; justify-content: flex-end; gap: 0.75rem; font-size: 0.78rem; color: var(--muted); }
+      .theme-toggle input { position: absolute; opacity: 0; width: 0; height: 0; }
+
+      .theme-slider {
+        width: 42px;
+        height: 24px;
+        border-radius: 2px;
+        border: 1px solid var(--line);
+        position: relative;
+        cursor: pointer;
+      }
+
+      .theme-slider::after {
+        content: "";
+        position: absolute;
+        top: 2px;
+        left: 2px;
+        width: 18px;
+        height: 18px;
+        border-radius: 1px;
+        background: var(--fg);
+        transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+
+      .theme-toggle input:checked + .theme-slider::after { transform: translateX(18px); }
+
+      h1, h2 { margin: 0; font-weight: 600; }
+      strong { font-weight: 600; }
+      h1 { font-size: 0.875rem; }
+      .page-title { font-size: 1rem; line-height: 1.35; }
+      .page-title-row { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; }
+      .page-links-inline { display: inline-flex; gap: 0.7rem; font-size: 0.8rem; white-space: nowrap; }
+      h2 {
+        font-size: 0.875rem;
+        margin-bottom: 1rem;
+        color: var(--muted);
+        font-weight: 500;
+      }
+      h2::before { content: "// "; }
+      article h2 { margin-top: 1.8rem; }
+      h3 { margin: 0 0 0.5rem; font-size: 0.875rem; }
+      p { margin: 0.8rem 0 0; }
+      ul { margin: 0; padding: 0; list-style: none; }
+      li + li { margin-top: 1.1rem; }
+      section { margin-top: 2.5rem; }
+      a { color: inherit; text-underline-offset: 0.15em; }
+      .list-link { text-decoration: none; font-weight: 500; }
+      .muted { color: var(--muted); }
+      .list-item { display: block; }
+      .list-item-link { display: block; text-decoration: none; }
+      .list-item-link:hover .list-title { text-decoration: underline; text-underline-offset: 0.15em; }
+      .list-title { display: inline-block; line-height: 1.3; }
+      .list-meta { margin-top: 0.2rem; font-size: 0.8rem; color: var(--muted); }
+      .post-meta { font-size: 0.78rem; }
+
+      .section-header { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 1rem; }
+      .section-header h2 { margin-bottom: 0; }
+      .view-all { font-size: 0.78rem; color: var(--muted); text-decoration: none; white-space: nowrap; line-height: 1; }
+      .view-all:hover { color: var(--fg); }
+      .nav-link { font-size: 0.78rem; color: var(--muted); text-decoration: none; line-height: 1; }
+      .nav-link:hover { color: var(--fg); }
+
+      article ul { list-style: disc; padding-left: 1.1rem; }
+      article ol { list-style: decimal; padding-left: 1.1rem; }
+      article li + li { margin-top: 0.45rem; }
+      .md-image { display: block; max-width: 100%; height: auto; margin-top: 0.9rem; border-radius: 2px; }
+      .mockup-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 1rem;
+        margin-top: 0.9rem;
+      }
+      .mockup-grid .md-image { margin-top: 0; width: 100%; }
+      @media (max-width: 560px) {
+        .mockup-grid { grid-template-columns: 1fr; }
+      }
+      .video-embed {
+        position: relative;
+        width: 100%;
+        aspect-ratio: 16 / 9;
+        margin-top: 1.25rem;
+        border-radius: 4px;
+        overflow: hidden;
+        background: #000;
+      }
+      .video-embed iframe {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        border: 0;
+      }
+      .video-embed-link {
+        margin: 0.65rem 0 0;
+        font-size: 0.85rem;
+        color: var(--muted);
+      }
+      .video-embed-link a {
+        text-decoration: underline;
+        text-underline-offset: 0.18em;
+        text-decoration-color: var(--line);
+      }
+      .video-embed-link a:hover { text-decoration-color: currentColor; }
+      p:has(> .md-image + .md-image) { display: flex; gap: 1.5rem; align-items: flex-start; margin-top: 0.9rem; }
+      p:has(> .md-image + .md-image) .md-image { flex: 1; min-width: 0; margin-top: 0; }
+      .md-hr { border: 0; border-top: 1px solid var(--line); margin: 1.2rem 0; }
+      blockquote { margin: 1.5rem 0 0; padding-left: 1rem; border-left: 2px solid var(--line); }
+      blockquote p { margin: 0; color: var(--muted); line-height: 1.6; }
+      .stack-chip {
+        display: inline-block;
+        padding: 0.15rem 0.4rem;
+        border-radius: 2px;
+        font-size: 0.72rem;
+        border: 1px solid var(--line);
+        color: var(--muted);
+      }
+
+      .md-table-wrap { overflow-x: auto; margin-top: 0.9rem; }
+      .md-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+      .md-table th, .md-table td { padding: 0.45rem 0.75rem; border: 1px solid var(--line); text-align: left; }
+      .md-table th { font-weight: 600; color: var(--muted); background: transparent; }
+
+      .contrib-chart { overflow-x: auto; padding-bottom: 0.25rem; }
+      .contrib-grid { display: grid; grid-template-rows: repeat(7, 10px); gap: 2px; width: fit-content; }
+      .contrib-cell { width: 10px; height: 10px; border-radius: 2px; background: rgba(0, 0, 0, 0.07); transition: transform 0.1s ease; }
+      [data-theme="dark"] .contrib-cell { background: rgba(255, 255, 255, 0.05); }
+      .contrib-cell[data-level="1"] { background: var(--contrib-1); }
+      .contrib-cell[data-level="2"] { background: var(--contrib-2); }
+      .contrib-cell[data-level="3"] { background: var(--contrib-3); }
+      .contrib-cell[data-level="4"] { background: var(--contrib-4); }
+      .contrib-cell:hover { transform: scale(1.35); }
+
+      body { transition: background-color 0.25s ease, color 0.25s ease; }
+
+      a { transition: color 0.15s ease; }
+      footer a:hover { color: var(--fg); }
+
+      .log-day { margin-bottom: 2rem; }
+      .log-day:last-child { margin-bottom: 0; }
+      .log-day-label { font-size: 0.78rem; color: var(--fg); font-weight: 500; margin-bottom: 0.65rem; }
+      .log-entry { margin-bottom: 0.9rem; }
+      .log-entry:last-child { margin-bottom: 0; }
+      .log-time { font-size: 0.72rem; color: var(--muted); margin-bottom: 0.2rem; font-variant-numeric: tabular-nums; }
+      .log-body p { margin: 0; }
+      .log-body p + p { margin-top: 0.5rem; }
+
+      .list-item-link { transition: transform 0.15s ease; }
+      .list-item-link:hover { transform: translateX(4px); }
+
+@media (max-width: 640px) {
+        main {
+          padding: 1.1rem 1rem 2.2rem;
+        }
+
+        h1 {
+          font-size: 0.82rem;
+        }
+
+        .page-title {
+          font-size: 0.92rem;
+        }
+
+        .page-title-row {
+          flex-wrap: wrap;
+          align-items: flex-start;
+          gap: 0.45rem 0.8rem;
+        }
+
+        .page-links-inline {
+          font-size: 0.76rem;
+          gap: 0.6rem;
+        }
+
+        header {
+          gap: 0.75rem;
+        }
+
+        .header-right {
+          gap: 0.55rem;
+          white-space: nowrap;
+        }
+
+        .theme-slider {
+          width: 38px;
+          height: 22px;
+        }
+
+        .theme-slider::after {
+          width: 16px;
+          height: 16px;
+        }
+
+        .theme-toggle input:checked + .theme-slider::after {
+          transform: translateX(16px);
+        }
+
+        section {
+          margin-top: 2rem;
+        }
+
+        li + li {
+          margin-top: 0.95rem;
+        }
+
+        .list-meta {
+          font-size: 0.78rem;
+        }
+
+        .post-meta {
+          font-size: 0.75rem;
+        }
+      }
+
+      .md-image { cursor: zoom-in; }
+      .lightbox {
+        position: fixed;
+        inset: 0;
+        z-index: 3000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: clamp(1rem, 4vw, 2.5rem);
+        background: rgba(0, 0, 0, 0.9);
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.2s ease, visibility 0.2s ease;
+      }
+      .lightbox.is-open {
+        opacity: 1;
+        visibility: visible;
+      }
+      .lightbox img {
+        display: block;
+        max-width: min(100%, 1200px);
+        max-height: calc(100vh - 5rem);
+        width: auto;
+        height: auto;
+        object-fit: contain;
+        border-radius: 4px;
+        box-shadow: 0 24px 80px rgba(0, 0, 0, 0.45);
+      }
+      .lightbox-close {
+        position: absolute;
+        top: clamp(0.75rem, 3vw, 1.25rem);
+        right: clamp(0.75rem, 3vw, 1.25rem);
+        width: 2.5rem;
+        height: 2.5rem;
+        border: 0;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.12);
+        color: #fff;
+        font-size: 1.5rem;
+        line-height: 1;
+        cursor: pointer;
+      }
+      .lightbox-close:hover { background: rgba(255, 255, 255, 0.22); }
+      body.lightbox-open { overflow: hidden; }
+
+
+    </style>
+  </head>
+  <body>
+    <main>
+
+
+      <header>
+        <div class="header-left"><a class="left-link" href="../index.html">home</a><span class="left-sep">/</span><a class="left-link second-link" href="index.html">blog</a></div>
+        <div class="header-right">
+
+          <label class="theme-toggle" aria-label="Toggle theme">
+            <input id="theme-toggle" type="checkbox" />
+            <span class="theme-slider"></span>
+          </label>
+        </div>
+      </header>
+
+
+      <section>
+        <h1 class="page-title">nobody cares how it works</h1>
+        <p class="muted">A simple framework for communicating products in the order users care about</p>
+        <p class="muted post-meta">Jul 27, 2026 · 6 min read</p>
+      </section>
+
+      <section>
+        <article>
+        <p>There&#39;s a simple framework for communicating a product. Three questions:</p>
+        <ol><li>What problem does it solve?</li><li>How does it solve that problem?</li><li>What does the user&#39;s life look like after?</li></ol>
+        <p>This is probably not a new framework. It is likely some combination of things I have read and heard over the years. But it is the clearest way I have found to think about product communication.</p>
+        <p>Builders spend most of their time on the second question.</p>
+        <p>This makes sense. Once you&#39;ve picked a problem, most of the actual work goes into the solution: weeks of thinking about architecture, features, integrations, edge cases, clever design decisions. When it&#39;s finally time to talk about the product, that&#39;s what&#39;s on your mind. So that&#39;s what you talk about.</p>
+        <p>The problem is users don&#39;t care. Not initially. What they care about is whether you understand a problem they actually have, and whether your product will make their life meaningfully better. The mechanism only becomes interesting after you&#39;ve made them care about the problem and convinced them the outcome is valuable.</p>
+        <p>The sequence matters:</p>
+        <p><em>Why should I care?</em></p>
+        <p><em>What changes for me?</em></p>
+        <p><em>Okay, now tell me how it works.</em></p>
+        <p>Skip the first two and you&#39;re giving people answers before they have a reason to ask the question.</p>
+        <hr class="md-hr" />
+        <p>I understood this more clearly at an OpenAI Codex hackathon I attended recently.</p>
+        <p>I almost didn&#39;t go. The brief mentioned agentic coding, evals, observability, security, most of which I had no experience in and didn&#39;t find particularly interesting. I was convinced I&#39;d get there, realize everyone knew more than me, and embarrass myself.</p>
+        <p>I went anyway.</p>
+        <p>The problem statement turned out to be completely open-ended. Three tracks: security, observability, virality. Six hours to build, then a two-or-three-minute pitch.</p>
+        <p>For the first ninety minutes, I had no idea what to make. I walked around, talked to people, watched what others were doing. Most people were working in teams. I was alone.</p>
+        <p>Eventually I sat down and started from a problem I actually had.</p>
+        <p>Building software has become easy. I can spend a weekend on a project, deploy it, put it on GitHub and call it shipped. Getting anyone to use it is still brutally hard.</p>
+        <p>I&#39;ve built a lot of side projects. Many of them work. Some are actually useful. But most have no users, no distribution, no revenue. They just exist, on localhost, or as a GitHub repo, or as a demo video that gets a few hundred views and disappears.</p>
+        <p>The standard advice for this is &quot;build in public.&quot; Share what you&#39;re making. Talk about what you learned. Slowly build an audience around your work.</p>
+        <p>In practice, this becomes another job. Every day you have to figure out whether you did anything worth sharing. Then what the post should be about. Then the hook, the framing, the tone, the call to action. And you have to do this for months while your early posts get eight impressions and zero likes.</p>
+        <p>Most developers don&#39;t want to become content strategists just to get someone to notice what they built.</p>
+        <p>So I made something called WorkPrint. The idea was simple: it looks at the work you&#39;re already doing and finds the moments worth sharing. Instead of a blank text box every day, you get suggested posts based on your actual progress.</p>
+        <p>I could spend time explaining how it reads GitHub commits and pull requests. But that would miss the point entirely.</p>
+        <p>The important thing isn&#39;t how WorkPrint processes your activity. The important thing is that a developer can go from building in silence to sharing their work consistently, without posting becoming another job.</p>
+        <p>That&#39;s the transformation. Everything else is implementation detail.</p>
+        <hr class="md-hr" />
+        <p>Solo participants got two minutes to pitch. Teams got three.</p>
+        <p>Two minutes is almost nothing. I watched some of the other pitches before mine. Most followed the same pattern: dense slides, long feature lists, careful explanations of how things worked. The teams had spent the day building these systems and wanted to show what they&#39;d done. That&#39;s completely natural.</p>
+        <p>But the result was that a lot of pitches were hard to care about. The audience was being given answers before they had a reason to ask the question.</p>
+        <p>I decided to spend most of my two minutes on the problem and the outcome.</p>
+        <p>I opened by talking about how building has gotten easier but getting users hasn&#39;t. That people spend hours, months, sometimes years building things nobody uses. And that the only guaranteed outcome of shipping a side project is that you&#39;ve increased Anthropic&#39;s revenue. Then I corrected myself and said OpenAI&#39;s revenue, since this was an OpenAI event.</p>
+        <p>The joke was scripted to look spontaneous. Once a room laughs, people are listening.</p>
+        <p>After that: the pain, a quick demo, what changes after using the product. The demo took thirty seconds. If the whole point of the product is removing friction, it can&#39;t require a five-minute tutorial to understand.</p>
+        <p>The slides had forty-three words total across eight slides. I didn&#39;t want people reading while I was talking. I wanted them listening.</p>
+        <p>The tagline went through the same filter. Early suggestions described what the product did, things like &quot;turns code activity into social posts&quot; or &quot;helps developers build in public.&quot; Accurate, but still product-focused.</p>
+        <p>The one I landed on was: <em>Your work should speak for itself. Now it can.</em></p>
+        <p>It doesn&#39;t explain the technology. It barely explains the product. It just speaks directly to the frustration of doing good work that nobody sees.</p>
+        <hr class="md-hr" />
+        <p>The presentation went well. People laughed, the judges liked the story, and several participants told me afterward it was one of the strongest pitches of the day. I came third, the only solo participant in the top five.</p>
+        <p>A few people said they remembered the presentation more vividly than the product itself, which is both a compliment and a warning. Good storytelling should make the product clearer. It shouldn&#39;t become a magic trick that distracts people from what you built.</p>
+        <p>But here&#39;s what the experience made obvious: my product was not the most technically complex thing in the room. I didn&#39;t win people over by explaining everything that happened under the hood.</p>
+        <p>I found a problem people immediately recognized, built a simple solution around it, and communicated it in the order the audience cared about.</p>
+        <p>Builders talk about the part they worked hardest on. Users care about the part that changes their life.</p>
+        <p>Good product communication is mostly about closing that gap.</p>
+        </article>
+      </section>
+
+      <footer>
+        <a href="https://x.com/orcus108" target="_blank" rel="noopener noreferrer">X (Twitter)</a>
+        <a href="https://github.com/orcus108" target="_blank" rel="noopener noreferrer">GitHub</a>
+      </footer>
+    </main>
+
+    <script defer src="/_vercel/insights/script.js"></script>
+
+
+    <script>
+      console.log('%c// hey, nosy. i see you.', 'font-family:monospace;font-size:13px;color:#a78bfa;');
+      console.log('%c   x (twitter) → https://x.com/orcus108', 'font-family:monospace;font-size:11px;color:#888;');
+      console.log('%c   github      → https://github.com/orcus108', 'font-family:monospace;font-size:11px;color:#888;');
+
+      (function() {
+        const code = ['ArrowUp','ArrowUp','ArrowDown','ArrowDown','ArrowLeft','ArrowRight','ArrowLeft','ArrowRight','b','a'];
+        let idx = 0;
+        document.addEventListener('keydown', function(e) {
+          if (e.key === code[idx]) {
+            idx++;
+            if (idx === code.length) { idx = 0; matrixRain(); }
+          } else {
+            idx = e.key === code[0] ? 1 : 0;
+          }
+        });
+
+        function matrixRain() {
+          const canvas = document.createElement('canvas');
+          canvas.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;z-index:9999;pointer-events:none;opacity:0;transition:opacity 0.4s;';
+          document.body.appendChild(canvas);
+          const ctx = canvas.getContext('2d');
+          canvas.width = window.innerWidth;
+          canvas.height = window.innerHeight;
+          requestAnimationFrame(function() { canvas.style.opacity = '1'; });
+
+          const cols = Math.floor(canvas.width / 16);
+          const drops = Array.from({length: cols}, function() { return Math.random() * -50; });
+          const chars = 'アイウエオカキクケコサシスセソタチツテトナニヌネノ0123456789ABCDEF';
+
+          const interval = setInterval(function() {
+            ctx.fillStyle = 'rgba(0,0,0,0.06)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.font = '14px monospace';
+            drops.forEach(function(y, i) {
+              const bright = Math.random() > 0.95;
+              ctx.fillStyle = bright ? '#ffffff' : '#6ee7b7';
+              ctx.fillText(chars[Math.floor(Math.random() * chars.length)], i * 16, y * 16);
+              if (y * 16 > canvas.height && Math.random() > 0.97) drops[i] = 0;
+              drops[i]++;
+            });
+          }, 45);
+
+          setTimeout(function() {
+            clearInterval(interval);
+            canvas.style.opacity = '0';
+            setTimeout(function() { canvas.remove(); }, 400);
+          }, 4000);
+        }
+      })();
+    </script>
+
+
+    <script>
+      const root = document.documentElement;
+      const btn = document.getElementById("theme-toggle");
+      const stored = localStorage.getItem("theme");
+      const initialTheme = stored || "light";
+
+      function applyTheme(theme) {
+        root.setAttribute("data-theme", theme);
+        btn.checked = theme === "dark";
+      }
+
+      applyTheme(initialTheme);
+
+      btn.addEventListener("change", () => {
+        const next = btn.checked ? "dark" : "light";
+        localStorage.setItem("theme", next);
+        applyTheme(next);
+      });
+    </script>
+
+<script>
+      (function () {
+        var lb = null;
+        var lbImg = null;
+        var lbClose = null;
+
+        function ensureLightbox() {
+          if (lb) return;
+          lb = document.createElement("div");
+          lb.className = "lightbox";
+          lb.setAttribute("role", "dialog");
+          lb.setAttribute("aria-modal", "true");
+          lb.setAttribute("aria-label", "Expanded image");
+          lb.innerHTML = '<button type="button" class="lightbox-close" aria-label="Close">&times;</button><img alt="">';
+          lbImg = lb.querySelector("img");
+          lbClose = lb.querySelector(".lightbox-close");
+          lbClose.addEventListener("click", close);
+          lb.addEventListener("click", function (e) {
+            if (e.target === lb) close();
+          });
+          document.body.appendChild(lb);
+        }
+
+        function open(src, alt) {
+          ensureLightbox();
+          lbImg.src = src;
+          lbImg.alt = alt || "";
+          lb.classList.add("is-open");
+          document.body.classList.add("lightbox-open");
+          document.addEventListener("keydown", onKey);
+          lbClose.focus();
+        }
+
+        function close() {
+          if (!lb) return;
+          lb.classList.remove("is-open");
+          document.body.classList.remove("lightbox-open");
+          document.removeEventListener("keydown", onKey);
+          lbImg.removeAttribute("src");
+        }
+
+        function onKey(e) {
+          if (e.key === "Escape") close();
+        }
+
+        document.addEventListener("click", function (e) {
+          var img = e.target.closest(".md-image");
+          if (!img || !img.src) return;
+          e.preventDefault();
+          open(img.currentSrc || img.src, img.alt);
+        });
+      })();</script>
+  </body>
+</html>
