@@ -46,8 +46,9 @@ const css = `
   .statement p:last-child{margin:0}
   .statement a,.statement a:hover,.statement a:focus-visible{text-decoration:none;font-weight:500}
   .statement a:hover,.statement a:focus-visible{opacity:.58}
-  .socials{display:flex;align-items:center;gap:8px;margin-top:25px;min-height:20px}
-  .socials a{display:inline-block;text-decoration:none}
+  .socials{display:flex;align-items:center;gap:8px;margin-top:25px;min-height:20px;font-size:16px;line-height:21px;font-weight:400;color:var(--muted)}
+  .socials a{display:inline-block;text-decoration:none;font-weight:inherit}
+  .socials a:hover,.socials a:focus-visible{transform:none;opacity:1}
   .socials img{object-fit:contain}
   .socials .separator{color:var(--muted)}
   .home-section{position:absolute;left:0;right:0;display:grid;grid-template-columns:196px 1fr;column-gap:96px}
@@ -100,6 +101,8 @@ const css = `
   .about-highlights{margin-top:48px}
   .about-highlights-only{margin-top:0}
   .about-intro{max-width:460px;margin:0 0 58px;font-size:16px;line-height:1.65}.about-intro p{margin:0 0 18px}.about-intro p:last-child{margin-bottom:0}
+  .about-collection>div:first-child{position:sticky;top:70px;align-self:start}
+  .about-side-socials{margin-top:22px;gap:6px;font-size:14px;line-height:20px;white-space:nowrap}
   .about-highlights-head{display:flex;align-items:baseline;justify-content:space-between;gap:20px;margin-bottom:28px}
   .about-highlights-head h2{font-size:14px;line-height:20px;font-weight:450;margin:0;color:var(--soft)}
   .about-highlights-hint{font-size:11px;line-height:16px;color:var(--muted)}
@@ -129,7 +132,7 @@ const css = `
     .home-section{display:none}
     .home-footer{position:relative;inset:auto;display:flex;min-height:48px;margin:0;gap:12px;align-items:flex-start;white-space:normal}.home-footer span:first-child{flex:1}.home-footer span:last-child{flex-shrink:0;text-align:right;white-space:nowrap}
     .sub-footer{min-height:58px;margin-top:70px;align-items:flex-start;white-space:normal;gap:20px}
-    .collection,.article-layout{grid-template-columns:1fr;padding-top:45px}.collection{gap:28px}.writing-collection,.projects-collection{gap:14px}
+    .collection,.article-layout{grid-template-columns:1fr;padding-top:45px}.collection{gap:28px}.writing-collection,.projects-collection{gap:14px}.about-collection>div:first-child{position:static}.about-side-socials{white-space:normal}
     .collection-note{margin-bottom:28px}.writing-collection .collection-note,.projects-collection .collection-note{margin-bottom:38px}.collection-list li+li{margin-top:18px}.collection-group+.collection-group{margin-top:48px}
     .article-layout{gap:30px}.article-meta{margin-bottom:4px}.article h1{font-size:22px}.prose{font-size:15px}
     .about-collection{padding-bottom:24px}.about-collection+.sub-footer{margin-top:24px}
@@ -323,7 +326,7 @@ export async function buildPersSite({ rootDir, root, projects, posts, aboutHtml,
   const aboutIntro = `<section class="about-intro"><p>I’m a product-first builder and sophomore at IIT Madras. I care about the gap between what AI can do in labs and what most people can actually use in everyday life.</p><p>I start with people, then work backwards into technology. Right now, I’m building consumer-facing AI products from India, with a focus on making powerful systems feel obvious, useful, and trustworthy.</p></section>`;
   const aboutHighlights = `<section class="about-highlights about-highlights-only"><div class="about-highlights-head"><h2>Highlights</h2><span class="about-highlights-hint"><span class="desktop-only">hover to read more</span><span class="mobile-only">tap to read more</span></span></div><div class="milestones">${milestoneRows}</div></section>`;
   const aboutDescription = "About Vedant Misra, an IIT Madras student and product-first builder making consumer-facing AI products from India.";
-  await fs.writeFile(path.join(out, "about", "index.html"), shell({ title: "About", depth: 1, active: "about", footer: true, description: aboutDescription, pathName: route("about/"), siteUrl, image: route("assets/social-card.png"), structuredData: [person, { "@type": "ProfilePage", url: absoluteUrl(siteUrl, route("about/")), name: "About Vedant Misra", description: aboutDescription, mainEntity: { "@id": personId } }, breadcrumb(siteUrl, [{ name: "Home", path: route() }, { name: "About", path: route("about/") }])], body: `<main class="page collection about-collection"><h1>About</h1><div>${aboutIntro}${aboutHighlights}</div></main>` }));
+  await fs.writeFile(path.join(out, "about", "index.html"), shell({ title: "About", depth: 1, active: "about", footer: true, description: aboutDescription, pathName: route("about/"), siteUrl, image: route("assets/social-card.png"), structuredData: [person, { "@type": "ProfilePage", url: absoluteUrl(siteUrl, route("about/")), name: "About Vedant Misra", description: aboutDescription, mainEntity: { "@id": personId } }, breadcrumb(siteUrl, [{ name: "Home", path: route() }, { name: "About", path: route("about/") }])], body: `<main class="page collection about-collection"><div><h1>About</h1><div class="socials about-side-socials"><a href="mailto:${EMAIL}">email</a><span class="separator" aria-hidden="true">·</span><a href="${X_URL}" target="_blank" rel="noopener noreferrer">x (twitter)</a><span class="separator" aria-hidden="true">·</span><a href="${LINKEDIN_URL}" target="_blank" rel="noopener noreferrer">linkedin</a></div></div><div>${aboutIntro}${aboutHighlights}</div></main>` }));
   sitemapEntries.push({ path: route("about/") });
   return sitemapEntries;
 }
