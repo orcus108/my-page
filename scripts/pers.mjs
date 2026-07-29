@@ -48,6 +48,7 @@ const css = `
   .statement a:hover,.statement a:focus-visible{opacity:.58}
   .socials{display:flex;align-items:center;gap:8px;margin-top:25px;min-height:20px;font-size:16px;line-height:21px;font-weight:400;color:var(--muted)}
   .socials a{display:inline-block;text-decoration:none;font-weight:inherit}
+  .home .socials a{font-weight:400}
   .socials a:hover,.socials a:focus-visible{transform:none;opacity:1}
   .socials img{object-fit:contain}
   .socials .separator{color:var(--muted)}
@@ -132,7 +133,7 @@ const css = `
     .home-section{display:none}
     .home-footer{position:relative;inset:auto;display:flex;min-height:48px;margin:0;gap:12px;align-items:flex-start;white-space:normal}.home-footer span:first-child{flex:1}.home-footer span:last-child{flex-shrink:0;text-align:right;white-space:nowrap}
     .sub-footer{min-height:58px;margin-top:70px;align-items:flex-start;white-space:normal;gap:20px}
-    .collection,.article-layout{grid-template-columns:1fr;padding-top:45px}.collection{gap:28px}.writing-collection,.projects-collection{gap:14px}.about-collection>div:first-child{position:static}.about-side-socials{white-space:normal}
+    .collection,.article-layout{grid-template-columns:1fr;padding-top:45px}.collection{gap:28px}.writing-collection,.projects-collection{gap:14px}.about-collection>div:first-child{position:static}.about-side-socials{white-space:normal}.about-collection>div:first-child .about-side-socials{display:none}
     .collection-note{margin-bottom:28px}.writing-collection .collection-note,.projects-collection .collection-note{margin-bottom:38px}.collection-list li+li{margin-top:18px}.collection-group+.collection-group{margin-top:48px}
     .article-layout{gap:30px}.article-meta{margin-bottom:4px}.article h1{font-size:22px}.prose{font-size:15px}
     .about-collection{padding-bottom:24px}.about-collection+.sub-footer{margin-top:24px}
