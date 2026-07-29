@@ -6,7 +6,7 @@ read_time: 6 min read
 summary: A simple framework for explaining products
 ---
 
-There's a simple framework for communicating a product. Three questions:
+Every product can be explained through three questions:
 
 1. What problem does it solve?
 2. How does it solve that problem?
