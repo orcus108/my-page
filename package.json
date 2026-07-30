@@ -2,7 +2,7 @@
   "name": "pers-site",
   "private": true,
   "scripts": {
-    "build": "node scripts/build.mjs && node scripts/build.mjs site",
+    "build": "node scripts/build.mjs site",
     "build:og": "node scripts/build.mjs",
     "build:preview": "node scripts/build.mjs preview-b",
     "build:site": "node scripts/build.mjs site",
