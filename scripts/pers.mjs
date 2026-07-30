@@ -75,6 +75,13 @@ const css = `
   .collection-list{list-style:none;padding:0;margin:0}
   .collection-list li+li{margin-top:20px}
   .collection-list a{font-size:16px;line-height:22px;font-weight:450}
+  .writing-collection .collection-list a{display:block}
+  .writing-collection .collection-list a:hover,.writing-collection .collection-list a:focus-visible{text-decoration:none}
+  .writing-collection .collection-list a:hover>span:first-child,.writing-collection .collection-list a:focus-visible>span:first-child{text-decoration:underline;text-underline-offset:3px}
+  .writing-collection .collection-item-summary{display:grid;grid-template-rows:0fr;max-width:520px;font-size:13px;line-height:19px;font-weight:400;color:var(--muted);opacity:0;transform:translateY(-3px);margin-top:0;transition:grid-template-rows 220ms cubic-bezier(.22,1,.36,1),opacity 180ms ease-out,transform 180ms ease-out,margin-top 220ms cubic-bezier(.22,1,.36,1)}
+  .writing-collection .collection-item-summary>span{overflow:hidden}
+  @media(hover:hover){.writing-collection .collection-list a:hover .collection-item-summary{grid-template-rows:1fr;opacity:1;transform:translateY(0);margin-top:5px}}
+  .writing-collection .collection-list a:focus-visible .collection-item-summary{grid-template-rows:1fr;opacity:1;transform:translateY(0);margin-top:5px}
   .collection-group+.collection-group{margin-top:58px}
   .collection-group h2{font-size:14px;line-height:20px;font-weight:450;margin:0 0 22px;color:var(--soft)}
   .collection-group-note{max-width:450px;font-size:14px;line-height:1.55;color:var(--muted);margin:-8px 0 26px}
@@ -136,6 +143,7 @@ const css = `
     .sub-footer{min-height:58px;margin-top:70px;align-items:flex-start;white-space:normal;gap:20px}
     .collection,.article-layout{grid-template-columns:1fr;padding-top:45px}.collection{gap:28px}.writing-collection,.projects-collection{gap:14px}.about-collection>div:first-child{position:static}.about-side-socials{white-space:normal}.about-collection>div:first-child .about-side-socials{display:none}
     .collection-note{margin-bottom:28px}.writing-collection .collection-note,.projects-collection .collection-note{margin-bottom:38px}.collection-list li+li{margin-top:18px}.collection-group+.collection-group{margin-top:48px}
+    .writing-collection .collection-item-summary{display:none}
     .article-layout{gap:30px}.article-meta{margin-bottom:4px}.article h1{font-size:22px}.prose{font-size:15px}
     .about-collection{padding-bottom:24px}.about-collection+.sub-footer{margin-top:24px}
     .about-highlights{margin-top:42px}.about-highlights-hint{display:inline}.about-highlights-hint .mobile-only{display:inline-block}.milestone{grid-template-columns:46px 1fr;gap:16px}.milestone-logo{width:46px;height:46px}.milestones::before{left:22.5px;top:23px;bottom:23px}
@@ -329,7 +337,7 @@ export async function buildPersSite({ rootDir, root, projects, posts, aboutHtml,
   await fs.writeFile(path.join(out, "index.html"), shell({ title: "Vedant Misra", body: homeWithLatestWriting, includeHeader: false, description: homeDescription, pathName: route(), feedPath: route("feed.xml"), siteUrl, image: route("assets/social-card.png"), structuredData: [person, { "@type": "WebSite", "@id": websiteId, url: absoluteUrl(siteUrl, route()), name: "Vedant Misra", description: homeDescription, inLanguage: SITE_CONFIG.language, publisher: { "@id": personId } }, { "@type": "WebPage", "@id": `${absoluteUrl(siteUrl, route())}#webpage`, url: absoluteUrl(siteUrl, route()), name: "Vedant Misra", description: homeDescription, about: { "@id": personId }, isPartOf: { "@id": websiteId }, inLanguage: SITE_CONFIG.language }] }));
   sitemapEntries.push({ path: route(), lastmod: latestSiteDate });
 
-  const writingRows = posts.map((post) => `<li><a href="${esc(post.slug)}.html">${esc(normalCapitalization(post.title))}</a></li>`).join("");
+  const writingRows = posts.map((post) => `<li><a href="${esc(post.slug)}.html"><span>${esc(normalCapitalization(post.title))}</span><span class="collection-item-summary"><span>${esc(normalCapitalization(post.summary))}</span></span></a></li>`).join("");
   const writingDescription = "Essays by Vedant Misra on artificial intelligence, product building, technology, human identity, healthcare, and building from India.";
   await fs.writeFile(path.join(out, "writing", "index.html"), shell({ title: "Writing", depth: 1, active: "writing", footer: true, description: writingDescription, pathName: route("writing/"), feedPath: route("feed.xml"), siteUrl, image: route("assets/social-card.png"), structuredData: [{ "@type": "CollectionPage", url: absoluteUrl(siteUrl, route("writing/")), name: "Writing by Vedant Misra", description: writingDescription, author: { "@id": personId }, isPartOf: { "@id": websiteId }, inLanguage: SITE_CONFIG.language }, breadcrumb(siteUrl, [{ name: "Home", path: route() }, { name: "Writing", path: route("writing/") }])], body: `<main class="page collection writing-collection"><h1>Writing</h1><div><p class="collection-note">Essays on intelligence, technology, and building from India.</p><ul class="collection-list">${writingRows}</ul></div></main>` }));
   sitemapEntries.push({ path: route("writing/"), lastmod: latestPostDate });
