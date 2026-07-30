@@ -1,13 +1,14 @@
 import { promises as fs } from "node:fs";
 import path from "node:path";
 import sharp from "sharp";
+import { SITE_CONFIG } from "./lib/site-config.mjs";
 
-const EMAIL = "thevedantmisra@gmail.com";
-const X_URL = "https://x.com/orcus108";
-const GH_URL = "https://github.com/orcus108";
-const LINKEDIN_URL = "https://www.linkedin.com/in/misra-vedant/";
+const EMAIL = SITE_CONFIG.email;
+const X_URL = SITE_CONFIG.profiles.x;
+const GH_URL = SITE_CONFIG.profiles.github;
+const LINKEDIN_URL = SITE_CONFIG.profiles.linkedin;
 const WORKPRINT_VIDEO = "../assets/workprint-demo.mp4";
-const DEFAULT_DESCRIPTION = "Vedant Misra is an IIT Madras student and product builder working to make powerful AI useful in everyday life.";
+const DEFAULT_DESCRIPTION = SITE_CONFIG.description;
 
 const css = `
   @font-face{font-family:Geist;src:url("geist-latin.woff2") format("woff2");font-weight:100 900;font-style:normal;font-display:swap}
@@ -213,6 +214,28 @@ function absoluteUrl(siteUrl, pathname = "/") {
   return `${base}/${String(pathname).replace(/^\/+/, "")}`;
 }
 
+function xmlEsc(value) {
+  return String(value ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&apos;");
+}
+
+function isoDate(value) {
+  const raw = String(value || "").slice(0, 10);
+  return /^\d{4}-\d{2}-\d{2}$/.test(raw) ? raw : "";
+}
+
+function latestDate(items) {
+  return items
+    .flatMap((item) => [isoDate(item.updated), isoDate(item.date)])
+    .filter(Boolean)
+    .sort()
+    .at(-1) || "";
+}
+
 function formatDate(value) {
   if (!value) return "";
   const date = new Date(`${String(value).slice(0, 10)}T00:00:00Z`);
@@ -232,7 +255,8 @@ function breadcrumb(siteUrl, items) {
 
 function header(depth, active) {
   const root = "../".repeat(depth);
-  return `<header class="header"><a class="mark" href="${root}index.html" aria-label="Vedant Misra home"><svg class="mark-motion" viewBox="0 0 128 128" aria-hidden="true"><path class="mark-motion-path"></path></svg><img class="mark-static" src="${root}assets/vm-mark.png" alt="" width="54" height="54"></a><nav class="nav" aria-label="Primary"><a href="${root}writing/index.html"${active === "writing" ? ' aria-current="page"' : ""}>writing</a><a href="${root}projects/index.html"${active === "projects" ? ' aria-current="page"' : ""}>projects</a><a href="${root}about/index.html"${active === "about" ? ' aria-current="page"' : ""}>about</a><a href="mailto:${EMAIL}"${active === "contact" ? ' aria-current="page"' : ""}>contact</a></nav></header>`;
+  const home = root || "./";
+  return `<header class="header"><a class="mark" href="${home}" aria-label="Vedant Misra home"><svg class="mark-motion" viewBox="0 0 128 128" aria-hidden="true"><path class="mark-motion-path"></path></svg><img class="mark-static" src="${root}assets/vm-mark.png" alt="" width="54" height="54"></a><nav class="nav" aria-label="Primary"><a href="${root}writing/"${active === "writing" ? ' aria-current="page"' : ""}>writing</a><a href="${root}projects/"${active === "projects" ? ' aria-current="page"' : ""}>projects</a><a href="${root}about/"${active === "about" ? ' aria-current="page"' : ""}>about</a><a href="mailto:${EMAIL}"${active === "contact" ? ' aria-current="page"' : ""}>contact</a></nav></header>`;
 }
 
 function subFooter(depth) {
@@ -240,12 +264,39 @@ function subFooter(depth) {
   return `<footer class="sub-footer"><span><span class="desktop-only">Sophomore @ IIT Madras · Building across AI, product, and design</span><span class="mobile-only">Sophomore at IIT Madras</span></span><span class="sub-footer-socials"><a href="mailto:${EMAIL}" aria-label="Email"><span class="contact-mark" aria-hidden="true">@</span></a><a href="${X_URL}" aria-label="X" target="_blank" rel="noopener noreferrer"><img src="${root}assets/email.png" alt=""></a></span></footer>`;
 }
 
-function shell({ title, body, depth = 0, active = "", includeHeader = true, footer = false, description = DEFAULT_DESCRIPTION, pathName = "/", siteUrl, image = "/assets/social-card.png", ogType = "website", publishedTime = "", structuredData = [] }) {
+function shell({ title, body, depth = 0, active = "", includeHeader = true, footer = false, description = DEFAULT_DESCRIPTION, pathName = "/", siteUrl, image = "/assets/social-card.png", ogType = "website", publishedTime = "", modifiedTime = "", feedPath = "/feed.xml", structuredData = [] }) {
   const root = "../".repeat(depth);
   const fullTitle = title === "Vedant Misra" ? "Vedant Misra | Product builder making AI useful" : `${title} | Vedant Misra`;
   const canonical = absoluteUrl(siteUrl, pathName);
   const socialImage = absoluteUrl(siteUrl, image);
-  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(fullTitle)}</title><meta name="description" content="${esc(description)}"><meta name="author" content="Vedant Misra"><meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"><link rel="canonical" href="${esc(canonical)}"><link rel="icon" href="${root}favicon.svg" type="image/svg+xml"><meta property="og:site_name" content="Vedant Misra"><meta property="og:title" content="${esc(fullTitle)}"><meta property="og:description" content="${esc(description)}"><meta property="og:type" content="${esc(ogType)}"><meta property="og:url" content="${esc(canonical)}"><meta property="og:image" content="${esc(socialImage)}"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:image:alt" content="Vedant Misra, product builder"><meta property="og:locale" content="en_IN">${publishedTime ? `<meta property="article:published_time" content="${esc(publishedTime)}">` : ""}<meta name="twitter:card" content="summary_large_image"><meta name="twitter:creator" content="@orcus108"><meta name="twitter:title" content="${esc(fullTitle)}"><meta name="twitter:description" content="${esc(description)}"><meta name="twitter:image" content="${esc(socialImage)}">${jsonLd(structuredData)}<link rel="stylesheet" href="${root}assets/pers.css?v=20260730-social-cache"></head><body><div class="site${footer ? " has-sub-footer" : ""}">${includeHeader ? header(depth, active) : ""}${body}${footer ? subFooter(depth) : ""}</div><script src="${root}assets/pers.js?v=20260730-social-cache"></script><script defer src="/_vercel/insights/script.js"></script></body></html>`;
+  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(fullTitle)}</title><meta name="description" content="${esc(description)}"><meta name="author" content="${esc(SITE_CONFIG.name)}"><meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"><link rel="canonical" href="${esc(canonical)}"><link rel="alternate" type="application/atom+xml" title="Writing by Vedant Misra" href="${esc(absoluteUrl(siteUrl, feedPath))}"><link rel="icon" href="${root}favicon.svg" type="image/svg+xml"><meta property="og:site_name" content="${esc(SITE_CONFIG.name)}"><meta property="og:title" content="${esc(fullTitle)}"><meta property="og:description" content="${esc(description)}"><meta property="og:type" content="${esc(ogType)}"><meta property="og:url" content="${esc(canonical)}"><meta property="og:image" content="${esc(socialImage)}"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:image:alt" content="Vedant Misra, product builder"><meta property="og:locale" content="${esc(SITE_CONFIG.locale)}">${publishedTime ? `<meta property="article:published_time" content="${esc(publishedTime)}">` : ""}${modifiedTime ? `<meta property="article:modified_time" content="${esc(modifiedTime)}">` : ""}<meta name="twitter:card" content="summary_large_image"><meta name="twitter:creator" content="${esc(SITE_CONFIG.twitterHandle)}"><meta name="twitter:title" content="${esc(fullTitle)}"><meta name="twitter:description" content="${esc(description)}"><meta name="twitter:image" content="${esc(socialImage)}"><meta name="twitter:image:alt" content="Vedant Misra, product builder">${jsonLd(structuredData)}<link rel="stylesheet" href="${root}assets/pers.css?v=20260730-social-cache"></head><body><div class="site${footer ? " has-sub-footer" : ""}">${includeHeader ? header(depth, active) : ""}${body}${footer ? subFooter(depth) : ""}</div><script src="${root}assets/pers.js?v=20260730-social-cache"></script><script defer src="/_vercel/insights/script.js"></script></body></html>`;
+}
+
+async function writeAtomFeed({ out, posts, siteUrl, route }) {
+  const updated = latestDate(posts) || "2026-01-01";
+  const entries = posts
+    .map((post) => {
+      const postPath = route(`writing/${post.slug}.html`);
+      const url = absoluteUrl(siteUrl, postPath);
+      const published = isoDate(post.date) || updated;
+      const modified = isoDate(post.updated) || published;
+      return `<entry><title>${xmlEsc(normalCapitalization(post.title))}</title><id>${xmlEsc(url)}</id><link href="${xmlEsc(url)}"/><published>${published}T00:00:00Z</published><updated>${modified}T00:00:00Z</updated><author><name>Vedant Misra</name><uri>${xmlEsc(absoluteUrl(siteUrl, route("about/")))}</uri></author><summary>${xmlEsc(normalCapitalization(post.summary || "Essay by Vedant Misra"))}</summary></entry>`;
+    })
+    .join("\n  ");
+  const feedUrl = absoluteUrl(siteUrl, route("feed.xml"));
+  const homeUrl = absoluteUrl(siteUrl, route());
+  const xml = `<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <title>Writing by Vedant Misra</title>
+  <id>${xmlEsc(homeUrl)}</id>
+  <link href="${xmlEsc(homeUrl)}"/>
+  <link href="${xmlEsc(feedUrl)}" rel="self" type="application/atom+xml"/>
+  <updated>${updated}T00:00:00Z</updated>
+  <author><name>Vedant Misra</name><uri>${xmlEsc(absoluteUrl(siteUrl, route("about/")))}</uri></author>
+  ${entries}
+</feed>
+`;
+  await fs.writeFile(path.join(out, "feed.xml"), xml, "utf8");
 }
 
 export async function buildPersSite({ rootDir, root, projects, posts, aboutHtml, renderMarkdown, siteUrl, basePath = "/", outputDir = "" }) {
@@ -264,30 +315,34 @@ export async function buildPersSite({ rootDir, root, projects, posts, aboutHtml,
 
   const personId = `${absoluteUrl(siteUrl, route())}#vedant-misra`;
   const websiteId = `${absoluteUrl(siteUrl, route())}#website`;
-  const person = { "@type": "Person", "@id": personId, name: "Vedant Misra", url: absoluteUrl(siteUrl, route("about/")), email: `mailto:${EMAIL}`, jobTitle: "Product builder", description: DEFAULT_DESCRIPTION, affiliation: { "@type": "CollegeOrUniversity", name: "IIT Madras", sameAs: "https://www.iitm.ac.in/" }, homeLocation: { "@type": "Place", name: "Hyderabad, India" }, knowsAbout: ["product design", "consumer software", "applied artificial intelligence", "human-computer interaction"], sameAs: [GH_URL, X_URL] };
+  const person = { "@type": "Person", "@id": personId, name: "Vedant Misra", url: absoluteUrl(siteUrl, route("about/")), email: `mailto:${EMAIL}`, jobTitle: "Product builder", description: DEFAULT_DESCRIPTION, affiliation: { "@type": "CollegeOrUniversity", name: "IIT Madras", sameAs: "https://www.iitm.ac.in/" }, homeLocation: { "@type": "Place", name: "Hyderabad, India" }, knowsAbout: ["product design", "consumer software", "applied artificial intelligence", "human-computer interaction"], sameAs: [GH_URL, LINKEDIN_URL, X_URL] };
   const sitemapEntries = [];
+  const latestPostDate = latestDate(posts);
+  const latestProjectDate = latestDate(projects);
+  const latestSiteDate = [latestPostDate, latestProjectDate].filter(Boolean).sort().at(-1) || "";
 
   const home = `<main class="home">${header(0, "contact")}<div class="home-intro"><div class="identity"><h1>Vedant Misra</h1><p>Product builder</p></div><div class="statement"><p>There is a growing gap between what AI can do and what most people can actually get out of it.</p><p>I build in that gap, starting with what people need and working backwards to make powerful technology feel obvious to use.</p><p>If you’re working on the same problem, <a href="mailto:${EMAIL}">let’s talk!</a></p><div class="socials"><a href="mailto:${EMAIL}">email</a><span class="separator" aria-hidden="true">·</span><a href="${X_URL}" target="_blank" rel="noopener noreferrer">x (twitter)</a><span class="separator" aria-hidden="true">·</span><a href="${LINKEDIN_URL}" target="_blank" rel="noopener noreferrer">linkedin</a></div></div></div><section class="home-section writing"><h2>Writing</h2><div><p class="section-note">Essays on intelligence, technology, and building from India.</p><ul class="link-list"><li><a href="writing/broke-countries-build-different.html">Broke Countries Build Different</a></li><li><a href="writing/ai-and-human-identity.html">AI and Human Identity</a></li></ul></div></section><section class="home-section projects"><h2>Projects</h2><div><p class="section-note">Things I’ve built, shipped, and learned from.</p><ul class="link-list"><li><a href="projects/workprint.html">Workprint</a></li><li><a href="projects/sakhi.html">Sakhi</a></li><li><a href="projects/friday.html">Friday</a></li></ul></div></section><footer class="home-footer"><span><span class="desktop-only">Sophomore @ IIT Madras · Building across AI, product, and design</span><span class="mobile-only">Sophomore at IIT Madras</span></span><span>Hyderabad, India</span></footer></main>`;
   const latestWriting = posts.slice(0, 2);
   const homeWritingLinks = latestWriting.map((post) => `<li><a href="writing/${esc(post.slug)}.html">${esc(normalCapitalization(post.title))}</a></li>`).join("");
   const homeWithLatestWriting = home.replace(/<ul class="link-list">.*?<\/ul>/, `<ul class="link-list">${homeWritingLinks}</ul>`);
   const homeDescription = "Vedant Misra is an IIT Madras student and product builder creating consumer-facing AI products, including Workprint, Friday, and Sakhi.";
-  await fs.writeFile(path.join(out, "index.html"), shell({ title: "Vedant Misra", body: homeWithLatestWriting, includeHeader: false, description: homeDescription, pathName: route(), siteUrl, image: route("assets/social-card.png"), structuredData: [person, { "@type": "WebSite", "@id": websiteId, url: absoluteUrl(siteUrl, route()), name: "Vedant Misra", description: homeDescription, inLanguage: "en-IN", publisher: { "@id": personId } }, { "@type": "ProfilePage", url: absoluteUrl(siteUrl, route()), name: "Vedant Misra", mainEntity: { "@id": personId } }] }));
-  sitemapEntries.push({ path: route() });
+  await fs.writeFile(path.join(out, "index.html"), shell({ title: "Vedant Misra", body: homeWithLatestWriting, includeHeader: false, description: homeDescription, pathName: route(), feedPath: route("feed.xml"), siteUrl, image: route("assets/social-card.png"), structuredData: [person, { "@type": "WebSite", "@id": websiteId, url: absoluteUrl(siteUrl, route()), name: "Vedant Misra", description: homeDescription, inLanguage: SITE_CONFIG.language, publisher: { "@id": personId } }, { "@type": "WebPage", "@id": `${absoluteUrl(siteUrl, route())}#webpage`, url: absoluteUrl(siteUrl, route()), name: "Vedant Misra", description: homeDescription, about: { "@id": personId }, isPartOf: { "@id": websiteId }, inLanguage: SITE_CONFIG.language }] }));
+  sitemapEntries.push({ path: route(), lastmod: latestSiteDate });
 
   const writingRows = posts.map((post) => `<li><a href="${esc(post.slug)}.html">${esc(normalCapitalization(post.title))}</a></li>`).join("");
   const writingDescription = "Essays by Vedant Misra on artificial intelligence, product building, technology, human identity, healthcare, and building from India.";
-  await fs.writeFile(path.join(out, "writing", "index.html"), shell({ title: "Writing", depth: 1, active: "writing", footer: true, description: writingDescription, pathName: route("writing/"), siteUrl, image: route("assets/social-card.png"), structuredData: [{ "@type": "CollectionPage", url: absoluteUrl(siteUrl, route("writing/")), name: "Writing by Vedant Misra", description: writingDescription, author: { "@id": personId } }, breadcrumb(siteUrl, [{ name: "Home", path: route() }, { name: "Writing", path: route("writing/") }])], body: `<main class="page collection writing-collection"><h1>Writing</h1><div><p class="collection-note">Essays on intelligence, technology, and building from India.</p><ul class="collection-list">${writingRows}</ul></div></main>` }));
-  sitemapEntries.push({ path: route("writing/") });
+  await fs.writeFile(path.join(out, "writing", "index.html"), shell({ title: "Writing", depth: 1, active: "writing", footer: true, description: writingDescription, pathName: route("writing/"), feedPath: route("feed.xml"), siteUrl, image: route("assets/social-card.png"), structuredData: [{ "@type": "CollectionPage", url: absoluteUrl(siteUrl, route("writing/")), name: "Writing by Vedant Misra", description: writingDescription, author: { "@id": personId }, isPartOf: { "@id": websiteId }, inLanguage: SITE_CONFIG.language }, breadcrumb(siteUrl, [{ name: "Home", path: route() }, { name: "Writing", path: route("writing/") }])], body: `<main class="page collection writing-collection"><h1>Writing</h1><div><p class="collection-note">Essays on intelligence, technology, and building from India.</p><ul class="collection-list">${writingRows}</ul></div></main>` }));
+  sitemapEntries.push({ path: route("writing/"), lastmod: latestPostDate });
   const persMarkdown = (body) => renderMarkdown(body, outputDir ? 3 : 2);
   for (const post of posts) {
     const published = String(post.date || "").slice(0, 10);
+    const modified = isoDate(post.updated) || published;
     const postPath = route(`writing/${post.slug}.html`);
     const postDescription = `${normalCapitalization(post.summary)}. An essay by Vedant Misra on AI, technology, and society.`;
-    const body = `<main class="page article-layout"><header class="detail-intro"><h1>${esc(normalCapitalization(post.title))}</h1><p>${esc(normalCapitalization(post.summary))}</p><time datetime="${esc(published)}">${esc(formatDate(published))}</time></header><article class="article"><div class="prose">${persMarkdown(post.body)}</div><a class="back" href="index.html">← All Writing</a></article></main>`;
-    const blogPosting = { "@type": "BlogPosting", "@id": `${absoluteUrl(siteUrl, postPath)}#article`, url: absoluteUrl(siteUrl, postPath), headline: post.title, description: postDescription, image: absoluteUrl(siteUrl, route("assets/social-card.png")), datePublished: published, author: { "@id": personId }, publisher: { "@id": personId }, mainEntityOfPage: absoluteUrl(siteUrl, postPath), inLanguage: "en-IN", isAccessibleForFree: true, isPartOf: { "@id": websiteId }, keywords: ["artificial intelligence", "technology", "India", post.title] };
-    await fs.writeFile(path.join(out, "writing", `${post.slug}.html`), shell({ title: post.title, body, depth: 1, active: "writing", footer: true, description: postDescription, pathName: postPath, siteUrl, image: route("assets/social-card.png"), ogType: "article", publishedTime: published, structuredData: [blogPosting, breadcrumb(siteUrl, [{ name: "Home", path: route() }, { name: "Writing", path: route("writing/") }, { name: post.title, path: postPath }])] }));
-    sitemapEntries.push({ path: postPath, lastmod: published });
+    const body = `<main class="page article-layout"><header class="detail-intro"><h1>${esc(normalCapitalization(post.title))}</h1><p>${esc(normalCapitalization(post.summary))}</p><time datetime="${esc(published)}">${esc(formatDate(published))}</time></header><article class="article"><div class="prose">${persMarkdown(post.body)}</div><a class="back" href="./">← All Writing</a></article></main>`;
+    const blogPosting = { "@type": "BlogPosting", "@id": `${absoluteUrl(siteUrl, postPath)}#article`, url: absoluteUrl(siteUrl, postPath), headline: post.title, description: postDescription, image: absoluteUrl(siteUrl, route("assets/social-card.png")), datePublished: published, dateModified: modified, author: { "@id": personId }, publisher: { "@id": personId }, mainEntityOfPage: absoluteUrl(siteUrl, postPath), inLanguage: SITE_CONFIG.language, isAccessibleForFree: true, isPartOf: { "@id": websiteId }, keywords: ["artificial intelligence", "technology", "India", post.title] };
+    await fs.writeFile(path.join(out, "writing", `${post.slug}.html`), shell({ title: post.title, body, depth: 1, active: "writing", footer: true, description: postDescription, pathName: postPath, feedPath: route("feed.xml"), siteUrl, image: route("assets/social-card.png"), ogType: "article", publishedTime: published, modifiedTime: modified, structuredData: [blogPosting, breadcrumb(siteUrl, [{ name: "Home", path: route() }, { name: "Writing", path: route("writing/") }, { name: post.title, path: postPath }])] }));
+    sitemapEntries.push({ path: postPath, lastmod: modified });
   }
 
   const workprintBody = await fs.readFile(path.join(rootDir, "content", "preview", "workprint.md"), "utf8");
@@ -298,24 +353,38 @@ export async function buildPersSite({ rootDir, root, projects, posts, aboutHtml,
   const projectLinks = (items) => items.map((project) => `<li><a href="${esc(project.slug)}.html">${esc(normalCapitalization(project.title))}</a></li>`).join("");
   const miscNote = "From the early days of my building journey. Clippy was my first macOS app. Odds was my first app with real users. Image Cartoonification was my first time implementing a research paper. CatGPT was the first website I deployed on the internet. They might seem small, but each carried an important learning.";
   const projectsDescription = "Products and experiments built by Vedant Misra, including Workprint, Friday, Sakhi, Clippy, and other applied AI projects.";
-  await fs.writeFile(path.join(out, "projects", "index.html"), shell({ title: "Projects", depth: 1, active: "projects", footer: true, description: projectsDescription, pathName: route("projects/"), siteUrl, image: route("assets/social-card.png"), structuredData: [{ "@type": "CollectionPage", url: absoluteUrl(siteUrl, route("projects/")), name: "Projects by Vedant Misra", description: projectsDescription, creator: { "@id": personId } }, breadcrumb(siteUrl, [{ name: "Home", path: route() }, { name: "Projects", path: route("projects/") }])], body: `<main class="page collection projects-collection"><h1>Projects</h1><div><p class="collection-note">Things I’ve built, shipped, and learned from.</p><section class="collection-group"><ul class="collection-list">${projectLinks(mainProjects)}</ul></section><details class="collection-group misc-disclosure"><summary>Misc</summary><div class="misc-disclosure-content"><p class="collection-group-note">${miscNote}</p><ul class="collection-list">${projectLinks(miscProjects)}</ul></div></details></div></main>` }));
-  sitemapEntries.push({ path: route("projects/") });
+  await fs.writeFile(path.join(out, "projects", "index.html"), shell({ title: "Projects", depth: 1, active: "projects", footer: true, description: projectsDescription, pathName: route("projects/"), feedPath: route("feed.xml"), siteUrl, image: route("assets/social-card.png"), structuredData: [{ "@type": "CollectionPage", url: absoluteUrl(siteUrl, route("projects/")), name: "Projects by Vedant Misra", description: projectsDescription, creator: { "@id": personId }, isPartOf: { "@id": websiteId }, inLanguage: SITE_CONFIG.language }, breadcrumb(siteUrl, [{ name: "Home", path: route() }, { name: "Projects", path: route("projects/") }])], body: `<main class="page collection projects-collection"><h1>Projects</h1><div><p class="collection-note">Things I’ve built, shipped, and learned from.</p><section class="collection-group"><ul class="collection-list">${projectLinks(mainProjects)}</ul></section><details class="collection-group misc-disclosure"><summary>Misc</summary><div class="misc-disclosure-content"><p class="collection-group-note">${miscNote}</p><ul class="collection-list">${projectLinks(miscProjects)}</ul></div></details></div></main>` }));
+  sitemapEntries.push({ path: route("projects/"), lastmod: latestDate(persProjects) });
+  const applicationCategories = {
+    workprint: "ProductivityApplication",
+    friday: "UtilitiesApplication",
+    clippy: "UtilitiesApplication",
+    sakhi: "HealthApplication",
+    odds: "GameApplication",
+    catgpt: "EntertainmentApplication",
+    cartoonification: "MultimediaApplication",
+    "llm-from-scratch": "DeveloperApplication",
+  };
   for (const project of persProjects) {
     const projectPath = route(`projects/${project.slug}.html`);
-    const projectDescription = `${project.title} is ${project.summary}, built by Vedant Misra.`;
+    const projectDescription = `${project.title} is ${project.summary}, built by Vedant Misra as part of his product and software work.`;
     const demo = project.slug === "workprint" ? `<figure class="project-demo"><video controls playsinline preload="metadata" poster="../assets/workprint-demo-poster.jpg" aria-label="Workprint Product Demo"><source src="${WORKPRINT_VIDEO}" type="video/mp4">Your browser cannot play the Workprint demo. <a href="${WORKPRINT_VIDEO}">Open the video</a>.</video></figure>` : "";
-    const body = `<main class="page article-layout"><header class="detail-intro"><h1>${esc(normalCapitalization(project.title))}</h1><p>${esc(normalCapitalization(project.summary))}</p></header><article class="article">${demo}<div class="prose">${persMarkdown(project.body)}</div><a class="back" href="index.html">← All Projects</a></article></main>`;
+    const body = `<main class="page article-layout"><header class="detail-intro"><h1>${esc(normalCapitalization(project.title))}</h1><p>${esc(normalCapitalization(project.summary))}</p></header><article class="article">${demo}<div class="prose">${persMarkdown(project.body)}</div><a class="back" href="./">← All Projects</a></article></main>`;
     const projectDate = String(project.date || "").slice(0, 10);
-    const projectSchema = { "@type": "SoftwareApplication", "@id": `${absoluteUrl(siteUrl, projectPath)}#project`, url: absoluteUrl(siteUrl, projectPath), name: project.title, description: projectDescription, image: absoluteUrl(siteUrl, project.slug === "workprint" ? route("assets/workprint-demo-poster.jpg") : route("assets/social-card.png")), applicationCategory: "ProductivityApplication", creator: { "@id": personId }, author: { "@id": personId }, mainEntityOfPage: absoluteUrl(siteUrl, projectPath), inLanguage: "en-IN", isAccessibleForFree: true, isPartOf: { "@id": websiteId } };
+    const projectModified = isoDate(project.updated) || projectDate;
+    const projectSchema = { "@type": "SoftwareApplication", "@id": `${absoluteUrl(siteUrl, projectPath)}#project`, url: absoluteUrl(siteUrl, projectPath), name: project.title, description: projectDescription, image: absoluteUrl(siteUrl, project.slug === "workprint" ? route("assets/workprint-demo-poster.jpg") : route("assets/social-card.png")), applicationCategory: applicationCategories[project.slug] || "SoftwareApplication", creator: { "@id": personId }, author: { "@id": personId }, mainEntityOfPage: absoluteUrl(siteUrl, projectPath), inLanguage: SITE_CONFIG.language, isAccessibleForFree: true, isPartOf: { "@id": websiteId } };
+    if (["friday", "clippy"].includes(project.slug)) projectSchema.operatingSystem = "macOS";
+    if (project.slug === "sakhi") projectSchema.operatingSystem = "Android, iOS, Web";
     if (/^\d{4}-\d{2}-\d{2}$/.test(projectDate)) projectSchema.dateCreated = projectDate;
+    if (projectModified) projectSchema.dateModified = projectModified;
     if (project.repo) projectSchema.codeRepository = project.repo;
     if (project.demo) projectSchema.sameAs = project.demo;
     if (project.slug === "workprint") projectSchema.codeRepository = "https://github.com/orcus108/openai-buildweek-hyd-workprint";
     const projectStructuredData = [projectSchema];
     if (project.slug === "workprint") projectStructuredData.push({ "@type": "VideoObject", name: "Workprint product demo", description: "A 51-second demonstration of Workprint reconstructing a builder's work and turning an evidence-backed moment into a story.", thumbnailUrl: absoluteUrl(siteUrl, route("assets/workprint-demo-poster.jpg")), uploadDate: "2026-07-18", duration: "PT51S", contentUrl: absoluteUrl(siteUrl, route("assets/workprint-demo.mp4")), embedUrl: absoluteUrl(siteUrl, projectPath) });
     projectStructuredData.push(breadcrumb(siteUrl, [{ name: "Home", path: route() }, { name: "Projects", path: route("projects/") }, { name: project.title, path: projectPath }]));
-    await fs.writeFile(path.join(out, "projects", `${project.slug}.html`), shell({ title: project.title, body, depth: 1, active: "projects", footer: true, description: projectDescription, pathName: projectPath, siteUrl, image: project.slug === "workprint" ? route("assets/workprint-demo-poster.jpg") : route("assets/social-card.png"), structuredData: projectStructuredData }));
-    sitemapEntries.push({ path: projectPath, lastmod: /^\d{4}-\d{2}-\d{2}$/.test(projectDate) ? projectDate : "" });
+    await fs.writeFile(path.join(out, "projects", `${project.slug}.html`), shell({ title: project.title, body, depth: 1, active: "projects", footer: true, description: projectDescription, pathName: projectPath, feedPath: route("feed.xml"), siteUrl, image: project.slug === "workprint" ? route("assets/workprint-demo-poster.jpg") : route("assets/social-card.png"), structuredData: projectStructuredData }));
+    sitemapEntries.push({ path: projectPath, lastmod: projectModified });
   }
 
   const highlights = JSON.parse(await fs.readFile(path.join(rootDir, "content", "preview", "highlights.json"), "utf8"));
@@ -330,7 +399,8 @@ export async function buildPersSite({ rootDir, root, projects, posts, aboutHtml,
   const aboutIntro = `<section class="about-intro"><p>I’m a product-first builder and sophomore at IIT Madras. I care about the gap between what AI can do in labs and what most people can actually use in everyday life.</p><p>I start with people, then work backwards into technology. Right now, I’m building consumer-facing AI products from India, with a focus on making powerful systems feel obvious, useful, and trustworthy.</p></section>`;
   const aboutHighlights = `<section class="about-highlights about-highlights-only"><div class="about-highlights-head"><h2>Highlights</h2><span class="about-highlights-hint"><span class="desktop-only">hover to read more</span><span class="mobile-only">tap to read more</span></span></div><div class="milestones">${milestoneRows}</div></section>`;
   const aboutDescription = "About Vedant Misra, an IIT Madras student and product-first builder making consumer-facing AI products from India.";
-  await fs.writeFile(path.join(out, "about", "index.html"), shell({ title: "About", depth: 1, active: "about", footer: true, description: aboutDescription, pathName: route("about/"), siteUrl, image: route("assets/social-card.png"), structuredData: [person, { "@type": "ProfilePage", url: absoluteUrl(siteUrl, route("about/")), name: "About Vedant Misra", description: aboutDescription, mainEntity: { "@id": personId } }, breadcrumb(siteUrl, [{ name: "Home", path: route() }, { name: "About", path: route("about/") }])], body: `<main class="page collection about-collection"><div><h1>About</h1><div class="socials about-side-socials"><a href="mailto:${EMAIL}">email</a><span class="separator" aria-hidden="true">·</span><a href="${X_URL}" target="_blank" rel="noopener noreferrer">x (twitter)</a><span class="separator" aria-hidden="true">·</span><a href="${LINKEDIN_URL}" target="_blank" rel="noopener noreferrer">linkedin</a></div></div><div>${aboutIntro}${aboutHighlights}</div></main>` }));
+  await fs.writeFile(path.join(out, "about", "index.html"), shell({ title: "About", depth: 1, active: "about", footer: true, description: aboutDescription, pathName: route("about/"), feedPath: route("feed.xml"), siteUrl, image: route("assets/social-card.png"), structuredData: [person, { "@type": "ProfilePage", "@id": `${absoluteUrl(siteUrl, route("about/"))}#profile`, url: absoluteUrl(siteUrl, route("about/")), name: "About Vedant Misra", description: aboutDescription, mainEntity: { "@id": personId }, isPartOf: { "@id": websiteId }, inLanguage: SITE_CONFIG.language }, breadcrumb(siteUrl, [{ name: "Home", path: route() }, { name: "About", path: route("about/") }])], body: `<main class="page collection about-collection"><div><h1>About</h1><div class="socials about-side-socials"><a href="mailto:${EMAIL}">email</a><span class="separator" aria-hidden="true">·</span><a href="${X_URL}" target="_blank" rel="noopener noreferrer">x (twitter)</a><span class="separator" aria-hidden="true">·</span><a href="${LINKEDIN_URL}" target="_blank" rel="noopener noreferrer">linkedin</a></div></div><div>${aboutIntro}${aboutHighlights}</div></main>` }));
   sitemapEntries.push({ path: route("about/") });
+  await writeAtomFeed({ out, posts, siteUrl, route });
   return sitemapEntries;
 }

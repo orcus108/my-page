@@ -4,6 +4,41 @@
   "outputDirectory": "site",
   "redirects": [
     {
+      "source": "/index.html",
+      "destination": "/",
+      "permanent": true
+    },
+    {
+      "source": "/about",
+      "destination": "/about/",
+      "permanent": true
+    },
+    {
+      "source": "/about/index.html",
+      "destination": "/about/",
+      "permanent": true
+    },
+    {
+      "source": "/writing",
+      "destination": "/writing/",
+      "permanent": true
+    },
+    {
+      "source": "/writing/index.html",
+      "destination": "/writing/",
+      "permanent": true
+    },
+    {
+      "source": "/projects",
+      "destination": "/projects/",
+      "permanent": true
+    },
+    {
+      "source": "/projects/index.html",
+      "destination": "/projects/",
+      "permanent": true
+    },
+    {
       "source": "/pers",
       "destination": "/",
       "permanent": true

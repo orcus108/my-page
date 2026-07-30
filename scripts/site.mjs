@@ -4,32 +4,17 @@ import { lightboxStyles, lightboxScriptBody } from "./lightbox.mjs";
 import { copyFonts, fontFaceCss, fontPreloads } from "./lib/fonts.mjs";
 import { contentHash, minifyCss, minifyJs } from "./lib/minify.mjs";
 import { collectMarkdownImages, ImagePipeline } from "./lib/optimize-image.mjs";
+import { SITE_CONFIG, resolveSiteUrl } from "./lib/site-config.mjs";
 import { buildPersSite } from "./pers.mjs";
 
-const EMAIL = "misravedantsocials@gmail.com";
-const X_URL = "https://x.com/orcus108";
-const GH_URL = "https://github.com/orcus108";
-const SUBSTACK_URL = "https://vedantmisra.substack.com";
-const SITE_TITLE = "Vedant Misra";
-const SITE_DESCRIPTION =
-  "Vedant Misra is an IIT Madras student building AI products for underserved users, including Friday, Sakhi, Clippy, and other product experiments from India.";
-const TWITTER_HANDLE = "@orcus108";
-const DEFAULT_SITE_URL = "https://vedantmisra.dev";
-
-function normalizeSiteUrl(value) {
-  const raw = String(value || "").trim();
-  if (!raw) return DEFAULT_SITE_URL;
-  const withProtocol = /^https?:\/\//i.test(raw) ? raw : `https://${raw}`;
-  return withProtocol.replace(/\/+$/, "");
-}
-
-const SITE_URL = normalizeSiteUrl(
-  process.env.SITE_URL ||
-    process.env.VERCEL_PROJECT_PRODUCTION_URL ||
-    process.env.URL ||
-    process.env.VERCEL_URL ||
-    DEFAULT_SITE_URL
-);
+const EMAIL = SITE_CONFIG.email;
+const X_URL = SITE_CONFIG.profiles.x;
+const GH_URL = SITE_CONFIG.profiles.github;
+const SUBSTACK_URL = SITE_CONFIG.profiles.substack;
+const SITE_TITLE = SITE_CONFIG.name;
+const SITE_DESCRIPTION = SITE_CONFIG.description;
+const TWITTER_HANDLE = SITE_CONFIG.twitterHandle;
+const SITE_URL = resolveSiteUrl();
 const PERSON_ID = `${SITE_URL}/#person`;
 const WEBSITE_ID = `${SITE_URL}/#website`;
 const DEFAULT_SOCIAL_IMAGE = "assets/portrait.webp";
@@ -321,12 +306,23 @@ Allow: /
 User-agent: OAI-SearchBot
 Allow: /
 
+User-agent: PerplexityBot
+Allow: /
+
 User-agent: GPTBot
 Allow: /
 
 Sitemap: ${absoluteUrl("/sitemap.xml")}
 `;
   await fs.writeFile(path.join(root, "robots.txt"), robots, "utf8");
+}
+
+async function writeIndexNowKey(root) {
+  await fs.writeFile(
+    path.join(root, `${SITE_CONFIG.indexNowKey}.txt`),
+    SITE_CONFIG.indexNowKey,
+    "utf8"
+  );
 }
 
 async function writeSitemap(root, entries) {
@@ -3814,6 +3810,7 @@ export async function buildSite({
   });
   await writeSitemap(root, persSitemapEntries);
   await writeRobots(root);
+  await writeIndexNowKey(root);
 
   console.log(`Built site/ (${projects.length} work, ${posts.length} writing, ${logs.length} log entries, ${books.length} books).`);
 }

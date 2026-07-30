@@ -820,6 +820,7 @@ async function loadCollection(dir, type) {
       image: attrs.image || "",
       banner: attrs.banner || "",
       date,
+      updated: attrs.updated || "",
       body,
       htmlBody: markdownToHtml(body)
     });
